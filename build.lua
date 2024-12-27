@@ -22,7 +22,7 @@ uploadconfig = {
 
 typesetfiles = { "doc/latex/neural-sketch/neural-sketch-doc.tex" }
 sourcefiles = { "src/neural-sketch.dtx", "src/neural-sketch.ins" }
-installfiles = { "neural-sketch.sty" }
+installfiles = { "neural-sketch.sty", "neural-sketch-colors.sty" }
 docfiles = { "doc/latex/neural-sketch/neural-sketch-doc.tex" }
 
 checkengines = { "pdftex", "luatex", "xetex" }
