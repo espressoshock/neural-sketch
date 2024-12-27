@@ -59,7 +59,21 @@
 
 	fill .tl_set:N = \l_nsk_block_fill_tl,
 	fill .initial:n = {yellow},
+
+	% -- The special pass-through key for arbitrary TikZ options.
+	tikz-opts  .code:n =
+		{
+			% #1 is exactly what is inside { ... }, including any commas.
+			% store it literally into \l_nsk_block_extra_style_tl
+			\tl_set:Nn \l_nsk_block_extra_style_tl {#1}
+		},
+	tikz-opts  .initial:n = {},
+	tikz-opts  .default:n = {},
 }
+
+%-----------------------------------------------------------
+% Position parsing
+%-----------------------------------------------------------
 
 %-----------------------------------------------------------
 % Auto-generate an ID if user does not supply one
@@ -143,6 +157,15 @@
 	% fill -----------------------------------------------------
 	\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}
 
+
+	% pass-through ---------------------------------------------
+	\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+	{ }
+	{
+		\tl_put_right:NV \l_tmps_tl {\l_nsk_block_extra_style_tl,}
+	}
+
+
 	% Now call the *variant* function which takes
 	% params by value:
 	\nsk__draw_block_aux:V
@@ -162,6 +185,7 @@
 \NewDocumentCommand \nskBlock { O{} }
 {
 	\group_begin:
+
 	% # 1 -> k=v list
 	\keys_set:nn {nsk / block } {#1}
 
