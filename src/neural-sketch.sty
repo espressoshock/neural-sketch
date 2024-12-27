@@ -6,3 +6,110 @@
 \RequirePackage{tikz}
 \RequirePackage{expl3}
 \usetikzlibrary{shapes.geometric}
+
+\ExplSyntaxOn
+
+%-----------------------------------------------------------
+% Block Primitive
+%-----------------------------------------------------------
+\keys_define:nn {nsk / block}
+{
+	type .tl_set:N = \l_nsk_block_type_tl,
+	type .initial:n = {rectangle},
+	type .default:n = {rectangle},
+
+	x .fp_set:N = \l_nsk_block_x_fp,
+	x .initial:n = {0},
+	x .default:n = {0},
+	y .fp_set:N = \l_nsk_block_y_fp,
+	y .initial:n  = {0},
+	y .default:n = {0},
+
+	width .dim_set:N =  \l_nsk_block_width_dim,
+	width .initial:n = {1cm},
+	width .default:n = {1cm},
+
+	height .dim_set:N = \l_nsk_block_height_dim,
+	height .default:n = {1cm},
+	height .initial:n = {1cm},
+
+	border-type .choice:,
+	border-type / solid .code:n = \tl_set:Nn \l_nsk_block_border_type_tl { solid },
+	border-type / dashed .code:n = \tl_set:Nn \l_nsk_block_border_type_tl { dashed },
+	border-type .initial:n = { solid },
+	border-type .default:n = { solid },
+
+	border-color .tl_set:N = \l_nsk_block_border_color_tl,
+	border-color .initial:n = {red},
+	border-color .default:n = {red},
+
+	fill .tl_set:N = \l_nsk_block_fill_tl,
+	fill .initial:n = {yellow},
+}
+
+\cs_new_protected_nopar:Npn \nsk__block_debug:
+{
+	\iow_term:x {type   = \tl_use:N \l_nsk_block_type_tl}
+	\iow_term:x {x      = \fp_use:N \l_nsk_block_x_fp}
+	\iow_term:x {y      = \fp_use:N \l_nsk_block_y_fp}
+	\iow_term:x {width  = \dim_use:N \l_nsk_block_width_dim}
+	\iow_term:x {height = \dim_use:N \l_nsk_block_height_dim}
+}
+
+
+\cs_new_protected_nopar:Npn \nsk__draw_block_aux:n #1
+{
+	\node [
+		#1
+	] {};
+}
+
+% Generate a "V V V V" variant so that we can pass token-list
+% variables or dimension variables by *value*.
+\cs_generate_variant:Nn \nsk__draw_block_aux:n { V }
+
+\cs_new_protected_nopar:Npn \nsk__build_block_style:
+{
+	% Build the style token list incrementally:
+	\tl_clear_new:N \l_tmps_tl
+
+	% shape
+	\tl_put_right:No \l_tmps_tl {shape=\l_nsk_block_type_tl,}
+	% dims
+	\tl_put_right:No \l_tmps_tl {minimum\space width=\l_nsk_block_width_dim,}
+	\tl_put_right:No \l_tmps_tl {minimum\space height=\l_nsk_block_height_dim,}
+	% border 
+	\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}
+	\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
+	% fill
+	\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}
+
+	% Now call the *variant* function which takes
+	% params by value:
+	\nsk__draw_block_aux:V
+	\l_tmps_tl
+}
+
+
+\cs_new_protected_nopar:Npn \nsk__draw_block:
+{
+	\nsk__build_block_style:
+}
+
+%-------------------------------------------------------
+% Public interface
+%-------------------------------------------------------
+\NewDocumentCommand \nskBlock { O{} }
+{
+	\group_begin:
+	% # 1 -> k=v list
+	\keys_set:nn {nsk / block } {#1}
+
+	\nsk__block_debug:
+
+	\nsk__build_block_style:
+	\group_end:
+
+}
+
+\ExplSyntaxOff
