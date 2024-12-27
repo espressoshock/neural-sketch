@@ -1,0 +1,12 @@
+% neural-sketch.ins
+\def\batchfile{neural-sketch.ins}
+\input docstrip.tex
+
+% Extract the style file from neural-sketch.dtx
+\generate{
+	\file{neural-sketch.sty}{%
+		\from{neural-sketch.dtx}{package}
+	}
+}
+
+\endbatchfile
