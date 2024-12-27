@@ -111,7 +111,8 @@
 \cs_new_protected_nopar:Npn \nsk__draw_block_aux:n #1
 {
 	\node [
-		#1
+		% at={(40, 3)},
+		#1,
 	] {};
 }
 
@@ -124,18 +125,22 @@
 	% Build the style token list incrementally:
 	\tl_clear_new:N \l_tmps_tl
 
-	% name/id
+	% id-ref ---------------------------------------------------
 	\tl_put_right:No \l_tmps_tl { name=\l_nsk_block_id_tl,}
 
-	% shape
+	% {x,y} pos ------------------------------------------------
+	\tl_put_right:Nx \l_tmps_tl
+	{at={(\fp_use:N \l_nsk_block_x_fp,\fp_use:N \l_nsk_block_y_fp)},}
+
+	% shape-type -----------------------------------------------
 	\tl_put_right:No \l_tmps_tl {shape=\l_nsk_block_type_tl,}
-	% dims
+	% dims -----------------------------------------------------
 	\tl_put_right:No \l_tmps_tl {minimum\space width=\l_nsk_block_width_dim,}
 	\tl_put_right:No \l_tmps_tl {minimum\space height=\l_nsk_block_height_dim,}
-	% border 
+	% borders --------------------------------------------------
 	\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}
 	\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
-	% fill
+	% fill -----------------------------------------------------
 	\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}
 
 	% Now call the *variant* function which takes
@@ -166,6 +171,7 @@
 	\nsk__block_debug:
 
 	\nsk__build_block_style:
+
 	\group_end:
 }
 
