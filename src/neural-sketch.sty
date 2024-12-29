@@ -69,6 +69,72 @@
 		},
 	tikz-opts  .initial:n = {},
 	tikz-opts  .default:n = {},
+
+	% -- text-anchoring
+	% ---------------------------------------
+
+	%---------------------------
+	% text-north
+	%---------------------------
+	text-north .tl_set:N = \l_nsk_text_north_tl,
+	text-north .initial:n = { },
+
+	text-north-loc .tl_set:N = \l_nsk_text_north_loc_tl,
+	text-north-loc .initial:n = { }, % e.g., 'above left', 'above', etc.
+
+	text-north-style .tl_set:N = \l_nsk_text_north_style_tl,
+	text-north-style .initial:n = { }, % e.g., 'color=red, font=\bfseries'
+
+	%---------------------------
+	% text-south
+	%---------------------------
+	text-south .tl_set:N = \l_nsk_text_south_tl,
+	text-south .initial:n = { },
+
+	text-south-loc .tl_set:N = \l_nsk_text_south_loc_tl,
+	text-south-loc .initial:n = { },
+
+	text-south-style .tl_set:N = \l_nsk_text_south_style_tl,
+	text-south-style .initial:n = { },
+
+	%---------------------------
+	% text-east
+	%---------------------------
+	text-east .tl_set:N = \l_nsk_text_east_tl,
+	text-east .initial:n = { },
+
+	text-east-loc .tl_set:N = \l_nsk_text_east_loc_tl,
+	text-east-loc .initial:n = { },
+
+	text-east-style .tl_set:N = \l_nsk_text_east_style_tl,
+	text-east-style .initial:n = { },
+
+	%---------------------------
+	% text-west
+	%---------------------------
+	text-west .tl_set:N = \l_nsk_text_west_tl,
+	text-west .initial:n = { },
+
+	text-west-loc .tl_set:N = \l_nsk_text_west_loc_tl,
+	text-west-loc .initial:n = { },
+
+	text-west-style .tl_set:N = \l_nsk_text_west_style_tl,
+	text-west-style .initial:n = { },
+
+	%---------------------------
+	% text-center
+	%  (TikZ calls it .center, but "center" anchor is effectively
+	%   the "center" of the node, so we can do:
+	%   at (<node>.center) [<loc options>]
+	%---------------------------
+	text-center .tl_set:N = \l_nsk_text_center_tl,
+	text-center .initial:n = { },
+
+	text-center-loc .tl_set:N = \l_nsk_text_center_loc_tl,
+	text-center-loc .initial:n = { },
+
+	text-center-style .tl_set:N = \l_nsk_text_center_style_tl,
+	text-center-style .initial:n = { },
 }
 
 %-----------------------------------------------------------
@@ -100,7 +166,7 @@
 	% Convert to int and increment
 	\int_set:Nn \l_tmpa_int { \l_tmpa_tl + 1 }
 
-	% (★) Update the counters property globally:
+	% Update the counters property globally:
 	\prop_gput:NVx \g_nsk_block_counters_prop \l_nsk_block_type_tl { \int_use:N \l_tmpa_int }
 
 	% Construct "diamond1", "diamond2", "rectangle3", etc.
@@ -109,6 +175,69 @@
 		\tl_use:N \l_nsk_block_type_tl
 		\int_use:N \l_tmpa_int
 	}
+}
+
+
+% generate a new variant
+%-----------------------------------------------------------
+\cs_generate_variant:Nn \nsk__render_one_text_aux:nnnn { nVVV }
+
+\cs_new_protected_nopar:Npn \nsk__render_one_text_aux:nnnn #1 #2 #3 #4
+{
+	% #1 = anchor name (literal or variable),
+	% #2 = text content,
+	% #3 = location/placement e.g. "above left",
+	% #4 = style e.g. "color=red, font=\bfseries"
+	% \node [#3, #4] at (\l_nsk_block_id_tl.#1) {#2};
+	% \draw[shift=(\l_nsk_block_id_tl.#1)] coordinates{(0, 0)} node[#3 #4] {#2};
+
+	\draw[shift=(\l_nsk_block_id_tl.#1)] node[#3, #4] {#2};
+}
+
+\cs_new_protected_nopar:Npn \nsk__render_one_text:nnnn #1 #2 #3 #4
+{
+	% #1 = the actual anchor name in TikZ (e.g., "north", "south", "center", etc.)
+	% #2 = text content
+	% #3 = location/placement (e.g., "above left", "right", etc.)
+	% #4 = style (e.g., "color=red, font=\bfseries")
+	% If the user did not provide text (#2), do nothing
+	\tl_if_blank:VTF {#2}
+	{
+		% do nothing
+	}
+	{
+		% Otherwise, call the :VVVV variant
+		\nsk__render_one_text_aux:nVVV {#1} {#2} {#3} {#4}
+	}
+}
+
+% We'll define a function that calls the above helper for each anchor:
+\cs_new_protected_nopar:Npn \nsk__render_all_text:
+{
+	\nsk__render_one_text:nnnn {north}
+	{ \l_nsk_text_north_tl }
+	{ \l_nsk_text_north_loc_tl }
+	{ \l_nsk_text_north_style_tl }
+
+	\nsk__render_one_text:nnnn {south}
+	{ \l_nsk_text_south_tl }
+	{ \l_nsk_text_south_loc_tl }
+	{ \l_nsk_text_south_style_tl }
+
+	\nsk__render_one_text:nnnn {east}
+	{ \l_nsk_text_east_tl }
+	{ \l_nsk_text_east_loc_tl }
+	{ \l_nsk_text_east_style_tl }
+
+	\nsk__render_one_text:nnnn {west}
+	{ \l_nsk_text_west_tl }
+	{ \l_nsk_text_west_loc_tl }
+	{ \l_nsk_text_west_style_tl }
+
+	\nsk__render_one_text:nnnn {center}
+	{ \l_nsk_text_center_tl }
+	{ \l_nsk_text_center_loc_tl }
+	{ \l_nsk_text_center_style_tl }
 }
 
 
@@ -124,10 +253,11 @@
 
 \cs_new_protected_nopar:Npn \nsk__draw_block_aux:n #1
 {
+
 	\node [
-		% at={(40, 3)},
 		#1,
 	] {};
+
 }
 
 % Generate a "V V V V" variant so that we can pass token-list
@@ -175,7 +305,11 @@
 
 \cs_new_protected_nopar:Npn \nsk__draw_block:
 {
+	% 1. draw the main block shape
 	\nsk__build_block_style:
+
+	% 2. draw the text anchorings
+	\nsk__render_all_text:
 }
 
 %-----------------------------------------------------------
@@ -194,7 +328,7 @@
 
 	\nsk__block_debug:
 
-	\nsk__build_block_style:
+	\nsk__draw_block:
 
 	\group_end:
 }

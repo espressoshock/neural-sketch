@@ -8,11 +8,30 @@
 \begin{tikzpicture}[]
 	\nskBlock[type=rectangle,tikz-opts={dashed, ultra thick}]
 	\nskBlock[type=rectangle, border-type=solid, fill=blue, x=1.5]
-	% \nskBlock[type=diamond, border-type=solid, fill=red]
-	% \nskBlock[type=diamond, border-type=solid, width=.5cm, height=.5cm]
-	% \draw[-, rounded corners] (diamond2.east) -- ++(0, .5) -- ++(1, 0) -- ++ (0, -1) -- ++(1, 0);
+	\nskBlock[
+		type        = rectangle,
+		fill        = red,
+		y           = 1.5,
+		tikz-opts       = {rounded corners=3pt},
+		text-north      = {North Label},
+		text-north-loc  = {above},
+		text-north-style  = {color=red, font=\footnotesize},
+		text-south      = {South Label},
+		text-south-loc  = {below left},
+		text-south-style  = {color=blue, font=\footnotesize},
+		text-east       = {East Side Note},
+		text-east-loc   = {right},
+		text-east-style  = {color=orange, font=\footnotesize},
+		text-west       = {West Side Note},
+		text-west-loc   = {above left},
+		text-west-style  = {color=green, font=\footnotesize},
+		text-center     = {Center},
+		text-center-loc = {}, % no special placement (just center)
+		text-center-style = {font=\footnotesize}, % no special placement (just center)
+	]
+
 \end{tikzpicture}
 
-hello17
+hello24
 
 \end{document}
