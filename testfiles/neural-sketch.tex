@@ -2,6 +2,8 @@
 \standaloneconfig{border=2mm}
 
 \usepackage{../src/neural-sketch}
+\usepackage{../src/neural-sketch-groups}
+% \usepackage{../src/neural-sketch-containers}
 
 \begin{document}
 
@@ -30,8 +32,20 @@
 		text-center-style = {font=\footnotesize}, % no special placement (just center)
 	]
 
+	\nskGroup[
+		shift-x=-1,
+		shift-y=3.5,
+		rotate=45,
+		group-style={draw=red, ultra thick},
+	]{
+		% child content: \nskBlock or raw TikZ
+    \nskBlock[type=rectangle, border-color=red, fill=none, x=0]
+    \nskBlock[type=rectangle, border-color=red, fill=none, x=1.5]
+	}
+
+
 \end{tikzpicture}
 
-hello24
+hello29
 
 \end{document}

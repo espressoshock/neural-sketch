@@ -1,0 +1,96 @@
+\ExplSyntaxOn
+
+
+%-----------------------------------------------------------
+% Group
+% logical grouping
+%-----------------------------------------------------------
+\keys_define:nn {nsk / group}
+{
+	shift-x .fp_set:N = \l_nsk_group_x_fp,
+	shift-x .initial:n = {0},
+
+	shift-y .fp_set:N = \l_nsk_group_y_fp,
+	shift-y .initial:n = {0},
+
+	rotate .fp_set:N = \l_nsk_group_rotate_fp,
+	rotate .initial:n = {0},
+
+	scale .fp_set:N = \l_nsk_group_scale_fp,
+	scale .initial:n = {1},
+
+	% todo: this requires proper expansion
+	% Optional "group-style" pass-through
+	group-style .code:n =
+		{
+			\tl_set:Nn \l_nsk_group_extra_style_tl {#1}
+		},
+	group-style .initial:n = {},
+	group-style .default:n = {},
+}
+
+
+
+%-----------------------------------------------------------------
+% 3) Internal: build the final TikZ style as a comma-separated list
+%    We'll store it in \l_tmpa_tl.
+%-----------------------------------------------------------------
+\cs_new_protected_nopar:Npn \nsk__build_group_style:
+{
+	% We'll create \l_tmpa_tl anew each time
+	\tl_clear_new:N \l_tmpa_tl
+
+	% shift=(...)
+	\tl_put_right:Nx \l_tmpa_tl
+	{ shift={(\fp_use:N \l_nsk_group_x_fp,\fp_use:N \l_nsk_group_y_fp)}, }
+
+	% rotate=...
+	\tl_put_right:Nx \l_tmpa_tl { rotate=\fp_use:N \l_nsk_group_rotate_fp, }
+
+	% scale=...
+	\tl_if_eq:nnF {\fp_to_decimal:N \l_nsk_group_scale_fp}{1.0}
+	{ \tl_put_right:Nx \l_tmpa_tl { scale=\fp_use:N \l_nsk_group_scale_fp, } }
+
+	% user-supplied style pass-through
+	\tl_if_empty:VTF \l_nsk_group_extra_style_tl
+	{ % do nothing if empty
+	}
+	{
+		\tl_put_right:NV \l_tmpa_tl { \l_nsk_group_extra_style_tl, }
+	}
+}
+
+%-----------------------------------------------------------------
+% 4) Internal: draw the scope with the built style
+%    #1 -> the style token list (passed by value)
+%    #2 -> user content
+%-----------------------------------------------------------------
+\cs_new_protected_nopar:Npn \nsk__draw_group_scope_aux:nn #1 #2
+{
+	\begin{scope}[#1]
+		#2
+	\end{scope}
+}
+\cs_generate_variant:Nn \nsk__draw_group_scope_aux:nn { Vn }
+% ^ so we can pass \l_tmpa_tl by value (like :Vn)
+
+%-----------------------------------------------------------------
+% 5) Public macro \nskGroup
+%-----------------------------------------------------------------
+\NewDocumentCommand \nskGroup { O{} +m }
+{
+	\group_begin:
+
+	% (a) Parse user-supplied keys
+	\keys_set:nn {nsk / group} {#1}
+
+	% (b) Build a comma-separated style in \l_tmpa_tl
+	\nsk__build_group_style:
+
+	% (c) Draw the scope, passing the style "by value"
+	\nsk__draw_group_scope_aux:Vn \l_tmpa_tl {#2}
+
+	\group_end:
+}
+
+\ExplSyntaxOff
