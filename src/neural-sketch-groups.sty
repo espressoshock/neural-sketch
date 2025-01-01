@@ -7,6 +7,10 @@
 %-----------------------------------------------------------
 \keys_define:nn {nsk / group}
 {
+  % bounds id ------------------------------------------------
+  bounds-name .tl_set:N = \l_nsk_group_bounds_name_tl,
+  bounds-name .initial:n = {__nsk_container_bounds},
+
 	shift-x .fp_set:N = \l_nsk_group_x_fp,
 	shift-x .initial:n = {0},
 
@@ -40,6 +44,10 @@
 	% We'll create \l_tmpa_tl anew each time
 	\tl_clear_new:N \l_tmpa_tl
 
+
+	\tl_put_right:Nx \l_tmpa_tl
+	{ local\space bounding\space box=\tl_use:N \l_nsk_group_bounds_name_tl, }
+
 	% shift=(...)
 	\tl_put_right:Nx \l_tmpa_tl
 	{ shift={(\fp_use:N \l_nsk_group_x_fp,\fp_use:N \l_nsk_group_y_fp)}, }
@@ -70,6 +78,7 @@
 	\begin{scope}[#1]
 		#2
 	\end{scope}
+  % \draw[dashed, blue] (__nsk_container_bounds.south\space west) rectangle (__nsk_container_bounds.north\space east);
 }
 \cs_generate_variant:Nn \nsk__draw_group_scope_aux:nn { Vn }
 % ^ so we can pass \l_tmpa_tl by value (like :Vn)
