@@ -21,6 +21,11 @@
 
 \keys_define:nn {nsk / container}
 {
+	% ref-id ---------------------------------------------------
+	% todo: passed through
+	id .tl_set:N = \l_nsk_block_id_tl,
+	id .initial:n = { },
+
 	% Let the user specify fill, border-type, border-color if desired
 	border-type .choice:,
 	border-type/solid .code:n = \tl_set:Nn \l_nsk_container_border_type_tl {solid},
@@ -33,8 +38,21 @@
 	fill .tl_set:N = \l_nsk_container_fill_tl,
 	fill .initial:n = {yellow!30},
 
-	% (the rest: shift-x, shift-y, rotate, scale, group-style, bounds-name)
-	% we won't define them here. We'll just pass them to \nskGroup as-is.
+
+	% group forward --------------------------------------------
+	shift-x .fp_set:N = \l_nsk_container_x_fp,
+	shift-x .initial:n = {0},
+
+	shift-y .fp_set:N = \l_nsk_container_y_fp,
+	shift-y .initial:n = {0},
+
+	rotate .fp_set:N = \l_nsk_container_rotate_fp,
+	rotate .initial:n = {0},
+
+	scale .fp_set:N = \l_nsk_container_scale_fp,
+	scale .initial:n = {1},
+
+	% forward unknown props to nsblocks  
 	unknown .code:n =
 		{
 			% Store unknown key in the property list, using the content of \l_keys_key_tl as a string
@@ -61,7 +79,12 @@
 
 	% (c) Now call \nskGroup, passing the same #1 so that shift-x, rotate, etc.
 	%     get recognized by nsk / group (or remain unknown for that domain).
-	\nskGroup[#1]
+	\nskGroup[
+		shift-x=\fp_use:N \l_nsk_container_x_fp,
+		shift-y=\fp_use:N \l_nsk_container_y_fp,
+		rotate=\fp_use:N \l_nsk_container_rotate_fp,
+		scale=\fp_use:N \l_nsk_container_scale_fp,
+	]
 	{
 		% user content
 		#2
@@ -108,20 +131,18 @@
 	\tl_put_right:Nn \l_tmpa_tl
 	{ tikz-opts={fit=(__nsk_container_bounds), inner\space sep=5pt}, }
 
-	% now map over the unknown keys and append them as k=v pairs
-	\prop_map_inline:Nn \l_nsk_container_unknown_prop
-	{
-		% #1 = the key, #2 = the value
-		% We'll just do key=value,
-		% but careful to insert commas in the final list
-		\tl_put_right:No \l_tmpa_tl
-		{
-			\exp_not:o {##1} = \exp_not:o {##2},
-		}
-	}
+	% todo: requires rework
+	% \prop_map_inline:Nn \l_nsk_container_unknown_prop
+	% {
+	% 	% #1 = key name, #2 = value
+	% 	% We'll produce "key=value,"
+	% 	\tl_put_right:No \l_tmpa_tl
+	% 	{
+	% 		\exp_not:o {##1} = \exp_not:o {##2},
+	% 	}
+	% }
 
-	\nsk__expand_block_aux:V
-	\l_tmpa_tl
+	\nsk__expand_block_aux:V \l_tmpa_tl
 }
 
 \ExplSyntaxOff

@@ -8,7 +8,12 @@
 \begin{document}
 
 \begin{tikzpicture}[]
-	\nskBlock[type=diamond,tikz-opts={dashed, ultra thick}]
+	\nskBlock[type=rectangle,tikz-opts={dashed}]
+	\nskBlock[id=ugly, type=rectangle,tikz-opts={dashed}, fill=purple, x=-1.5,
+		text-north={You are ugly},
+		text-north-loc  = {above},
+	]
+	\draw[->] (ugly.south east) -- ++(0, -.5) --++(1, 0) -- (rectangle1.south);
 	\nskBlock[type=rectangle, border-type=solid, fill=blue, x=1.5]
 	\nskBlock[
 		type        = rectangle,
@@ -28,8 +33,8 @@
 		text-west-loc   = {above left},
 		text-west-style  = {color=green, font=\footnotesize},
 		text-center     = {Center},
-		text-center-loc = {}, % no special placement (just center)
-		text-center-style = {font=\footnotesize}, % no special placement (just center)
+		text-center-loc = {}, % no special placement (ust center)
+		text-center-style = {font=\footnotesize}, % no special placement (ust center)
 	]
 
 	\nskGroup[
@@ -51,15 +56,17 @@
 		fill=green!20,
 		border-color=purple,
 		border-type=dashed,
-		% bounds-name=myC,
+		id=potato2,
+    fill=red,
 	]{
 		% child content
 		\nskBlock[ x=0,  y=0, fill=orange ]
 		\nskBlock[ x=1.5,y=0, fill=yellow!50 ]
 		\nskBlock[ x=0, y=-1.5, fill=blue!50 ]
 	}
+	\draw[->] (potato2.south) -- ++(0, -2);
 \end{tikzpicture}
 
-hello36
+hello40
 
 \end{document}
