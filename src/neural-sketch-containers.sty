@@ -12,10 +12,6 @@
 %    (lowest -> highest)
 \pgfsetlayers{background,main,foreground}
 
-\tl_new:N \l_nsk_container_border_type_tl
-\tl_new:N \l_nsk_container_border_color_tl
-\tl_new:N \l_nsk_container_fill_tl
-
 
 \prop_new:N \l_nsk_container_unknown_prop
 
@@ -28,9 +24,10 @@
 
 	% Let the user specify fill, border-type, border-color if desired
 	border-type .choice:,
-	border-type/solid .code:n = \tl_set:Nn \l_nsk_container_border_type_tl {solid},
-	border-type/dashed .code:n = \tl_set:Nn \l_nsk_container_border_type_tl {dashed},
-	border-type .initial:n = {solid},
+	border-type / solid .code:n = \tl_set:Nn \l_nsk_container_border_type_tl { solid },
+	border-type / dashed .code:n = \tl_set:Nn \l_nsk_container_border_type_tl { dashed },
+	border-type .initial:n = { solid },
+	border-type .default:n = { solid },
 
 	border-color .tl_set:N = \l_nsk_container_border_color_tl,
 	border-color .initial:n = {black},
@@ -38,6 +35,8 @@
 	fill .tl_set:N = \l_nsk_container_fill_tl,
 	fill .initial:n = {yellow!30},
 
+	padding .tl_set:N = \l_nsk_container_padding_tl,
+	padding .initial:n = {50pt},
 
 	% group forward --------------------------------------------
 	shift-x .fp_set:N = \l_nsk_container_x_fp,
@@ -53,13 +52,14 @@
 	scale .initial:n = {1},
 
 	% forward unknown props to nsblocks  
-	unknown .code:n =
-		{
-			% Store unknown key in the property list, using the content of \l_keys_key_tl as a string
-			\prop_put:Nnn \l_nsk_container_unknown_prop
-			{ \tl_use:N \l_keys_key_tl }
-			{ #1 }
-		},
+	% unknown .code:n =
+	% 	{
+	% 		% Store unknown key in the property list, using the content of \l_keys_key_tl as a string
+	% 		\prop_put:Nnn \l_nsk_container_unknown_prop
+	% 		{ \tl_use:N \l_keys_key_tl }
+	% 		{ #1 }
+	% 	},
+
 }
 
 
@@ -72,7 +72,7 @@
 	\group_begin:
 
 	% (a) Clear the property list so it doesn't retain any old unknown keys
-	\prop_clear_new:N \l_nsk_container_unknown_prop
+	% \prop_clear_new:N \l_nsk_container_unknown_prop
 
 	% (b) Parse recognized container keys + store unknown keys
 	\keys_set:nn {nsk / container}{#1}
@@ -107,6 +107,7 @@
 		]
 	\end{pgfonlayer}
 
+	\node[] {#1};
 }
 
 % Generate a "V V V V" variant so that we can pass token-list
@@ -126,10 +127,11 @@
 	% put recognized container keys:
 	\tl_put_right:No \l_tmpa_tl { type=rectangle, }
 	\tl_put_right:No \l_tmpa_tl { fill=\l_nsk_container_fill_tl, }
-	\tl_put_right:No \l_tmpa_tl { border-type=\l_nsk_container_border_type_tl, }
 	\tl_put_right:No \l_tmpa_tl { border-color=\l_nsk_container_border_color_tl, }
-	\tl_put_right:Nn \l_tmpa_tl
-	{ tikz-opts={fit=(__nsk_container_bounds), inner\space sep=5pt}, }
+	% \tl_put_right:No \l_tmpa_tl { border-type=\l_nsk_container_border_type_tl, }
+	\tl_put_right:No \l_tmpa_tl
+	{ tikz-opts={fit=(\l_nsk_group_bounds_name_tl), inner\space sep=\l_nsk_container_padding_tl,
+				\l_nsk_container_border_type_tl}, }
 
 	% todo: requires rework
 	% \prop_map_inline:Nn \l_nsk_container_unknown_prop
