@@ -4,16 +4,39 @@
 \usepackage{../src/neural-sketch}
 \usepackage{../src/neural-sketch-groups}
 \usepackage{../src/neural-sketch-containers}
+\usepackage{../src/neural-sketch-bridge}
+
+
 
 \begin{document}
 
+% \tikzset{
+% % bridging path/.initial=arc,
+% % bridging span/.initial=8pt,
+% % bridging gap/.initial=4pt,
+% bridge/.style 2 args={
+% spath/split at intersections with={#1}{#2},
+% spath/insert gaps after
+% components={#1}{\pgfkeysvalueof{/tikz/bridging span}},
+% spath/join components upright
+% with={#1}{\pgfkeysvalueof{/tikz/bridging path}},
+% spath/split at intersections with={#2}{#1},
+% spath/insert gaps after
+% components={#2}{\pgfkeysvalueof{/tikz/bridging gap}},
+% }
+% }
+% \tikz[overlay] { \path[spath/save global=arc] (0,0) arc[radius=1cm,
+% 			start angle=180, delta angle=-180]; }
+%
 \begin{tikzpicture}[]
 	\nskBlock[type=rectangle,tikz-opts={dashed}]
 	\nskBlock[id=ugly, type=rectangle,tikz-opts={dashed}, fill=purple, x=-1.5,
-		text-north={You are ugly},
+		% text-north={You are ugly},
 		text-north-loc  = {above},
 	]
 	\draw[->] (ugly.south east) -- ++(0, -.5) --++(1, 0) -- (rectangle1.south);
+	% \draw[thick, -latex] (ugly.north) to[bend left=90] (rectangle1.north);
+	\draw[thick, -latex] (ugly.north) -- ++(0, 1) -| (rectangle1.north);
 	\nskBlock[type=rectangle, border-type=solid, fill=blue, x=1.5]
 	\nskBlock[
 		type        = rectangle,
@@ -23,7 +46,7 @@
 		text-north      = {North Label},
 		text-north-loc  = {above},
 		text-north-style  = {color=red, font=\footnotesize},
-		text-south      = {South Label},
+		% text-south      = {South Label},
 		text-south-loc  = {below left},
 		text-south-style  = {color=blue, font=\footnotesize},
 		text-east       = {East Side Note},
@@ -55,7 +78,7 @@
 		rotate=30,
 		fill=green!20,
 		border-color=green,
-		border-type=solid,
+		border-type=dashed,
 		id=potato2,
 		fill=red!50,
 		padding=5pt,
@@ -66,7 +89,41 @@
 		\nskBlock[ x=0, y=-1.5, fill=blue!50 ]
 	}
 	\draw[->] (potato2.south) -- ++(0, -2);
+
+	\nskBlock[id=boxA, x=0, y=-3.5]
+	\nskBlock[id=boxB, x=2, y=-3.5]
+
+	% A normal arrow
+	\nskConnect[
+		from=boxA.east,
+		to=boxB.west,
+		% arrow-style={ultra thick, ->},
+		arrow-style={ultra thick ->},
+		color=blue,
+		bridging=true,
+		bridging-style=over,
+	]
+
+	\nskBlock[id=boxC, x=1, y=-5]
+	\nskBlock[id=boxD, x=1, y=-2]
+
+	\nskConnect[
+		from=boxC.north,
+		to=boxD.south,
+		% arrow-style={ultra thick, -latex},
+		arrow-style={ultra thick},
+		color=red,
+		bridging=true,
+		bridging-style=under,
+	]
+
+	% \path[spath/save=str] (boxC.north) -- (boxD.south);
+	%  \draw[spath/use=str, draw=red];
+
+	\nskDoBridging
+
 \end{tikzpicture}
+
 
 hello41
 

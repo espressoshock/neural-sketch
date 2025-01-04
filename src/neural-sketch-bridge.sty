@@ -1,0 +1,328 @@
+
+\ExplSyntaxOn
+
+% ---------------------------------------------------------------------
+% 1) Global Data Structures
+% ---------------------------------------------------------------------
+
+% A counter to generate unique path names.
+\int_new:N \g__nsk_connect_counter_int
+
+% A sequence storing bridging info for each path:
+% Each item is a comma list:
+%   pathName, arrowStyle, color, bridgingStyle, bridgingPath,
+%   bridgingSpan, bridgingGap
+\seq_new:N \g__nsk_bridging_info_seq
+
+
+% ---------------------------------------------------------------------
+% 2) Storing One Connect Item
+% ---------------------------------------------------------------------
+% (path name, arrow style, color, bridging style, bridging path,
+%  bridging span, bridging gap)
+\cs_new_protected_nopar:Npn \__nsk_connect_store_item:nnnnnnn #1#2#3#4#5#6#7
+{
+	% We'll build a single token list item, then push it into
+	% the bridging sequence.
+	\tl_clear_new:N \l__nsk_storeitem_tl
+
+	% Insert #1..#7 by expansion (x), forming a comma list:
+	\exp_args:NNx \tl_put_right:Nn \l__nsk_storeitem_tl
+	{ #1, #2, #3, #4, #5, #6, #7 }
+
+	% Now append that item to the bridging sequence:
+	\seq_gput_right:No \g__nsk_bridging_info_seq \l__nsk_storeitem_tl
+
+	% Debug lines (currently commented out):
+	% \seq_show:N \g__nsk_bridging_info_seq
+	% \tl_show:N  \l__nsk_storeitem_tl
+}
+
+
+% ---------------------------------------------------------------------
+% 3) Key-Value Setup for \nskConnect
+% ---------------------------------------------------------------------
+
+% A boolean to track bridging = true/false
+\bool_new:N \l__nsk_connect_bridging_bool
+
+\keys_define:nn { nsk / connect }
+{
+	from .tl_set:N           = \l_nsk_connect_from_tl,
+	from .value_required:n   = true,
+
+	to .tl_set:N             = \l_nsk_connect_to_tl,
+	to .value_required:n     = true,
+
+	route .tl_set:N          = \l_nsk_connect_route_tl,
+	route .initial:n         = { -- },
+
+	bridging .choice:,
+	bridging / true  .code:n = { \bool_set_true:N  \l__nsk_connect_bridging_bool },
+	bridging / false .code:n = { \bool_set_false:N \l__nsk_connect_bridging_bool },
+	bridging .initial:n      = { false },
+
+	bridging-style .choice:,
+	bridging-style / over  .code:n  = { \tl_set:Nn \l_nsk_connect_bridging_style_tl { over } },
+	bridging-style / under .code:n  = { \tl_set:Nn \l_nsk_connect_bridging_style_tl { under } },
+	bridging-style .initial:n       = { under },
+	bridging-style .default:n       = { under },
+
+	bridging-path .tl_set:N         = \l_nsk_connect_bridging_path_tl,
+	bridging-path .initial:n        = { arc },
+
+	bridging-span .tl_set:N         = \l_nsk_connect_bridging_span_tl,
+	bridging-span .initial:n        = { 8pt },
+
+	bridging-gap .tl_set:N          = \l_nsk_connect_bridging_gap_tl,
+	bridging-gap .initial:n         = { 4pt },
+
+	arrow-style .tl_set:N           = \l_nsk_connect_arrow_style_tl,
+	arrow-style .initial:n          = {->, >=Triangle},
+
+	color .tl_set:N                 = \l_nsk_connect_color_tl,
+	color .initial:n                = { black },
+}
+
+
+% ---------------------------------------------------------------------
+% 4) Connect Drawing Helpers
+% ---------------------------------------------------------------------
+
+% Immediate draw if bridging is false:
+%   \nsk__draw_connect:VV
+% #1 => arrow-style, #2 => color
+\cs_new_protected_nopar:Npn \nsk__draw_connect:VV #1#2
+{
+	\draw[
+		#1,
+		draw=#2
+	]
+	(\l_nsk_connect_from_tl)
+	\l_nsk_connect_route_tl
+	(\l_nsk_connect_to_tl);
+}
+
+
+% Save a soft path if bridging is true:
+%   \nsk__spath_save:V
+% #1 => path name (by value)
+\cs_new_protected_nopar:Npn \nsk__spath_save:V #1
+{
+	\iow_term:x {
+		=save=>#1
+		-from=\tl_use:N \l_nsk_connect_from_tl
+		-route=\tl_use:N \l_nsk_connect_route_tl
+		-to=\tl_use:N \l_nsk_connect_to_tl
+	}
+
+	% Just a simplified path from->to:
+	\path[
+		spath/save\space global=#1
+	]
+	(\tl_use:N \l_nsk_connect_from_tl)
+	--
+	(\tl_use:N \l_nsk_connect_to_tl);
+}
+
+
+% ---------------------------------------------------------------------
+% 5) Public \nskConnect Macro
+% ---------------------------------------------------------------------
+\NewDocumentCommand \nskConnect { O{} }
+{
+	\group_begin:
+
+	% (a) parse user keys for "nsk/connect"
+	\keys_set:nn { nsk / connect } { #1 }
+
+	% (b) increment the global path counter
+	\int_gincr:N \g__nsk_connect_counter_int
+
+	% (c) build a default path name e.g. "path1"
+	\tl_set:Nx \l_tmpa_tl { path\int_use:N \g__nsk_connect_counter_int }
+	\int_show:N \g__nsk_connect_counter_int
+
+	% (d) bridging check
+	\bool_if:NTF \l__nsk_connect_bridging_bool
+	{
+		% bridging == true => store path with spath
+		\nsk__spath_save:V \l_tmpa_tl
+
+		% then store bridging data for later
+		\__nsk_connect_store_item:nnnnnnn
+		{
+			\tl_use:N \l_tmpa_tl
+		}
+		{ \l_nsk_connect_arrow_style_tl      }
+		{ \l_nsk_connect_color_tl            }
+		{ \l_nsk_connect_bridging_style_tl   }
+		{ \l_nsk_connect_bridging_path_tl    }
+		{ \l_nsk_connect_bridging_span_tl    }
+		{ \l_nsk_connect_bridging_gap_tl     }
+
+		% debugging lines if needed:
+		% \tl_show:N \l_tmpa_tl
+		% \tl_show:N \l_nsk_connect_arrow_style_tl
+		% ...
+	}
+	{
+		% bridging == false => draw it now
+		\nsk__draw_connect:VV
+		\l_nsk_connect_arrow_style_tl
+		\l_nsk_connect_color_tl
+	}
+
+	\group_end:
+}
+
+
+% ---------------------------------------------------------------------
+% 6) Finalize: bridging arcs over/under
+% ---------------------------------------------------------------------
+
+% Expand each path vs. each other path, bridging accordingly.
+\cs_new_protected_nopar:Npn \just_expand:VV #1#2
+{
+	\seq_map_inline:Nn #2
+	{
+		\iow_term:x {
+			=inner => (#1, ##1)
+			=style => \l_nsk_connect_bridging_style_tl
+		}
+
+		% local to each iteration
+		\tl_set:Nx \a_tl {#1}
+		\tl_set:Nx \b_tl {##1}
+
+		\tl_show:N \a_tl
+		\tl_show:N \b_tl
+
+		% skip bridging with itself
+		\tl_if_eq:NNF \a_tl \b_tl
+		{
+			\iow_term:x {
+				difpaths: (\tl_use:N \a_tl, \tl_use:N \b_tl)
+			}
+
+			% bridging style => over or under
+			\tl_show:N \l_nsk_connect_bridging_style_tl
+			\tl_if_eq:NnTF \l_nsk_connect_bridging_style_tl {over}
+			{
+				\exp_args:NNx \tl_set:Nn \brd_tl
+				{ bridge={\tl_use:N \a_tl}{\tl_use:N \b_tl} }
+			}
+			{
+				\exp_args:NNx \tl_set:Nn \brd_tl
+				{ bridge={\tl_use:N \b_tl}{\tl_use:N \a_tl} }
+			}
+
+			\exp_args:Nx \tikzset{ \brd_tl }
+		}
+	}
+}
+
+
+% A small init macro for bridging keys
+\cs_new_protected_nopar:Npn \nsk__init_bridging_code:
+{
+\tikzset{
+bridge/.style\space 2\space args={
+spath/split\space at\space intersections\space with={##1}{##2},
+spath/insert\space gaps\space after\space components={##1}{\pgfkeysvalueof{/tikz/bridging\space span}},
+spath/join\space components\space upright\space with={##1}{\pgfkeysvalueof{/tikz/bridging\space path}},
+
+spath/split\space at\space intersections\space with={##2}{##1},
+spath/insert\space gaps\space after\space components={##2}{\pgfkeysvalueof{/tikz/bridging\space gap}},
+},
+}
+
+\path[
+	spath/save\space global=arc
+]
+(0,0)
+arc[
+		radius=1cm,
+		start\space angle=180,
+		delta\space angle=-180
+	];
+}
+
+
+% ---------------------------------------------------------------------
+% 7) Main Macro: \nskDoBridging
+% ---------------------------------------------------------------------
+\NewDocumentCommand \nskDoBridging { O{} }
+{
+	\group_begin:
+
+	% Initialize bridging keys, and define an arc path globally
+	\nsk__init_bridging_code:
+
+	% For storing all path names
+	\seq_new:N \l__nsk_tmp_paths_seq
+
+	% Collect path names from bridging info
+	\seq_map_inline:Nn \g__nsk_bridging_info_seq
+	{
+		\clist_set:Nn \l_tmpa_clist { ##1 }
+		\exp_args:NNx \seq_put_right:No \l__nsk_tmp_paths_seq
+		{ \clist_item:Nn \l_tmpa_clist {1} }
+	}
+
+	% Copy bridging info into a local seq, for iteration
+	\seq_set_eq:NN \l__nsk_tmp_seq \g__nsk_bridging_info_seq
+
+	\seq_show:N \l__nsk_tmp_seq
+	\seq_show:N \l__nsk_tmp_paths_seq
+
+	% For each bridging path, set bridging keys, do bridging with others,
+	% then finally draw its path.
+	\seq_map_inline:Nn \l__nsk_tmp_seq
+	{
+		\clist_set:Nn \l_tmpa_clist { ##1 }
+
+		\tl_set:Nx \l__nsk_pathname_tl
+		{ \clist_item:Nn \l_tmpa_clist {1} }
+		\tl_set:Nx \l__nsk_arrowstyle_tl
+		{ \clist_item:Nn \l_tmpa_clist {2} }
+		\tl_set:Nx \l__nsk_color_tl
+		{ \clist_item:Nn \l_tmpa_clist {3} }
+
+		\tl_set:Nx \l_nsk_connect_bridging_style_tl
+		{ \clist_item:Nn \l_tmpa_clist {4} }
+
+		\tl_set:Nx \l__nsk_bridgingpath_tl
+		{ \clist_item:Nn \l_tmpa_clist {5} }
+		\tl_set:Nx \l__nsk_bridgingspan_tl
+		{ \clist_item:Nn \l_tmpa_clist {6} }
+		\tl_set:Nx \l__nsk_bridginggap_tl
+		{ \clist_item:Nn \l_tmpa_clist {7} }
+
+		% Set bridging path, span, gap
+		\tikzset{
+			bridging\space path=\tl_use:N \l__nsk_bridgingpath_tl,
+			bridging\space span=\tl_use:N \l__nsk_bridgingspan_tl,
+			bridging\space gap=\tl_use:N \l__nsk_bridginggap_tl,
+		}
+
+		% do bridging over all other path names
+		\just_expand:VV
+		{\l__nsk_pathname_tl}
+		{\l__nsk_tmp_paths_seq}
+
+		% finally draw the path with color
+		\draw[
+			\l__nsk_arrowstyle_tl,
+			draw=\l__nsk_color_tl,
+			spath/use=\l__nsk_pathname_tl
+		];
+	}
+
+	% Clear bridging items so not redrawn
+	\seq_clear:N \g__nsk_bridging_info_seq
+
+	\group_end:
+}
+
+\ExplSyntaxOff
