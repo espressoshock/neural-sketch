@@ -10,26 +10,9 @@
 
 \begin{document}
 
-% \tikzset{
-% % bridging path/.initial=arc,
-% % bridging span/.initial=8pt,
-% % bridging gap/.initial=4pt,
-% bridge/.style 2 args={
-% spath/split at intersections with={#1}{#2},
-% spath/insert gaps after
-% components={#1}{\pgfkeysvalueof{/tikz/bridging span}},
-% spath/join components upright
-% with={#1}{\pgfkeysvalueof{/tikz/bridging path}},
-% spath/split at intersections with={#2}{#1},
-% spath/insert gaps after
-% components={#2}{\pgfkeysvalueof{/tikz/bridging gap}},
-% }
-% }
-% \tikz[overlay] { \path[spath/save global=arc] (0,0) arc[radius=1cm,
-% 			start angle=180, delta angle=-180]; }
-%
 \begin{tikzpicture}[]
 	\nskBlock[type=rectangle,tikz-opts={dashed}]
+	\nskBlock[type=rectangle, border-type=dashed, x=10, y=5, text-north={hello text}, text-north-loc={above left}, shadow=true]
 	\nskBlock[id=ugly, type=rectangle,tikz-opts={dashed}, fill=purple, x=-1.5,
 		% text-north={You are ugly},
 		text-north-loc  = {above},
