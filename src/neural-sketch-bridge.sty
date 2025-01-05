@@ -28,14 +28,14 @@
 
 	% Insert #1..#7 by expansion (x), forming a comma list:
 	\exp_args:NNx \tl_put_right:Nn \l__nsk_storeitem_tl
-	{ #1, #2, #3, #4, #5, #6, #7 }
+	{ #1, { #2 }, #3, #4, #5, #6, #7 }
 
 	% Now append that item to the bridging sequence:
 	\seq_gput_right:No \g__nsk_bridging_info_seq \l__nsk_storeitem_tl
 
 	% Debug lines (currently commented out):
-	% \seq_show:N \g__nsk_bridging_info_seq
-	% \tl_show:N  \l__nsk_storeitem_tl
+	\seq_show:N \g__nsk_bridging_info_seq
+	\tl_show:N  \l__nsk_storeitem_tl
 }
 
 
@@ -141,7 +141,6 @@
 
 	% (c) build a default path name e.g. "path1"
 	\tl_set:Nx \l_tmpa_tl { path\int_use:N \g__nsk_connect_counter_int }
-	\int_show:N \g__nsk_connect_counter_int
 
 	% (d) bridging check
 	\bool_if:NTF \l__nsk_connect_bridging_bool
@@ -195,9 +194,6 @@
 		\tl_set:Nx \a_tl {#1}
 		\tl_set:Nx \b_tl {##1}
 
-		\tl_show:N \a_tl
-		\tl_show:N \b_tl
-
 		% skip bridging with itself
 		\tl_if_eq:NNF \a_tl \b_tl
 		{
@@ -206,7 +202,6 @@
 			}
 
 			% bridging style => over or under
-			\tl_show:N \l_nsk_connect_bridging_style_tl
 			\tl_if_eq:NnTF \l_nsk_connect_bridging_style_tl {over}
 			{
 				\exp_args:NNx \tl_set:Nn \brd_tl
@@ -273,8 +268,6 @@ arc[
 	% Copy bridging info into a local seq, for iteration
 	\seq_set_eq:NN \l__nsk_tmp_seq \g__nsk_bridging_info_seq
 
-	\seq_show:N \l__nsk_tmp_seq
-	\seq_show:N \l__nsk_tmp_paths_seq
 
 	% For each bridging path, set bridging keys, do bridging with others,
 	% then finally draw its path.
@@ -311,8 +304,10 @@ arc[
 		{\l__nsk_pathname_tl}
 		{\l__nsk_tmp_paths_seq}
 
+		\tl_show:N \l__nsk_arrowstyle_tl
+
 		% finally draw the path with color
-		\draw[
+		\expandafter\draw\expandafter[
 			\l__nsk_arrowstyle_tl,
 			draw=\l__nsk_color_tl,
 			spath/use=\l__nsk_pathname_tl

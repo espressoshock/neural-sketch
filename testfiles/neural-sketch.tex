@@ -98,7 +98,7 @@
 		from=boxA.east,
 		to=boxB.west,
 		% arrow-style={ultra thick, ->},
-		arrow-style={ultra thick ->},
+		arrow-style={thick, ->},
 		color=blue,
 		bridging=true,
 		bridging-style=over,
@@ -110,15 +110,11 @@
 	\nskConnect[
 		from=boxC.north,
 		to=boxD.south,
-		% arrow-style={ultra thick, -latex},
-		arrow-style={ultra thick},
+		arrow-style={ultra thick, -latex},
 		color=red,
 		bridging=true,
 		bridging-style=under,
 	]
-
-	% \path[spath/save=str] (boxC.north) -- (boxD.south);
-	%  \draw[spath/use=str, draw=red];
 
 	\nskDoBridging
 
