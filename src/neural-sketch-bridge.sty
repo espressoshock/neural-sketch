@@ -192,7 +192,12 @@
 
 		% local to each iteration
 		\tl_set:Nx \a_tl {#1}
-		\tl_set:Nx \b_tl {##1}
+		\clist_set:No \args_dcs_clist {##1}
+		\tl_set:Nx \b_tl {\clist_item:Nn \args_dcs_clist {1}}
+		\tl_set:Nx \b_bridging_style_tl {\clist_item:Nn \args_dcs_clist {2}}
+
+		\clist_show:N \args_dcs_clist
+		\tl_show:N \b_bridging_style_tl
 
 		% skip bridging with itself
 		\tl_if_eq:NNF \a_tl \b_tl
@@ -202,17 +207,24 @@
 			}
 
 			% bridging style => over or under
-			\tl_if_eq:NnTF \l_nsk_connect_bridging_style_tl {over}
+			\tl_if_eq:NNF \l_nsk_connect_bridging_style_tl \b_bridging_style_tl
 			{
-				\exp_args:NNx \tl_set:Nn \brd_tl
-				{ bridge={\tl_use:N \a_tl}{\tl_use:N \b_tl} }
-			}
-			{
-				\exp_args:NNx \tl_set:Nn \brd_tl
-				{ bridge={\tl_use:N \b_tl}{\tl_use:N \a_tl} }
+
+				\tl_if_eq:NnTF \l_nsk_connect_bridging_style_tl {over}
+				{
+					\exp_args:NNx \tl_set:Nn \brd_tl
+					{ bridge={\tl_use:N \a_tl}{\tl_use:N \b_tl} }
+
+				}
+				{
+					\exp_args:NNx \tl_set:Nn \brd_tl
+					{ bridge={\tl_use:N \b_tl}{\tl_use:N \a_tl} }
+				}
+
+				\exp_args:Nx \tikzset{ \brd_tl }
 			}
 
-			\exp_args:Nx \tikzset{ \brd_tl }
+
 		}
 	}
 }
@@ -260,9 +272,12 @@ arc[
 	% Collect path names from bridging info
 	\seq_map_inline:Nn \g__nsk_bridging_info_seq
 	{
+		% {pathid, bridging-style}
 		\clist_set:Nn \l_tmpa_clist { ##1 }
 		\exp_args:NNx \seq_put_right:No \l__nsk_tmp_paths_seq
-		{ \clist_item:Nn \l_tmpa_clist {1} }
+		{ \clist_item:Nn \l_tmpa_clist {1}, \clist_item:Nn \l_tmpa_clist {4} }
+
+		\seq_show:N \l__nsk_tmp_paths_seq
 	}
 
 	% Copy bridging info into a local seq, for iteration
