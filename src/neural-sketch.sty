@@ -182,6 +182,10 @@
   embed .default:n = {},
   embed .initial:n = {},
 
+	embed-gfx .tl_set:N = \l_nsk_embed_gfx_tl,
+  embed-gfx .default:n = {},
+  embed-gfx .initial:n = {},
+
   embed-padding .dim_set:N = \l_nsk_block_embed_padding_dim,
   embed-padding .default:n = \g__nsk_style_block_embed_padding_dim,
   embed-padding .initial:n = \g__nsk_style_block_embed_padding_dim,
@@ -315,19 +319,37 @@
   % embed ----------------------------------------------------
   \tl_if_blank:VF {\l_nsk_embed_tl}
   {
-
     \dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
     \dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
 
     \begin{scope}
-      \pgftransformshift{\pgfpoint{\fp_use:N \l_nsk_block_x_fp cm}{\fp_use:N \l_nsk_block_y_fp cm}}
+      \pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
       \pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
       \pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
       \pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
 
-      \node[]
-      {\tl_use:N \l_nsk_embed_tl};
+      % raw embedding --------------------------------------------
+      \tl_use:N \l_nsk_embed_tl
     \end{scope}
+  }
+
+
+  \tl_if_blank:VF {\l_nsk_embed_gfx_tl}
+  {
+    \dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
+    \dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
+
+    \begin{scope}
+      \pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
+      \pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
+      \pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
+      \pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
+
+      % gfx node ------------------------------------------------
+      \node[]
+      {\includegraphics[width=\l_nsk_block_width_dim, height=\l_nsk_block_height_dim]{\tl_use:N \l_nsk_embed_gfx_tl};};
+    \end{scope}
+
   }
 
 }
