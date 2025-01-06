@@ -61,6 +61,10 @@
 	y .initial:n  = {0},
 	y .default:n = {0},
 
+	% natural positioning using positioning library
+	pos .tl_set:N = \l_nsk_block_pos_tl,
+	pos .initial:n = { },
+
 	% dimensions  -----------------------------------------------
 	width .dim_set:N =  \l_nsk_block_width_dim,
 	width .initial:V = \g__nsk_style_block_width_dim,
@@ -170,6 +174,21 @@
 
 	text-center-style .tl_set:N = \l_nsk_text_center_style_tl,
 	text-center-style .initial:n = { },
+
+  %-----------------------------------------------------------
+  % raster-embed
+  %-----------------------------------------------------------
+	embed .tl_set:N = \l_nsk_embed_tl,
+  embed .default:n = {},
+  embed .initial:n = {},
+
+  embed-padding .dim_set:N = \l_nsk_block_embed_padding_dim,
+  embed-padding .default:n = \g__nsk_style_block_embed_padding_dim,
+  embed-padding .initial:n = \g__nsk_style_block_embed_padding_dim,
+
+	embed-border-radius .dim_set:N = \l_nsk_block_embed_border_radius_dim,
+  embed-border-radius .initial:V = \g__nsk_style_block_embed_border_radius_dim,
+	embed-border-radius .default:V = \g__nsk_style_block_embed_border_radius_dim,
 }
 
 %-----------------------------------------------------------
@@ -293,6 +312,24 @@
 		#1,
 	] {};
 
+  % embed ----------------------------------------------------
+  \tl_if_blank:VF {\l_nsk_embed_tl}
+  {
+
+    \dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
+    \dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
+
+    \begin{scope}
+      \pgftransformshift{\pgfpoint{\fp_use:N \l_nsk_block_x_fp cm}{\fp_use:N \l_nsk_block_y_fp cm}}
+      \pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
+      \pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
+      \pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
+
+      \node[]
+      {\tl_use:N \l_nsk_embed_tl};
+    \end{scope}
+  }
+
 }
 
 % Generate a "V V V V" variant so that we can pass token-list
@@ -308,8 +345,17 @@
 	\tl_put_right:No \l_tmps_tl { name=\l_nsk_block_id_tl,}
 
 	% {x,y} pos ------------------------------------------------
-	\tl_put_right:Nx \l_tmps_tl
-	{at={(\fp_use:N \l_nsk_block_x_fp,\fp_use:N \l_nsk_block_y_fp)},}
+	\tl_if_blank:VTF \l_nsk_block_pos_tl
+	{
+		% -- pos is blank => place the node using x,y
+		\tl_put_right:Nx \l_tmps_tl
+		{ at={(\fp_use:N \l_nsk_block_x_fp,\fp_use:N \l_nsk_block_y_fp)}, }
+	}
+	{
+		% -- pos is given => place the node by raw TikZ positioning
+		% i.e., [right=2cm of otherNode]
+		\tl_put_right:NV \l_tmps_tl { \l_nsk_block_pos_tl, }
+	}
 
 	% shape-type -----------------------------------------------
 	\tl_put_right:No \l_tmps_tl {shape=\l_nsk_block_type_tl,}
