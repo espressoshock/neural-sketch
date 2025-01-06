@@ -1,14 +1,7 @@
 \ExplSyntaxOn
 
-% (a) Declare global token lists to store default colors (etc.) for blocks:
-\tl_new:N \g__nsk_style_block_fill_tl
-\tl_new:N \g__nsk_style_block_border_tl
+\dim_new:N \g__nsk_style_container_padding_dim
 
-% (b) Provide initial values (pointing to your *public* color names, not c__nsk_...):
-\tl_set:Nn \g__nsk_style_block_fill_tl   { nskLightGray } % fallback if user doesn't set anything
-\tl_set:Nn \g__nsk_style_block_border_tl { nskDarkGray  }
-
-% (c) Define a keys interface for “nsk / style”:
 \keys_define:nn { nsk / style }
 {
 	%-----------------------------------------------------------
@@ -57,6 +50,31 @@
 
 	% shadow ---------------------------------------------------
 	shadow .bool_set:N = \g__nsk_style_block_shadow_bool,
+
+  %-----------------------------------------------------------
+  % Container styles
+  %-----------------------------------------------------------
+  container-border-color .tl_set:N = \g__nsk_style_container_border_color_tl,
+  container-border-color .initial:n = { nskLighterGray },
+
+  container-fill .tl_set:N = \g__nsk_style_container_fill_tl,
+  container-fill .initial:n = { nskLightestGray },
+
+  container-padding .dim_set:N = \g__nsk_style_container_padding_dim,
+  container-padding .initial:n = { 1cm },
+
+  container-shift-x .fp_set:N = \g__nsk_style_container_x_fp,
+  container-shift-x .initial:n = { 0 },
+
+  container-shift-y .fp_set:N = \g__nsk_style_container_y_fp,
+  container-shift-y .initial:n = { 0 },
+
+  container-rotate .fp_set:N = \g__nsk_style_container_rotate_fp,
+  container-rotate .initial:n = { 0 },
+
+  container-scale .fp_set:N = \g__nsk_style_container_scale_fp,
+  container-scale .initial:n = { 1 },
+
 }
 
 %-----------------------------------------------------------
@@ -78,5 +96,6 @@ fill=nskLighterGray
 	% #1 is the keyval list, e.g.  block-fill=yellow, block-border=blue
 	\keys_set:nn { nsk / style }{ #1 }
 }
+
 
 \ExplSyntaxOff

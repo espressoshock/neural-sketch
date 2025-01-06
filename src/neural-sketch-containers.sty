@@ -26,39 +26,45 @@
 	border-type .choice:,
 	border-type / solid .code:n = \tl_set:Nn \l_nsk_container_border_type_tl { solid },
 	border-type / dashed .code:n = \tl_set:Nn \l_nsk_container_border_type_tl { dashed },
-	border-type .initial:n = { solid },
-	border-type .default:n = { solid },
+	border-type .initial:n = { dashed },
+	border-type .default:n = { dashed },
 
-	border-color .tl_set:N = \l_nsk_container_border_color_tl,
-	border-color .initial:n = {black},
+  border-color .tl_set:N = \l_nsk_container_border_color_tl,
+  border-color .initial:V = \g__nsk_style_container_border_color_tl,
+  border-color .default:V = \g__nsk_style_container_border_color_tl,
 
-	fill .tl_set:N = \l_nsk_container_fill_tl,
-	fill .initial:n = {yellow!30},
+  fill .tl_set:N = \l_nsk_container_fill_tl,
+  fill .initial:V = \g__nsk_style_container_fill_tl,
+  fill .default:V = \g__nsk_style_container_fill_tl,
 
-	padding .tl_set:N = \l_nsk_container_padding_tl,
-	padding .initial:n = {50pt},
+  padding .dim_set:N = \l_nsk_container_padding_tl,
+  padding .initial:V = \g__nsk_style_container_padding_dim,
+  padding .default:V = \g__nsk_style_container_padding_dim,
 
-	% group forward --------------------------------------------
-	shift-x .fp_set:N = \l_nsk_container_x_fp,
-	shift-x .initial:n = {0},
+  shift-x .fp_set:N = \l_nsk_container_x_fp,
+  shift-x .initial:V = \g__nsk_style_container_x_fp,
+  shift-x .default:V = \g__nsk_style_container_x_fp,
 
-	shift-y .fp_set:N = \l_nsk_container_y_fp,
-	shift-y .initial:n = {0},
+  shift-y .fp_set:N = \l_nsk_container_y_fp,
+  shift-y .initial:V = \g__nsk_style_container_y_fp,
+  shift-y .default:V = \g__nsk_style_container_y_fp,
 
-	rotate .fp_set:N = \l_nsk_container_rotate_fp,
-	rotate .initial:n = {0},
+  rotate .fp_set:N = \l_nsk_container_rotate_fp,
+  rotate .initial:V = \g__nsk_style_container_rotate_fp,
+  rotate .default:V = \g__nsk_style_container_rotate_fp,
 
-	scale .fp_set:N = \l_nsk_container_scale_fp,
-	scale .initial:n = {1},
+  scale .fp_set:N = \l_nsk_container_scale_fp,
+  scale .initial:V = \g__nsk_style_container_scale_fp,
+  scale .default:V = \g__nsk_style_container_scale_fp,
 
 	% forward unknown props to nsblocks  
-	% unknown .code:n =
-	% 	{
-	% 		% Store unknown key in the property list, using the content of \l_keys_key_tl as a string
-	% 		\prop_put:Nnn \l_nsk_container_unknown_prop
-	% 		{ \tl_use:N \l_keys_key_tl }
-	% 		{ #1 }
-	% 	},
+	unknown .code:n =
+		{
+			% Store unknown key in the property list, using the content of \l_keys_key_tl as a string
+			\prop_put:Nxx \l_nsk_container_unknown_prop
+			{ \tl_use:N \l_keys_key_tl }
+			{ #1 }
+		},
 
 }
 
@@ -103,6 +109,7 @@
 
 	\begin{pgfonlayer}{background}
 		\nskBlock [
+      shadow=false,
 			#1,
 		]
 	\end{pgfonlayer}
@@ -131,16 +138,14 @@
 	{ tikz-opts={fit=(\l_nsk_group_bounds_name_tl), inner\space sep=\l_nsk_container_padding_tl,
 				\l_nsk_container_border_type_tl}, }
 
-	% todo: requires rework
-	% \prop_map_inline:Nn \l_nsk_container_unknown_prop
-	% {
-	% 	% #1 = key name, #2 = value
-	% 	% We'll produce "key=value,"
-	% 	\tl_put_right:No \l_tmpa_tl
-	% 	{
-	% 		\exp_not:o {##1} = \exp_not:o {##2},
-	% 	}
-	% }
+  % forward unknown keys as-is
+	\prop_map_inline:Nn \l_nsk_container_unknown_prop
+	{
+		\tl_put_right:Nn \l_tmpa_tl
+		{
+			{##1} = {##2},
+		}
+	}
 
 	\nsk__expand_block_aux:V \l_tmpa_tl
 }
