@@ -1,0 +1,82 @@
+\ExplSyntaxOn
+
+% (a) Declare global token lists to store default colors (etc.) for blocks:
+\tl_new:N \g__nsk_style_block_fill_tl
+\tl_new:N \g__nsk_style_block_border_tl
+
+% (b) Provide initial values (pointing to your *public* color names, not c__nsk_...):
+\tl_set:Nn \g__nsk_style_block_fill_tl   { nskLightGray } % fallback if user doesn't set anything
+\tl_set:Nn \g__nsk_style_block_border_tl { nskDarkGray  }
+
+% (c) Define a keys interface for “nsk / style”:
+\keys_define:nn { nsk / style }
+{
+	%-----------------------------------------------------------
+	% Block styles
+	% The user can write:  block-fill=orange
+	%-----------------------------------------------------------
+	block-fill .tl_set:N = \g__nsk_style_block_fill_tl,
+	block-fill .initial:n = { nskLightGray },  % fallback if user sets the key *but no value*
+
+	block-border-color .tl_set:N = \g__nsk_style_block_border_color_tl,
+	block-border-color .initial:n = { nskDarkGray },
+
+	block-border-radius .dim_set:N = \g__nsk_style_block_border_radius_dim,
+	block-border-radius .initial:n = 2.5mm,
+
+	block-embed-border-radius .dim_set:N = \g__nsk_style_block_embed_border_radius_dim,
+	block-embed-border-radius.initial:n = 1.3mm,
+
+	block-embed-padding .dim_set:N = \g__nsk_style_block_embed_padding_dim,
+	block-embed-padding .initial:n = 1mm,
+
+	block-border-size .dim_set:N = \g__nsk_style_block_border_size_dim,
+	block-border-size .initial:n = .4mm,
+
+	block-width  .dim_set:N = \g__nsk_style_block_width_dim,
+	block-width  .initial:n = {2cm},
+
+	block-height .dim_set:N = \g__nsk_style_block_height_dim,
+	block-height .initial:n = {2cm},
+
+	% text-loc  -------------------------------------------------
+	text-north-loc .tl_set:N = \g__nsk_style_text_north_loc_tl,
+	text-north-loc .initial:n = {above},
+
+	text-south-loc .tl_set:N = \g__nsk_style_text_south_loc_tl,
+	text-south-loc .initial:n = {below},
+
+	text-east-loc .tl_set:N = \g__nsk_style_text_east_loc_tl,
+	text-east-loc .initial:n = {right},
+
+	text-west-loc .tl_set:N = \g__nsk_style_text_west_loc_tl,
+	text-west-loc .initial:n = {left},
+
+	text-center-loc .tl_set:N = \g__nsk_style_text_center_loc_tl,
+	text-center-loc .initial:n = { },
+
+	% shadow ---------------------------------------------------
+	shadow .bool_set:N = \g__nsk_style_block_shadow_bool,
+}
+
+%-----------------------------------------------------------
+% tikz styles
+%-----------------------------------------------------------
+\tikzset{
+nskShadow/.style={
+drop\space shadow={
+shadow\space xshift=-.1ex,
+shadow\space yshift=-.6ex,
+fill=nskLighterGray
+}
+}
+}
+
+% (d) Provide a simple public macro to set these style keys in one line:
+\NewDocumentCommand \nskSetStyle { O{} }
+{
+	% #1 is the keyval list, e.g.  block-fill=yellow, block-border=blue
+	\keys_set:nn { nsk / style }{ #1 }
+}
+
+\ExplSyntaxOff
