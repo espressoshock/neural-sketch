@@ -78,7 +78,7 @@
 	bridging-gap .initial:n         = { 4pt },
 
 	arrow-style .tl_set:N           = \l_nsk_connect_arrow_style_tl,
-	arrow-style .initial:n          = {->, >=Triangle},
+	arrow-style .initial:n          = {ultra\space thick, >=Triangle},
 
 	color .tl_set:N                 = \l_nsk_connect_color_tl,
 	color .initial:n                = { black },
@@ -94,7 +94,7 @@
 % #1 => arrow-style, #2 => color
 \cs_new_protected_nopar:Npn \nsk__draw_connect:VV #1#2
 {
-	\draw[
+  \expandafter\draw\expandafter[
 		#1,
 		draw=#2
 	]
