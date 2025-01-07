@@ -82,6 +82,7 @@
 
 	color .tl_set:N                 = \l_nsk_connect_color_tl,
 	color .initial:n                = { black },
+
 }
 
 
@@ -94,7 +95,7 @@
 % #1 => arrow-style, #2 => color
 \cs_new_protected_nopar:Npn \nsk__draw_connect:VV #1#2
 {
-  \expandafter\draw\expandafter[
+	\expandafter\draw\expandafter[
 		#1,
 		draw=#2
 	]
@@ -121,7 +122,7 @@
 		spath/save\space global=#1
 	]
 	(\tl_use:N \l_nsk_connect_from_tl)
-	--
+	\tl_use:N \l_nsk_connect_route_tl
 	(\tl_use:N \l_nsk_connect_to_tl);
 }
 
