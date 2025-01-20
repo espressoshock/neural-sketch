@@ -383,7 +383,7 @@ arc[
 	\tl_set_eq:NN \l__nsk_connect_bend_direction_tl \l__nsk_tmp_tl
 	% now the remainder is presumably the distance
 	\seq_pop_left:NN \l__nsk_tmp_seq \l__nsk_tmp_tl
-  \dim_set:Nn \l__nsk_connect_bend_amount_dim {\l__nsk_tmp_tl}
+	\dim_set:Nn \l__nsk_connect_bend_amount_dim {\l__nsk_tmp_tl}
 }
 
 % This sets \l_nsk_connect_route_tl to the standard (– – distance -|) or (|- distance – –)
@@ -424,6 +424,147 @@ arc[
 		\tl_put_right:No \l_nsk_connect_route_tl
 		{ \dim_use:N \l__nsk_connect_bend_amount_dim ) -| }
 	}
+}
+
+%-----------------------------------------------------------
+% FillBetween
+%-----------------------------------------------------------
+\keys_define:nn { nsk / fillbetween }
+{
+	from .tl_set:N = \l_nsk_fillbetween_from_tl,
+	from .value_required:n  = true,
+
+	to   .tl_set:N = \l_nsk_fillbetween_to_tl,
+	to   .value_required:n   = true,
+
+	fill .tl_set:N = \l_nsk_fillbetween_fill_tl,
+	fill .initial:n = {black!10},
+
+	draw .tl_set:N = \l_nsk_fillbetween_draw_tl,
+	draw .initial:n = {black!50},
+
+	opacity .fp_set:N = \l_nsk_fillbetween_opacity_fp,
+	opacity .initial:n = {0.3},
+
+	edge .choice:,
+	edge / straight .code:n = { \tl_set:Nn \l_nsk_fillbetween_edge_tl { straight } },
+	edge / curved  .code:n  = { \tl_set:Nn \l_nsk_fillbetween_edge_tl { curved } },
+	edge .initial:n = {straight},
+
+	orientation .choice:,
+	orientation / vertical   .code:n = { \tl_set:Nn \l_nsk_fillbetween_orient_tl { vertical } },
+	orientation / horizontal .code:n = { \tl_set:Nn \l_nsk_fillbetween_orient_tl { horizontal } },
+	orientation .initial:n   = { vertical },
+
+	% If you want an explicit “out=xx, in=yy” override, you could add:
+	out .tl_set:N = \l_nsk_fillbetween_out_tl,
+	out .initial:n = {},
+
+	in .tl_set:N  = \l_nsk_fillbetween_in_tl,
+	in .initial:n = {},
+
+}
+
+%=================================================================
+%  B) Internal Drawing Helper
+%=================================================================
+\cs_new_protected_nopar:Npn \__nsk_fillbetween_draw:
+{
+	% 1) Determine out/in angles if user wants curved edges but didn't provide them
+	\tl_if_eq:NNF \l_nsk_fillbetween_edge_tl \c_tl_empty_tl
+	{
+		\tl_if_eq:NnT \l_nsk_fillbetween_edge_tl {curved}
+		{
+			% if "curved" but user didn't specify \l_nsk_fillbetween_out_tl or in_tl
+			% we can set them based on orientation
+			\tl_if_blank:VTF \l_nsk_fillbetween_out_tl
+			{
+				\str_case:Vn { \l_nsk_fillbetween_orient_tl }
+				{
+					{vertical}   { \tl_set:Nn \l_nsk_fillbetween_out_tl { 90 } }
+						{horizontal} { \tl_set:Nn \l_nsk_fillbetween_out_tl {   180 } }
+				}{}
+			}{}
+
+			\tl_if_blank:VTF \l_nsk_fillbetween_in_tl
+			{
+				\str_case:Vn { \l_nsk_fillbetween_orient_tl }
+				{
+					{vertical}   { \tl_set:Nn \l_nsk_fillbetween_in_tl  { -90 } }
+						{horizontal} { \tl_set:Nn \l_nsk_fillbetween_in_tl  { 0 } }
+				}{}
+			}{}
+		}
+	}
+
+	\begin{scope}[]
+		\draw[
+			fill=\l_nsk_fillbetween_fill_tl,
+			draw=\l_nsk_fillbetween_draw_tl,
+			opacity=\fp_use:N \l_nsk_fillbetween_opacity_fp
+		]
+		let
+		\p{TL_a} = (\l_nsk_fillbetween_from_tl.north\space west),
+		\p{TR_a} = (\l_nsk_fillbetween_from_tl.north\space east),
+		\p{BL_a} = (\l_nsk_fillbetween_from_tl.south\space west),
+		\p{BR_a} = (\l_nsk_fillbetween_from_tl.south\space east),
+		\p{TL_b} = (\l_nsk_fillbetween_to_tl.north\space west),
+		\p{TR_b} = (\l_nsk_fillbetween_to_tl.north\space east),
+		\p{BL_b} = (\l_nsk_fillbetween_to_tl.south\space west),
+		\p{BR_b} = (\l_nsk_fillbetween_to_tl.south\space east)
+		in
+		\str_case:VnF { \l_nsk_fillbetween_edge_tl }
+		{
+			{straight}
+				{
+					\str_case:Vn { \l_nsk_fillbetween_orient_tl }
+					{
+						{vertical}   {
+								(\p{BL_a}) -- (\p{TL_b}) -- (\p{TR_b}) -- (\p{BR_a})
+								-- cycle;
+							}
+							{horizontal} {
+								(\p{TR_a}) -- (\p{TL_b}) -- (\p{BL_b}) -- (\p{BR_a})
+								-- cycle;
+							}
+					}{}
+				}
+				{curved}
+				{
+					\str_case:Vn { \l_nsk_fillbetween_orient_tl }
+					{
+						{vertical}   {
+								(\p{BL_a}) to[out=\tl_use:N \l_nsk_fillbetween_in_tl, in=\tl_use:N \l_nsk_fillbetween_out_tl] (\p{TL_b})
+								-- (\p{TR_b}) to[out=\tl_use:N \l_nsk_fillbetween_out_tl, in=\tl_use:N \l_nsk_fillbetween_in_tl] (\p{BR_a})
+								-- cycle;
+							}
+							{horizontal} {
+								(\p{TR_a}) to[out=\tl_use:N \l_nsk_fillbetween_in_tl, in=\tl_use:N \l_nsk_fillbetween_out_tl] (\p{TL_b})
+								-- (\p{BL_b}) to[out=\tl_use:N \l_nsk_fillbetween_out_tl, in=\tl_use:N \l_nsk_fillbetween_in_tl] (\p{BR_a})
+								-- cycle;
+							}
+					}{}
+				}
+		}
+		{
+			% (\p{BL_a}) -- (\p{TL_b}) -- (\p{TR_b}) -- (\p{BR_a})
+			% -- cycle;
+		}
+	\end{scope}
+}
+
+%=================================================================
+%  C) Public Macro: \nskFillBetween
+%=================================================================
+\NewDocumentCommand \nskFillBetween { O{} }
+{
+	\group_begin:
+	% 1. Parse the keys
+	\keys_set:nn {nsk / fillbetween}{#1}
+
+	% 2. Draw
+	\__nsk_fillbetween_draw:
+	\group_end:
 }
 
 
