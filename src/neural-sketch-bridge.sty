@@ -463,13 +463,43 @@ arc[
 	in .tl_set:N  = \l_nsk_fillbetween_in_tl,
 	in .initial:n = {},
 
+	corner-offset .dim_set:N = \l_nsk_fillbetween_corner_offset_dim,
+	corner-offset .initial:n = {0pt},
+	corner-offset .default:n = {0pt},
+
 }
 
 %=================================================================
 %  B) Internal Drawing Helper
 %=================================================================
+\dim_new:N \l__nsk_offset_west_dim
+\dim_new:N \l__nsk_offset_east_dim
+\dim_new:N \l__nsk_offset_north_dim
+\dim_new:N \l__nsk_offset_south_dim
+
 \cs_new_protected_nopar:Npn \__nsk_fillbetween_draw:
 {
+
+	% 2) Prepare local shift offsets for each corner direction:
+	%    By default, do no shift.
+	\dim_set:Nn \l__nsk_offset_west_dim  { 0pt }
+	\dim_set:Nn \l__nsk_offset_east_dim  { 0pt }
+	\dim_set:Nn \l__nsk_offset_north_dim { 0pt }
+	\dim_set:Nn \l__nsk_offset_south_dim { 0pt }
+
+	% If orientation=vertical
+	\str_if_eq:VnT { \l_nsk_fillbetween_orient_tl } { vertical }
+	{
+		\dim_set:Nn    \l__nsk_offset_south_dim { \dim_use:N \l_nsk_fillbetween_corner_offset_dim }
+		\dim_set:Nn    \l__nsk_offset_north_dim { -\dim_use:N \l_nsk_fillbetween_corner_offset_dim }
+	}
+
+	% If orientation=horizontal
+	\str_if_eq:VnT { \l_nsk_fillbetween_orient_tl } { horizontal }
+	{
+		\dim_set_eq:NN \l__nsk_offset_west_dim  \l_nsk_fillbetween_corner_offset_dim
+		\dim_set:Nn    \l__nsk_offset_east_dim { -\dim_use:N \l_nsk_fillbetween_corner_offset_dim }
+	}
 	% 1) Determine out/in angles if user wants curved edges but didn't provide them
 	\tl_if_eq:NNF \l_nsk_fillbetween_edge_tl \c_tl_empty_tl
 	{
@@ -496,22 +526,46 @@ arc[
 			}{}
 		}
 	}
-
-	\begin{scope}[]
+	\begin{pgfonlayer}{interim}
 		\draw[
 			fill=\l_nsk_fillbetween_fill_tl,
 			draw=\l_nsk_fillbetween_draw_tl,
 			opacity=\fp_use:N \l_nsk_fillbetween_opacity_fp
 		]
 		let
-		\p{TL_a} = (\l_nsk_fillbetween_from_tl.north\space west),
-		\p{TR_a} = (\l_nsk_fillbetween_from_tl.north\space east),
-		\p{BL_a} = (\l_nsk_fillbetween_from_tl.south\space west),
-		\p{BR_a} = (\l_nsk_fillbetween_from_tl.south\space east),
-		\p{TL_b} = (\l_nsk_fillbetween_to_tl.north\space west),
-		\p{TR_b} = (\l_nsk_fillbetween_to_tl.north\space east),
-		\p{BL_b} = (\l_nsk_fillbetween_to_tl.south\space west),
-		\p{BR_b} = (\l_nsk_fillbetween_to_tl.south\space east)
+		% -- “From” corners --
+		\p{TL_a} = ($(\l_nsk_fillbetween_from_tl.north\space west)
+			+ (\dim_use:N \l__nsk_offset_west_dim,
+			\dim_use:N \l__nsk_offset_north_dim)$),
+
+		\p{TR_a} = ($(\l_nsk_fillbetween_from_tl.north\space east)
+			+ (\dim_use:N \l__nsk_offset_east_dim,
+			\dim_use:N \l__nsk_offset_north_dim)$),
+
+		\p{BL_a} = ($(\l_nsk_fillbetween_from_tl.south\space west)
+			+ (\dim_use:N \l__nsk_offset_west_dim,
+			\dim_use:N \l__nsk_offset_south_dim)$),
+
+		\p{BR_a} = ($(\l_nsk_fillbetween_from_tl.south\space east)
+			+ (\dim_use:N \l__nsk_offset_east_dim,
+			\dim_use:N \l__nsk_offset_south_dim)$),
+
+		% -- “To” corners --
+		\p{TL_b} = ($(\l_nsk_fillbetween_to_tl.north\space west)
+			+ (\dim_use:N \l__nsk_offset_west_dim,
+			\dim_use:N \l__nsk_offset_north_dim)$),
+
+		\p{TR_b} = ($(\l_nsk_fillbetween_to_tl.north\space east)
+			+ (\dim_use:N \l__nsk_offset_east_dim,
+			\dim_use:N \l__nsk_offset_north_dim)$),
+
+		\p{BL_b} = ($(\l_nsk_fillbetween_to_tl.south\space west)
+			+ (\dim_use:N \l__nsk_offset_west_dim,
+			\dim_use:N \l__nsk_offset_south_dim)$),
+
+		\p{BR_b} = ($(\l_nsk_fillbetween_to_tl.south\space east)
+			+ (\dim_use:N \l__nsk_offset_east_dim,
+			\dim_use:N \l__nsk_offset_south_dim)$)
 		in
 		\str_case:VnF { \l_nsk_fillbetween_edge_tl }
 		{
@@ -550,7 +604,7 @@ arc[
 			% (\p{BL_a}) -- (\p{TL_b}) -- (\p{TR_b}) -- (\p{BR_a})
 			% -- cycle;
 		}
-	\end{scope}
+	\end{pgfonlayer}
 }
 
 %=================================================================
