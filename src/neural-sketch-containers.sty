@@ -6,11 +6,12 @@
 
 % 1) Declare your custom layers
 \pgfdeclarelayer{background}
+\pgfdeclarelayer{interim}
 \pgfdeclarelayer{foreground}
 
 % 2) Set the order in which layers are drawn
 %    (lowest -> highest)
-\pgfsetlayers{background,main,foreground}
+\pgfsetlayers{background,interim,main,foreground}
 
 
 \prop_new:N \l_nsk_container_unknown_prop
@@ -29,33 +30,37 @@
 	border-type .initial:n = { dashed },
 	border-type .default:n = { dashed },
 
-  border-color .tl_set:N = \l_nsk_container_border_color_tl,
-  border-color .initial:V = \g__nsk_style_container_border_color_tl,
-  border-color .default:V = \g__nsk_style_container_border_color_tl,
+	border-color .tl_set:N = \l_nsk_container_border_color_tl,
+	border-color .initial:V = \g__nsk_style_container_border_color_tl,
+	border-color .default:V = \g__nsk_style_container_border_color_tl,
 
-  fill .tl_set:N = \l_nsk_container_fill_tl,
-  fill .initial:V = \g__nsk_style_container_fill_tl,
-  fill .default:V = \g__nsk_style_container_fill_tl,
+	fill .tl_set:N = \l_nsk_container_fill_tl,
+	fill .initial:V = \g__nsk_style_container_fill_tl,
+	fill .default:V = \g__nsk_style_container_fill_tl,
 
-  padding .dim_set:N = \l_nsk_container_padding_tl,
-  padding .initial:V = \g__nsk_style_container_padding_dim,
-  padding .default:V = \g__nsk_style_container_padding_dim,
+	padding .dim_set:N = \l_nsk_container_padding_tl,
+	padding .initial:V = \g__nsk_style_container_padding_dim,
+	padding .default:V = \g__nsk_style_container_padding_dim,
 
-  shift-x .fp_set:N = \l_nsk_container_x_fp,
-  shift-x .initial:V = \g__nsk_style_container_x_fp,
-  shift-x .default:V = \g__nsk_style_container_x_fp,
+	shift-x .fp_set:N = \l_nsk_container_x_fp,
+	shift-x .initial:V = \g__nsk_style_container_x_fp,
+	shift-x .default:V = \g__nsk_style_container_x_fp,
 
-  shift-y .fp_set:N = \l_nsk_container_y_fp,
-  shift-y .initial:V = \g__nsk_style_container_y_fp,
-  shift-y .default:V = \g__nsk_style_container_y_fp,
+	shift-y .fp_set:N = \l_nsk_container_y_fp,
+	shift-y .initial:V = \g__nsk_style_container_y_fp,
+	shift-y .default:V = \g__nsk_style_container_y_fp,
 
-  rotate .fp_set:N = \l_nsk_container_rotate_fp,
-  rotate .initial:V = \g__nsk_style_container_rotate_fp,
-  rotate .default:V = \g__nsk_style_container_rotate_fp,
+	% natural positioning using positioning library
+	pos .tl_set:N = \l_nsk_container_pos_tl,
+	pos .initial:n = { },
 
-  scale .fp_set:N = \l_nsk_container_scale_fp,
-  scale .initial:V = \g__nsk_style_container_scale_fp,
-  scale .default:V = \g__nsk_style_container_scale_fp,
+	rotate .fp_set:N = \l_nsk_container_rotate_fp,
+	rotate .initial:V = \g__nsk_style_container_rotate_fp,
+	rotate .default:V = \g__nsk_style_container_rotate_fp,
+
+	scale .fp_set:N = \l_nsk_container_scale_fp,
+	scale .initial:V = \g__nsk_style_container_scale_fp,
+	scale .default:V = \g__nsk_style_container_scale_fp,
 
 	% forward unknown props to nsblocks  
 	unknown .code:n =
@@ -85,11 +90,13 @@
 
 	% (c) Now call \nskGroup, passing the same #1 so that shift-x, rotate, etc.
 	%     get recognized by nsk / group (or remain unknown for that domain).
+  \tl_show:N \l_nsk_container_pos_tl
 	\nskGroup[
 		shift-x=\fp_use:N \l_nsk_container_x_fp,
 		shift-y=\fp_use:N \l_nsk_container_y_fp,
 		rotate=\fp_use:N \l_nsk_container_rotate_fp,
 		scale=\fp_use:N \l_nsk_container_scale_fp,
+    pos=\tl_use:N \l_nsk_container_pos_tl,
 	]
 	{
 		% user content
@@ -109,7 +116,7 @@
 
 	\begin{pgfonlayer}{background}
 		\nskBlock [
-      shadow=false,
+			shadow=false,
 			#1,
 		]
 	\end{pgfonlayer}
@@ -126,25 +133,25 @@
 
 \cs_new_protected_nopar:Npn \nsk__container_draw_block:
 {
-	% We'll build a token list of block options
-	\tl_clear_new:N \l_tmpa_tl
+% We'll build a token list of block options
+\tl_clear_new:N \l_tmpa_tl
 
-	% put recognized container keys:
-	\tl_put_right:No \l_tmpa_tl { type=rectangle, }
-	\tl_put_right:No \l_tmpa_tl { fill=\l_nsk_container_fill_tl, }
-	\tl_put_right:No \l_tmpa_tl { border-color=\l_nsk_container_border_color_tl, }
-	% \tl_put_right:No \l_tmpa_tl { border-type=\l_nsk_container_border_type_tl, }
-	\tl_put_right:No \l_tmpa_tl
-	{ tikz-opts={fit=(\l_nsk_group_bounds_name_tl), inner\space sep=\l_nsk_container_padding_tl,
-				\l_nsk_container_border_type_tl}, }
+% put recognized container keys:
+\tl_put_right:No \l_tmpa_tl { type=rectangle, }
+\tl_put_right:No \l_tmpa_tl { fill=\l_nsk_container_fill_tl, }
+\tl_put_right:No \l_tmpa_tl { border-color=\l_nsk_container_border_color_tl, }
+% \tl_put_right:No \l_tmpa_tl { border-type=\l_nsk_container_border_type_tl, }
+\tl_put_right:No \l_tmpa_tl
+{ tikz-opts={fit=(\l_nsk_group_bounds_name_tl), inner\space sep=\l_nsk_container_padding_tl,
+			\l_nsk_container_border_type_tl}, }
 
-  % forward unknown keys as-is
-	\prop_map_inline:Nn \l_nsk_container_unknown_prop
+% forward unknown keys as-is
+\prop_map_inline:Nn \l_nsk_container_unknown_prop
+{
+	\tl_put_right:Nn \l_tmpa_tl
 	{
-		\tl_put_right:Nn \l_tmpa_tl
-		{
-			{##1} = {##2},
-		}
+		{##1} = {##2},
+			}
 	}
 
 	\nsk__expand_block_aux:V \l_tmpa_tl
