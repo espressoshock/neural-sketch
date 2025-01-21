@@ -4,6 +4,7 @@
 % 1) Global Data Structures
 % ---------------------------------------------------------------------
 \tl_set:Nn \l_nsk_group_refnode_id_tl {__nsk_phantom_refnode}
+\prop_new:N \l_nsk_group_unknown_prop
 
 %-----------------------------------------------------------
 % Group
@@ -14,10 +15,12 @@
 	% bounds id ------------------------------------------------
 	bounds-name .tl_set:N = \l_nsk_group_bounds_name_tl,
 	bounds-name .initial:n = {__nsk_container_bounds},
+	bounds-name .default:n = {__nsk_container_bounds},
 
 	% natural positioning using positioning library
 	pos .tl_set:N = \l_nsk_group_pos_tl,
 	pos .initial:n = { },
+	pos .default:n = { },
 
 	shift-x .fp_set:N = \l_nsk_group_x_fp,
 	shift-x .initial:n = {0},
@@ -43,6 +46,15 @@
 		},
 	group-style .initial:n = {},
 	group-style .default:n = {},
+
+	% forward unknown props to scope
+	unknown .code:n =
+		{
+			% Store unknown key in the property list, using the content of \l_keys_key_tl as a string
+			\prop_put:Nxx \l_nsk_group_unknown_prop
+			{ \tl_use:N \l_keys_key_tl }
+			{ #1 }
+		},
 }
 
 
@@ -88,6 +100,15 @@
 	{
 		\tl_put_right:Nx \l_tmpa_tl { \l_nsk_group_extra_style_tl, }
 	}
+
+	% forward unknown keys as-is
+	\prop_map_inline:Nn \l_nsk_group_unknown_prop
+	{
+		\tl_put_right:Nn \l_tmpa_tl
+		{
+			##1 = ##2,
+		}
+	}
 }
 
 %-----------------------------------------------------------------
@@ -104,11 +125,18 @@
 		\node[draw=red, #3] (\l_nsk_group_refnode_id_tl) {refnode};
 	}
 
+
 	\begin{scope}[#1]
 		#2
 	\end{scope}
 
-	\fill[red, #3] (\l_nsk_group_refnode_id_tl) circle (2mm);
+
+	% FIX: delete me
+	\tl_if_blank:VF \l_nsk_group_pos_tl
+	{
+		\fill[red, #3] (\l_nsk_group_refnode_id_tl) circle (2mm);
+	}
+
 }
 \cs_generate_variant:Nn \nsk__draw_group_scope_aux:nnn { Vnx }
 % ^ so we can pass \l_tmpa_tl by value (like :Vn)
