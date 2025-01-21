@@ -16,6 +16,71 @@
 
 \prop_new:N \l_nsk_container_unknown_prop
 
+\cs_new_protected_nopar:Npn \nsk__container_parse_pos_value:nn #1#2
+{
+  % #1 = the user’s "right=1cm of X" or "above=2mm of Y" ...
+  % #2 = the container’s padding dimension (e.g. 3mm)
+
+  % 1) Save the *raw* pos string to \l_nsk_container_pos_tl
+  \tl_set:Nx \l_nsk_container_pos_tl {#1}
+
+  % 2) Split at '=' (only if the user wrote e.g. "right=1cm of X").
+  \seq_set_split:Nnn \l_tmpa_seq {=}{#1}
+  \seq_show:N \l_tmpa_seq
+
+  % 3) If we have exactly 2 items, item 1 is "right" and item 2 is "1cm of X".
+  \int_compare:nNnT { \seq_count:N \l_tmpa_seq } = {2}
+  {
+    % The direction (left/right/above/below)
+    \tl_set:Nx \l_tmpa_tl { \seq_item:Nn \l_tmpa_seq {1} }
+    \tl_trim_spaces:N \l_tmpa_tl
+
+    % The distance+node portion
+    \tl_set:Nx \l_tmpb_tl { \seq_item:Nn \l_tmpa_seq {2} }
+    \tl_trim_spaces:N \l_tmpb_tl
+
+    \tl_show:N \l_tmpa_tl
+    \tl_show:N \l_tmpb_tl
+
+     % We'll try to split at " of "
+    \seq_set_split:Nnx \l_tmpb_seq {of}{\l_tmpb_tl}
+    \seq_show:N \l_tmpb_seq
+
+
+    \int_compare:nNnT { \seq_count:N \l_tmpb_seq } = {2}
+    {
+      % item 1 = "1cm", item 2 = "X"
+      \tl_set:Nx \l_tmpc_tl { \seq_item:Nn \l_tmpb_seq {1} }
+      \tl_trim_spaces:N \l_tmpc_tl
+      \tl_set:Nx \l_tmpd_tl { \seq_item:Nn \l_tmpb_seq {2} }
+      \tl_trim_spaces:N \l_tmpd_tl
+      \tl_show:N \l_tmpc_tl
+      \tl_show:N \l_tmpd_tl
+
+
+      % Convert "1cm" to a dimension variable
+      \dim_new:N \l__nsk_tmp_dim
+      \dim_set:Nn \l__nsk_tmp_dim {\tl_use:N \l_tmpc_tl}
+      \dim_show:N \l__nsk_tmp_dim
+      % Now add the container's padding
+      \dim_add:Nn \l__nsk_tmp_dim  { #2 }
+      \dim_show:N \l__nsk_tmp_dim
+
+
+      % Rebuild "right=(dist+pad) of X"
+      \tl_set:Nx \l_nsk_container_pos_tl
+      {
+        \tl_use:N \l_tmpa_tl
+        = \dim_use:N \l__nsk_tmp_dim
+        \c_space_tl of \c_space_tl
+        \tl_use:N \l_tmpd_tl
+      }
+    }
+  }
+
+}
+
+
 \keys_define:nn {nsk / container}
 {
 	% ref-id ---------------------------------------------------
@@ -51,8 +116,12 @@
 	shift-y .default:V = \g__nsk_style_container_y_fp,
 
 	% natural positioning using positioning library
-	pos .tl_set:N = \l_nsk_container_pos_tl,
+	pos .code:n =
+		{
+			\nsk__container_parse_pos_value:nn {#1} {\l_nsk_container_padding_tl}
+		},
 	pos .initial:n = { },
+	pos .default:n = { },
 
 	rotate .fp_set:N = \l_nsk_container_rotate_fp,
 	rotate .initial:V = \g__nsk_style_container_rotate_fp,
@@ -62,7 +131,7 @@
 	scale .initial:V = \g__nsk_style_container_scale_fp,
 	scale .default:V = \g__nsk_style_container_scale_fp,
 
-	% forward unknown props to nsblocks  
+	% forward unknown props to nsblocks
 	unknown .code:n =
 		{
 			% Store unknown key in the property list, using the content of \l_keys_key_tl as a string
@@ -90,13 +159,12 @@
 
 	% (c) Now call \nskGroup, passing the same #1 so that shift-x, rotate, etc.
 	%     get recognized by nsk / group (or remain unknown for that domain).
-  \tl_show:N \l_nsk_container_pos_tl
 	\nskGroup[
 		shift-x=\fp_use:N \l_nsk_container_x_fp,
 		shift-y=\fp_use:N \l_nsk_container_y_fp,
 		rotate=\fp_use:N \l_nsk_container_rotate_fp,
 		scale=\fp_use:N \l_nsk_container_scale_fp,
-    pos=\tl_use:N \l_nsk_container_pos_tl,
+		pos=\tl_use:N \l_nsk_container_pos_tl,
 	]
 	{
 		% user content
@@ -116,7 +184,10 @@
 
 	\begin{pgfonlayer}{background}
 		\nskBlock [
+			% this are computed by bounding box
+			width=0pt, height=0pt,
 			shadow=false,
+			text-north=\nskBlockID,
 			#1,
 		]
 	\end{pgfonlayer}
@@ -140,10 +211,11 @@
 \tl_put_right:No \l_tmpa_tl { type=rectangle, }
 \tl_put_right:No \l_tmpa_tl { fill=\l_nsk_container_fill_tl, }
 \tl_put_right:No \l_tmpa_tl { border-color=\l_nsk_container_border_color_tl, }
-% \tl_put_right:No \l_tmpa_tl { border-type=\l_nsk_container_border_type_tl, }
+% use tikz-ops keys
 \tl_put_right:No \l_tmpa_tl
 { tikz-opts={fit=(\l_nsk_group_bounds_name_tl), inner\space sep=\l_nsk_container_padding_tl,
 			\l_nsk_container_border_type_tl}, }
+
 
 % forward unknown keys as-is
 \prop_map_inline:Nn \l_nsk_container_unknown_prop

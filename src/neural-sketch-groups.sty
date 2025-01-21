@@ -7,6 +7,40 @@
 \prop_new:N \l_nsk_group_unknown_prop
 
 %-----------------------------------------------------------
+% parse pos
+%-----------------------------------------------------------
+\cs_new_protected_nopar:Npn \nsk__group_parse_pos_value:V #1
+{
+
+	% 1) Store the user’s "pos={...}" string in a variable
+	\tl_set:Nx \l_nsk_group_pos_tl { #1 }
+
+	% % 2) Default anchor is "center"
+	\tl_set:Nn \l_nsk_group_anchor_tl { center }
+
+	% 3) Split #1 at the '=' sign into a sequence \l_tmpa_seq
+	%    If the user wrote "right=1cm of A", item 1 is "right"
+	%    and item 2 is "1cm of A". If there's no '=', there's
+	%    only one item, so you can skip or do fallback logic.
+	\seq_set_split:Nnx \l_tmpa_seq {=}{#1}
+  \seq_show:N \l_tmpa_seq
+
+	% 4) Check if there's at least two items (the part before '=' plus after '=')
+	\int_compare:nNnT { \seq_count:N \l_tmpa_seq } > {1}
+		{
+			% The first item is "right", "left", etc.
+			\tl_set:Nx \l_tmpa_tl { \seq_item:Nn\l_tmpa_seq {1} }
+			\tl_trim_spaces:N \l_tmpa_tl
+
+			% % Compare it to known directions to pick an anchor
+			\tl_if_eq:VnT \l_tmpa_tl {right} { \tl_set:Nn \l_nsk_group_anchor_tl { west } }
+			\tl_if_eq:VnT \l_tmpa_tl {left}  { \tl_set:Nn \l_nsk_group_anchor_tl { east } }
+			\tl_if_eq:VnT \l_tmpa_tl {above} { \tl_set:Nn \l_nsk_group_anchor_tl { south } }
+			\tl_if_eq:VnT \l_tmpa_tl {below} { \tl_set:Nn \l_nsk_group_anchor_tl { north } }
+		}
+}
+
+%-----------------------------------------------------------
 % Group
 % logical grouping
 %-----------------------------------------------------------
@@ -18,7 +52,11 @@
 	bounds-name .default:n = {__nsk_container_bounds},
 
 	% natural positioning using positioning library
-	pos .tl_set:N = \l_nsk_group_pos_tl,
+	pos .code:n =
+		{
+			\nsk__group_parse_pos_value:V {#1}
+			% \tl_set:Nn \l_nsk_group_pos_tl {#1}
+		},
 	pos .initial:n = { },
 	pos .default:n = { },
 
@@ -93,6 +131,11 @@
 	\tl_if_eq:nnF {\fp_to_decimal:N \l_nsk_group_scale_fp}{1.0}
 	{ \tl_put_right:Nx \l_tmpa_tl { scale=\fp_use:N \l_nsk_group_scale_fp, } }
 
+	% anchor=
+	% for relative naural positionig/alignment
+	\tl_put_right:Nx \l_tmpa_tl
+	{ anchor=\tl_use:N \l_nsk_group_anchor_tl, }
+
 	% user-supplied style pass-through
 	\tl_if_empty:VTF \l_nsk_group_extra_style_tl
 	{ % do nothing if empty
@@ -122,19 +165,21 @@
 	% phantom reference node for natural positioning
 	\tl_if_blank:VF \l_nsk_group_pos_tl
 	{
-		\node[draw=red, #3] (\l_nsk_group_refnode_id_tl) {refnode};
+		\node[#3, anchor=center] (\l_nsk_group_refnode_id_tl) {};
 	}
-
 
 	\begin{scope}[#1]
 		#2
 	\end{scope}
 
-
-	% FIX: delete me
+	% FIXME: delete me
 	\tl_if_blank:VF \l_nsk_group_pos_tl
 	{
-		\fill[red, #3] (\l_nsk_group_refnode_id_tl) circle (2mm);
+		\fill[green] (\l_nsk_group_refnode_id_tl) circle (1mm);
+
+		\draw[green,thick]
+		(\l_nsk_group_bounds_name_tl.south\space west) rectangle
+		(\l_nsk_group_bounds_name_tl.north\space east);
 	}
 
 }
