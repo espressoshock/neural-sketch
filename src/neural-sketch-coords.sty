@@ -13,6 +13,74 @@
 	% Let the user specify the "pos" usage from TikZ [right=1cm of something]:
 	pos .tl_set:N = \l_nsk_coord_pos_tl,
 	pos .initial:n = { },
+
+	shift-x .dim_set:N = \l_nsk_coord_shift_x_dim,
+	shift-x .initial:n = {0pt},
+	shift-x .default:n = {0pt},
+
+	shift-y .dim_set:N = \l_nsk_coord_shift_y_dim,
+	shift-y .initial:n = {0pt},
+	shift-y .default:n = {0pt},
+
+	% marker ---------------------------------------------------
+	marker .tl_set:N = \l_nsk_coord_marker_tl,
+	marker .initial:n = {none},   % 'none' = disabled
+	marker .default:n = {none},
+
+	marker-color .tl_set:N = \l_nsk_coord_marker_color_tl,
+	marker-color .initial:n = {red},
+	marker-color .default:n = {red},
+
+	marker-size .dim_set:N = \l_nsk_coord_marker_size_dim,
+	marker-size .initial:n = {1mm},
+	marker-size .default:n = {1mm},
+}
+
+%-----------------------------------------------------------
+% Markers
+%-----------------------------------------------------------
+\cs_new_protected_nopar:Npn \nsk__draw_coord_marker:
+{
+	% If marker = none, do nothing
+	% \tl_if_eq:VnT \l_nsk_coord_marker_tl { none } { \skip_0 }
+	\tl_if_eq:VnF \l_nsk_coord_marker_tl { none }
+	{
+		% We'll rely on the node's name \l_nsk_coord_id_tl
+		\begin{scope}[shift=(\tl_use:N \l_nsk_coord_id_tl)]
+			% color = <marker-color>
+			% We'll define a local style
+			\tikzset{nskcoordmarker/.style={
+						draw=\l_nsk_coord_marker_color_tl,
+						fill=\l_nsk_coord_marker_color_tl,
+					}}
+
+			\begin{scope}[nskcoordmarker]
+
+				\str_case:VnF { \l_nsk_coord_marker_tl }
+				{
+					{o}{
+							% Draw a circle with radius= marker-size/2 or marker-size?
+							\draw circle[radius=\l_nsk_coord_marker_size_dim];
+						}
+						{x}{
+							% We'll interpret marker-size as the half-diagonal
+							% so we draw lines from -(size)/2 to +(size)/2
+              \fp_set:Nn \l_tmpa_fp { \dim_to_fp:n {\l_nsk_coord_marker_size_dim}/2 }
+              \dim_set:Nn \l_tmpa_dim { \fp_to_dim:n {\l_tmpa_fp} }
+							\draw
+							(-\l_tmpa_dim, -\l_tmpa_dim) -- (\l_tmpa_dim, \l_tmpa_dim)
+							(\l_tmpa_dim, -\l_tmpa_dim) -- (-\l_tmpa_dim, \l_tmpa_dim);
+						}
+				}
+				{
+					% fallback: user gave some unknown marker?
+					% maybe draw a small diamond or do nothing
+					\draw (0,0) node {\l_nsk_coord_marker_tl};
+				}
+
+			\end{scope}
+		\end{scope}
+	}
 }
 
 \cs_new_protected_nopar:Npn \nsk__coord_maybe_set_id:
@@ -45,12 +113,21 @@
 		\tl_put_right:No \l_tmpa_tl { \l_nsk_coord_pos_tl, }
 	}
 
+	% shift-x/y
+	\tl_put_right:No \l_tmpa_tl
+	{
+		shift={ (\dim_use:N \l_nsk_coord_shift_x_dim, \dim_use:N \l_nsk_coord_shift_y_dim) },
+	}
+
 	% invisible node
 	\tl_put_right:No \l_tmpa_tl { draw=none, fill=none, }
 	\tl_show:N \l_tmpa_tl
 
 	% Actually create the node
 	\nsk__build_coord_style_aux:V \l_tmpa_tl
+
+	% Now draw the marker if user wants it
+	\nsk__draw_coord_marker:
 }
 
 \cs_new_protected_nopar:Npn \nsk__build_coord_style_aux:n #1
