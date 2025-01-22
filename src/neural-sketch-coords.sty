@@ -1,0 +1,80 @@
+\ExplSyntaxOn
+
+\keys_define:nn {nsk / coord}
+{
+	id .tl_set:N = \l_nsk_coord_id_tl,
+	id .initial:n = { },
+
+	x .fp_set:N = \l_nsk_coord_x_fp,
+	x .initial:n = {0},
+	y .fp_set:N = \l_nsk_coord_y_fp,
+	y .initial:n = {0},
+
+	% Let the user specify the "pos" usage from TikZ [right=1cm of something]:
+	pos .tl_set:N = \l_nsk_coord_pos_tl,
+	pos .initial:n = { },
+}
+
+\cs_new_protected_nopar:Npn \nsk__coord_maybe_set_id:
+{
+	% If the user didn’t supply an ID, automatically generate one
+	\tl_if_blank:VTF \l_nsk_coord_id_tl
+	{
+		\int_gincr:N \g__nsk_coord_count_int
+		\tl_set:cn {l__nsk_autocoord_\int_use:N \g__nsk_coord_count_int _tl}
+		{ coord\int_use:N \g__nsk_coord_count_int }
+		\tl_set_eq:NN \l_nsk_coord_id_tl { l__nsk_autocoord_\int_use:N \g__nsk_coord_count_int _tl }
+	}
+	{ }
+}
+
+\cs_new_protected_nopar:Npn \nsk__build_coord_style:
+{
+	% Construct the node style for the ghost coordinate
+	\tl_clear_new:N \l_tmpa_tl
+
+	% name=<id>
+	\tl_put_right:Nx \l_tmpa_tl { name=\l_nsk_coord_id_tl, }
+
+	% If pos is blank, we place it at (x,y). Otherwise, we place it using [pos=...]
+	\tl_if_blank:VTF \l_nsk_coord_pos_tl
+	{
+		\tl_put_right:Nx \l_tmpa_tl { at={(\fp_use:N \l_nsk_coord_x_fp,\fp_use:N \l_nsk_coord_y_fp)}, }
+	}
+	{
+		\tl_put_right:No \l_tmpa_tl { \l_nsk_coord_pos_tl, }
+	}
+
+	% invisible node
+	\tl_put_right:No \l_tmpa_tl { draw=none, fill=none, }
+	\tl_show:N \l_tmpa_tl
+
+	% Actually create the node
+	\nsk__build_coord_style_aux:V \l_tmpa_tl
+}
+
+\cs_new_protected_nopar:Npn \nsk__build_coord_style_aux:n #1
+{
+	\node[#1] {};
+}
+\cs_generate_variant:Nn \nsk__build_coord_style_aux:n { V }
+
+% A simple global counter to auto-generate an ID if needed
+\int_new:N \g__nsk_coord_count_int
+
+% The main user command
+\NewDocumentCommand \nskCoord { O{} }
+{
+	\group_begin:
+	% 1) Parse the keys
+	\keys_set:nn {nsk / coord} {#1}
+
+	% 2) Possibly auto-generate an ID
+	\nsk__coord_maybe_set_id:
+
+	% 3) Build the node style & place the coordinate
+	\nsk__build_coord_style:
+	\group_end:
+}
+
+\ExplSyntaxOff
