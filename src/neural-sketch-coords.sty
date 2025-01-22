@@ -60,13 +60,13 @@
 				{
 					{o}{
 							% Draw a circle with radius= marker-size/2 or marker-size?
-							\draw circle[radius=\l_nsk_coord_marker_size_dim];
+							\draw circle[radius=\l_nsk_coord_marker_size_dim/2];
 						}
 						{x}{
 							% We'll interpret marker-size as the half-diagonal
 							% so we draw lines from -(size)/2 to +(size)/2
-              \fp_set:Nn \l_tmpa_fp { \dim_to_fp:n {\l_nsk_coord_marker_size_dim}/2 }
-              \dim_set:Nn \l_tmpa_dim { \fp_to_dim:n {\l_tmpa_fp} }
+							\fp_set:Nn \l_tmpa_fp { \dim_to_fp:n {\l_nsk_coord_marker_size_dim}/2 }
+							\dim_set:Nn \l_tmpa_dim { \fp_to_dim:n {\l_tmpa_fp} }
 							\draw
 							(-\l_tmpa_dim, -\l_tmpa_dim) -- (\l_tmpa_dim, \l_tmpa_dim)
 							(\l_tmpa_dim, -\l_tmpa_dim) -- (-\l_tmpa_dim, \l_tmpa_dim);
