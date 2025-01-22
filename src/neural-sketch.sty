@@ -396,6 +396,25 @@
 
 }
 
+\cs_new_protected_nopar:Npn \nsk__resolve_pattern_alias:
+{
+	% If \l_nsk_block_pattern_tl is empty, do nothing
+	\tl_if_blank:VTF \l_nsk_block_pattern_tl
+	{ }
+	{
+		% Check if the user’s pattern key is in the alias property
+		\prop_if_in:NVTF \g_nsk_pattern_aliases_prop \l_nsk_block_pattern_tl
+		{
+			% It's an alias => retrieve the real pattern
+			\prop_get:NVN \g_nsk_pattern_aliases_prop \l_nsk_block_pattern_tl \l_tmpa_tl
+			\tl_set:NV \l_nsk_block_pattern_tl \l_tmpa_tl
+		}
+		{
+			% Not an alias => user gave a real pattern or a custom name => do nothing
+		}
+	}
+}
+
 % Generate a "V V V V" variant so that we can pass token-list
 % variables or dimension variables by *value*.
 \cs_generate_variant:Nn \nsk__draw_block_aux:n { V }
@@ -404,6 +423,8 @@
 {
 	% Build the style token list incrementally:
 	\tl_clear_new:N \l_tmps_tl
+
+	\nsk__resolve_pattern_alias:
 
 	% Possibly scale border-size according to importance:
 	\nsk__maybe_scale_border_by_importance:

@@ -32,6 +32,9 @@
 	block-height .dim_set:N = \g__nsk_style_block_height_dim,
 	block-height .initial:n = {2cm},
 
+	% shadow ---------------------------------------------------
+	shadow .bool_set:N = \g__nsk_style_block_shadow_bool,
+
 	% text-loc  -------------------------------------------------
 	text-north-loc .tl_set:N = \g__nsk_style_text_north_loc_tl,
 	text-north-loc .initial:n = {above},
@@ -48,34 +51,44 @@
 	text-center-loc .tl_set:N = \g__nsk_style_text_center_loc_tl,
 	text-center-loc .initial:n = { },
 
-	% shadow ---------------------------------------------------
-	shadow .bool_set:N = \g__nsk_style_block_shadow_bool,
+	%-----------------------------------------------------------
+	% Container styles
+	%-----------------------------------------------------------
+	container-border-color .tl_set:N = \g__nsk_style_container_border_color_tl,
+	container-border-color .initial:n = { nskLighterGray },
 
-  %-----------------------------------------------------------
-  % Container styles
-  %-----------------------------------------------------------
-  container-border-color .tl_set:N = \g__nsk_style_container_border_color_tl,
-  container-border-color .initial:n = { nskLighterGray },
+	container-fill .tl_set:N = \g__nsk_style_container_fill_tl,
+	container-fill .initial:n = { nskLightestGray },
 
-  container-fill .tl_set:N = \g__nsk_style_container_fill_tl,
-  container-fill .initial:n = { nskLightestGray },
+	container-padding .dim_set:N = \g__nsk_style_container_padding_dim,
+	container-padding .initial:n = { 1cm },
 
-  container-padding .dim_set:N = \g__nsk_style_container_padding_dim,
-  container-padding .initial:n = { 1cm },
+	container-shift-x .fp_set:N = \g__nsk_style_container_x_fp,
+	container-shift-x .initial:n = { 0 },
 
-  container-shift-x .fp_set:N = \g__nsk_style_container_x_fp,
-  container-shift-x .initial:n = { 0 },
+	container-shift-y .fp_set:N = \g__nsk_style_container_y_fp,
+	container-shift-y .initial:n = { 0 },
 
-  container-shift-y .fp_set:N = \g__nsk_style_container_y_fp,
-  container-shift-y .initial:n = { 0 },
+	container-rotate .fp_set:N = \g__nsk_style_container_rotate_fp,
+	container-rotate .initial:n = { 0 },
 
-  container-rotate .fp_set:N = \g__nsk_style_container_rotate_fp,
-  container-rotate .initial:n = { 0 },
-
-  container-scale .fp_set:N = \g__nsk_style_container_scale_fp,
-  container-scale .initial:n = { 1 },
+	container-scale .fp_set:N = \g__nsk_style_container_scale_fp,
+	container-scale .initial:n = { 1 },
 
 }
+
+%-----------------------------------------------------------
+% Aliases
+%-----------------------------------------------------------
+% A property to hold short aliases that map to
+% standard TikZ pattern names.
+\prop_new:N \g_nsk_pattern_aliases_prop
+
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { hlines } { horizontal\space lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { vlines } { vertical\space lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { hatch } { north\space east\space lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { rhatch } { north\space west\space lines }
+
 
 %-----------------------------------------------------------
 % tikz styles
@@ -89,6 +102,7 @@ fill=nskLighterGray
 }
 }
 }
+
 
 % (d) Provide a simple public macro to set these style keys in one line:
 \NewDocumentCommand \nskSetStyle { O{} }
