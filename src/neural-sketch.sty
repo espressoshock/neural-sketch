@@ -6,11 +6,15 @@
 \RequirePackage{tikz}
 \RequirePackage{expl3}
 \usetikzlibrary{
-	shapes.geometric, calc, fit, intersections, spath3,
+	calc, fit, intersections, spath3,
+	shapes.geometric,
+	shapes.symbols,
+	shapes.misc,
 	arrows.meta,
 	positioning,
 	arrows.meta,
 	shadows,
+	patterns,
 }
 
 % color scheme  --------------------------------------------
@@ -92,6 +96,11 @@
 	border-size .dim_set:N = \l_nsk_block_border_size_dim,
 	border-size .initial:V = \g__nsk_style_block_border_size_dim,
 	border-size .default:V = \g__nsk_style_block_border_size_dim,
+
+	% importance -----------------------------------------------
+	importance .fp_set:N = \l_nsk_block_importance_fp,
+	importance .initial:n = {1.0},
+	importance .default:n = {1.0},
 
 	fill .tl_set:N = \l_nsk_block_fill_tl,
 	fill .initial:V = \g__nsk_style_block_fill_tl,
@@ -175,24 +184,35 @@
 	text-center-style .tl_set:N = \l_nsk_text_center_style_tl,
 	text-center-style .initial:n = { },
 
-  %-----------------------------------------------------------
-  % raster-embed
-  %-----------------------------------------------------------
+	%-----------------------------------------------------------
+	% raster-embed
+	%-----------------------------------------------------------
 	embed .tl_set:N = \l_nsk_embed_tl,
-  embed .default:n = {},
-  embed .initial:n = {},
+	embed .default:n = {},
+	embed .initial:n = {},
 
 	embed-gfx .tl_set:N = \l_nsk_embed_gfx_tl,
-  embed-gfx .default:n = {},
-  embed-gfx .initial:n = {},
+	embed-gfx .default:n = {},
+	embed-gfx .initial:n = {},
 
-  embed-padding .dim_set:N = \l_nsk_block_embed_padding_dim,
-  embed-padding .default:n = \g__nsk_style_block_embed_padding_dim,
-  embed-padding .initial:n = \g__nsk_style_block_embed_padding_dim,
+	embed-padding .dim_set:N = \l_nsk_block_embed_padding_dim,
+	embed-padding .default:n = \g__nsk_style_block_embed_padding_dim,
+	embed-padding .initial:n = \g__nsk_style_block_embed_padding_dim,
 
 	embed-border-radius .dim_set:N = \l_nsk_block_embed_border_radius_dim,
-  embed-border-radius .initial:V = \g__nsk_style_block_embed_border_radius_dim,
+	embed-border-radius .initial:V = \g__nsk_style_block_embed_border_radius_dim,
 	embed-border-radius .default:V = \g__nsk_style_block_embed_border_radius_dim,
+
+	%-----------------------------------------------------------
+	% patterns
+	%-----------------------------------------------------------
+	pattern .tl_set:N = \l_nsk_block_pattern_tl,
+	pattern .initial:n = { },
+	pattern .default:n = { },
+
+	pattern-color .tl_set:N = \l_nsk_block_pattern_color_tl,
+	pattern-color .initial:n = { },
+	pattern-color .default:n = { },
 }
 
 %-----------------------------------------------------------
@@ -236,6 +256,26 @@
 }
 
 
+%-----------------------------------------------------------
+% Border size importance
+%-----------------------------------------------------------
+\cs_new_protected_nopar:Npn \nsk__maybe_scale_border_by_importance:
+{
+	% \fp_if_gt:NNT \l_nsk_block_importance_fp \l_nsk_block_importance_fp
+	\fp_compare:nT {\l_nsk_block_importance_fp > 1.0}
+	{
+		% Convert the current border-size dimension into a float:
+		\fp_set:Nn \l_tmpa_fp { \l_nsk_block_border_size_dim }
+
+		% Multiply by the importance factor:
+		\fp_set:Nn \l_tmpa_fp { \l_tmpa_fp * \l_nsk_block_importance_fp }
+
+		% Update the actual dimension variable:
+		\dim_set:Nn \l_nsk_block_border_size_dim { \fp_to_dim:N \l_tmpa_fp }
+	}
+}
+
+
 % generate a new variant
 %-----------------------------------------------------------
 \cs_generate_variant:Nn \nsk__render_one_text_aux:nnnn { nVVV }
@@ -249,7 +289,7 @@
 	% \node [#3, #4] at (\l_nsk_block_id_tl.#1) {#2};
 	% \draw[shift=(\l_nsk_block_id_tl.#1)] coordinates{(0, 0)} node[#3 #4] {#2};
 
-	\draw[shift=(\l_nsk_block_id_tl.#1)] node[#3, #4] {#2};
+	\draw[shift=(\l_nsk_block_id_tl.#1), anchor=center] node[#3, #4] {#2};
 }
 
 \cs_new_protected_nopar:Npn \nsk__render_one_text:nnnn #1 #2 #3 #4
@@ -316,41 +356,43 @@
 		#1,
 	] {};
 
-  % embed ----------------------------------------------------
-  \tl_if_blank:VF {\l_nsk_embed_tl}
-  {
-    \dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
-    \dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
+	% embed ----------------------------------------------------
+	\tl_if_blank:VF {\l_nsk_embed_tl}
+	{
+		\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
+		\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
 
-    \begin{scope}
-      \pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
-      \pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
-      \pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
-      \pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
+		\begin{scope}
+			\pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
+			\pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
+			\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
+			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
 
-      % raw embedding --------------------------------------------
-      \tl_use:N \l_nsk_embed_tl
-    \end{scope}
-  }
+			% raw embedding --------------------------------------------
+			\tl_use:N \l_nsk_embed_tl
+		\end{scope}
+
+	}
 
 
-  \tl_if_blank:VF {\l_nsk_embed_gfx_tl}
-  {
-    \dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
-    \dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
+	\tl_if_blank:VF {\l_nsk_embed_gfx_tl}
+	{
+		\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
+		\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
 
-    \begin{scope}
-      \pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
-      \pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
-      \pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
-      \pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
+		\begin{scope}
+			\pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
+			\pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
+			\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
+			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
 
-      % gfx node ------------------------------------------------
-      \node[]
-      {\includegraphics[width=\l_nsk_block_width_dim, height=\l_nsk_block_height_dim]{\tl_use:N \l_nsk_embed_gfx_tl};};
-    \end{scope}
+			% gfx node ------------------------------------------------
+			\node[]
+			{\includegraphics[width=\l_nsk_block_width_dim, height=\l_nsk_block_height_dim]{\tl_use:N \l_nsk_embed_gfx_tl};};
+		\end{scope}
 
-  }
+	}
+
 
 }
 
@@ -362,6 +404,9 @@
 {
 	% Build the style token list incrementally:
 	\tl_clear_new:N \l_tmps_tl
+
+	% Possibly scale border-size according to importance:
+	\nsk__maybe_scale_border_by_importance:
 
 	% id-ref ---------------------------------------------------
 	\tl_put_right:No \l_tmps_tl { name=\l_nsk_block_id_tl,}
@@ -376,7 +421,7 @@
 	{
 		% -- pos is given => place the node by raw TikZ positioning
 		% i.e., [right=2cm of otherNode]
-		\tl_put_right:NV \l_tmps_tl { \l_nsk_block_pos_tl, }
+		\tl_put_right:No \l_tmps_tl { \l_nsk_block_pos_tl, }
 	}
 
 	% shape-type -----------------------------------------------
@@ -396,6 +441,23 @@
 	\bool_if:NT \l_nsk_block_shadow_bool
 	{
 		\tl_put_right:No \l_tmps_tl {nskShadow, }
+	}
+	% patterns  -------------------------------------------------
+	\tl_if_blank:VTF \l_nsk_block_pattern_tl
+	{ }
+	{
+		% We'll build something like:
+		%   postaction={pattern=..., pattern color=...}
+		\tl_clear_new:N \l_tmpb_tl
+		\tl_put_right:Nx \l_tmpb_tl { pattern=\l_nsk_block_pattern_tl, }
+		\tl_if_blank:VTF \l_nsk_block_pattern_color_tl
+		{ }
+		{
+			\tl_put_right:Nx \l_tmpb_tl { pattern\space color=\l_nsk_block_pattern_color_tl, }
+		}
+		\tl_show:N \l_tmpb_tl
+		% Finally add 'postaction={...},' to the main style
+		\tl_put_right:Nx \l_tmps_tl { postaction={\tl_use:N \l_tmpb_tl}, }
 	}
 
 
@@ -442,6 +504,24 @@
 	\nsk__draw_block:
 
 	\group_end:
+}
+
+\NewDocumentEnvironment{nskFigure}{O{}}
+{
+
+	\prop_gclear:N \g_nsk_block_counters_prop
+	\begin{tikzpicture}[#1]
+		}
+		{
+	\end{tikzpicture}
+}
+
+%-----------------------------------------------------------
+% Miscs utils
+%-----------------------------------------------------------
+\NewDocumentCommand \nskBlockID {}
+{
+	\tl_use:N \l_nsk_block_id_tl
 }
 
 \ExplSyntaxOff
