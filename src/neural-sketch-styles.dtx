@@ -1,3 +1,36 @@
+% ----------------------------------------------------------------
+%  neural-sketch-styles.dtx
+% ----------------------------------------------------------------
+% \iffalse
+%<*driver>
+\documentclass{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+
+\begin{document}
+\DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+
+\ProvidesFile{neural-sketch-styles.dtx}%
+[2025/01/22 v0.1 neural-sketch-styles]
+
+% \title{neural-sketch-styles.sty\\[1ex]
+%        Global style keys for neural-sketch}
+% \author{Vincenzo Buono}
+% \date{\today}
+% \maketitle
+%
+% \section{Introduction}
+% This file defines global style keys for blocks, containers, etc.
+%
+% \StopEventually{}
+%
+% ----------------------------------------------------------------
+%<*package>
+%\begin{macrocode}
 \ExplSyntaxOn
 
 \dim_new:N \g__nsk_style_container_padding_dim
@@ -113,3 +146,7 @@ fill=nskLighterGray
 
 
 \ExplSyntaxOff
+%\end{macrocode}
+%</package>
+
+\endinput

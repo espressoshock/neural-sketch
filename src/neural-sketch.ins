@@ -2,11 +2,42 @@
 \def\batchfile{neural-sketch.ins}
 \input docstrip.tex
 
-% Extract the style file from neural-sketch.dtx
+\keepsilent
+\askforoverwritefalse
+
+\Msg{************************************************}
+\Msg{*  This is neural-sketch.ins, the docstrip     *}
+\Msg{*  installer for the neural-sketch library.    *}
+\Msg{*  Run `latex neural-sketch.ins` to extract    *}
+\Msg{*  the .sty files from the .dtx sources.       *}
+\Msg{************************************************}
+
 \generate{
-	\file{neural-sketch.sty}{%
-		\from{neural-sketch.dtx}{package}
-	}
+  \file{neural-sketch.sty}{
+    \from{neural-sketch.dtx}{package}
+  }
+  \file{neural-sketch-colors.sty}{
+    \from{neural-sketch-colors.dtx}{package}
+  }
+  \file{neural-sketch-styles.sty}{
+    \from{neural-sketch-styles.dtx}{package}
+  }
+  \file{neural-sketch-groups.sty}{
+    \from{neural-sketch-groups.dtx}{package}
+  }
+  \file{neural-sketch-containers.sty}{
+    \from{neural-sketch-containers.dtx}{package}
+  }
+  \file{neural-sketch-coords.sty}{
+    \from{neural-sketch-coords.dtx}{package}
+  }
+  \file{neural-sketch-bridge.sty}{
+    \from{neural-sketch-bridge.dtx}{package}
+  }
 }
+
+\Msg{************************************************}
+\Msg{* All done. You can now use these .sty files!  *}
+\Msg{************************************************}
 
 \endbatchfile
