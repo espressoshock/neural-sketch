@@ -55,6 +55,11 @@
 % to track auto-increment counters
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \prop_new:N \g_nsk_block_counters_prop
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Global seq -
+% to track block-id reference counters
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\seq_new:N \g_nsk_block_id_history_seq
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Main nsk / Block Primitive
@@ -509,6 +514,16 @@
 
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Ref-Counter history
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__store_block_in_history:
+{
+	% Push the current block's ID into the global sequence
+	\seq_gput_right:NV \g_nsk_block_id_history_seq \l_nsk_block_id_tl
+}
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Main block draw
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__draw_block:
@@ -538,6 +553,9 @@
 
 	\nsk__draw_block:
 
+	% store id in history
+	\nsk__store_block_in_history:
+
 	\group_end:
 }
 
@@ -558,6 +576,43 @@
 {
 	\tl_use:N \l_nsk_block_id_tl
 }
+
+
+%--
+
+
+% \nskBlockIDLast[n=1] -> "the nth last block ID"
+\NewDocumentCommand \nskBlockIDLast { O{1} }
+{
+	% 1. If there are not enough blocks in the history, gracefully handle or produce an error
+	\seq_if_empty:NTF \g_nsk_block_id_history_seq
+	{
+		% no blocks exist at all
+		\GenericError{}{No block in the history!}{}{%
+			Attempted to reference \string\nskBlockIDLast[#1], but no blocks exist.%
+		}
+	}
+	{
+		\int_compare:nNnTF {#1} > {\seq_count:N \g_nsk_block_id_history_seq}
+			{
+				\GenericError{}{Block index too large!}{}{%
+					\string\nskBlockIDLast[#1] exceeds the number of existing blocks.%
+				}
+			}
+			{
+				\seq_item:Nn \g_nsk_block_id_history_seq
+				{
+					\int_eval:n { \seq_count:N \g_nsk_block_id_history_seq - #1 + 1 }
+				}
+			}
+	}
+}
+
+\NewDocumentCommand \nskLastBlockID {} {
+	% "Alias" for the single last block (i.e., \nskBlockIDLast[1])
+	\nskBlockIDLast[1]
+}
+
 
 \ExplSyntaxOff
 
