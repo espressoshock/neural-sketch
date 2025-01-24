@@ -1,6 +1,6 @@
-% ----------------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %  neural-sketch-styles.dtx
-% ----------------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 % \iffalse
 %<*driver>
 \documentclass{ltxdoc}
@@ -23,26 +23,28 @@
 % \date{\today}
 % \maketitle
 %
-% \section{Introduction}
-% This file defines global style keys for blocks, containers, etc.
 %
 % \StopEventually{}
-%
-% ----------------------------------------------------------------
+
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 %<*package>
-%\begin{macrocode}
+%    \begin{macrocode}
 \ExplSyntaxOn
 
+% globals ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \dim_new:N \g__nsk_style_container_padding_dim
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Global package styles
+% The user can write:  block-fill=orange
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \keys_define:nn { nsk / style }
 {
-	%-----------------------------------------------------------
-	% Block styles
-	% The user can write:  block-fill=orange
-	%-----------------------------------------------------------
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% nsk / Block
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	block-fill .tl_set:N = \g__nsk_style_block_fill_tl,
-	block-fill .initial:n = { nskLightGray },  % fallback if user sets the key *but no value*
+	block-fill .initial:n = { nskLightGray },
 
 	block-border-color .tl_set:N = \g__nsk_style_block_border_color_tl,
 	block-border-color .initial:n = { nskDarkGray },
@@ -65,10 +67,9 @@
 	block-height .dim_set:N = \g__nsk_style_block_height_dim,
 	block-height .initial:n = {2cm},
 
-	% shadow ---------------------------------------------------
 	shadow .bool_set:N = \g__nsk_style_block_shadow_bool,
 
-	% text-loc  -------------------------------------------------
+	% text-anchoring ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	text-north-loc .tl_set:N = \g__nsk_style_text_north_loc_tl,
 	text-north-loc .initial:n = {above},
 
@@ -84,9 +85,9 @@
 	text-center-loc .tl_set:N = \g__nsk_style_text_center_loc_tl,
 	text-center-loc .initial:n = { },
 
-	%-----------------------------------------------------------
-	% Container styles
-	%-----------------------------------------------------------
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% nsk / Container
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	container-border-color .tl_set:N = \g__nsk_style_container_border_color_tl,
 	container-border-color .initial:n = { nskLighterGray },
 
@@ -94,7 +95,7 @@
 	container-fill .initial:n = { nskLightestGray },
 
 	container-padding .dim_set:N = \g__nsk_style_container_padding_dim,
-	container-padding .initial:n = { 1cm },
+	container-padding .initial:n = { .5cm },
 
 	container-shift-x .fp_set:N = \g__nsk_style_container_x_fp,
 	container-shift-x .initial:n = { 0 },
@@ -110,11 +111,11 @@
 
 }
 
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Aliases
-%-----------------------------------------------------------
 % A property to hold short aliases that map to
 % standard TikZ pattern names.
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \prop_new:N \g_nsk_pattern_aliases_prop
 
 \prop_put:Nnn \g_nsk_pattern_aliases_prop { hlines } { horizontal\space lines }
@@ -123,21 +124,37 @@
 \prop_put:Nnn \g_nsk_pattern_aliases_prop { rhatch } { north\space west\space lines }
 
 
-%-----------------------------------------------------------
-% tikz styles
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Tikz styles
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\ExplSyntaxOff
 \tikzset{
-nskShadow/.style={
-drop\space shadow={
-shadow\space xshift=-.1ex,
-shadow\space yshift=-.6ex,
-fill=nskLighterGray
-}
-}
-}
+	nskShadow/.style={
+			drop shadow={
+					shadow xshift=-.1ex,
+					shadow yshift=-.6ex,
+					fill=nskLighterGray
+				},
+		},
+	bridging path/.initial=arc,
+	bridging span/.initial=8pt,
+	bridging gap/.initial=4pt,
+	bridge/.style 2 args={
+			spath/split at intersections with={#1}{#2},
+			spath/insert gaps after components={#1}{\pgfkeysvalueof{/tikz/bridging span}},
+			spath/join components upright with={#1}{\pgfkeysvalueof{/tikz/bridging path}},
 
+			spath/split at intersections with={#2}{#1},
+			spath/insert gaps after components={#2}{\pgfkeysvalueof{/tikz/bridging gap}},
+		}
+}
+\ExplSyntaxOn
 
-% (d) Provide a simple public macro to set these style keys in one line:
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface
+% - (user-facing)
+% () Provide a simple public macro to set these style keys in one line:
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskSetStyle { O{} }
 {
 	% #1 is the keyval list, e.g.  block-fill=yellow, block-border=blue

@@ -1,6 +1,6 @@
-% ----------------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %  neural-sketch-loader.dtx
-% ----------------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 % \iffalse
 %<*driver>
 \documentclass{ltxdoc}
@@ -22,6 +22,7 @@
 % \author{Your Name <you@example.com>}
 % \date{\today}
 % \maketitle
+% \StopEventually{}
 %
 % This dtx file extracts to "neural-sketch-loader.sty".
 % It defines a user command \nskUseModule to load the optional modules
@@ -31,20 +32,17 @@
 
 % \StopEventually{}
 
-% ----------------------------------------------------------------
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 %<*package>
-%\begin{macrocode}
-\NeedsTeXFormat{LaTeX2e}
-\RequirePackage{expl3} % ensure expl3 is available
-
-\ProvidesPackage{neural-sketch-loader}%
-[2025/02/01 v0.1 Loader for optional neural-sketch modules]
-
+%    \begin{macrocode}
 \ExplSyntaxOn
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% G-Modules
 % 1) A clist of recognized modules:
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \clist_new:N \g__nsk_known_modules_clist
-% Here we define the optional modules we ship:
+% optionals ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \clist_set:Nn \g__nsk_known_modules_clist
 {
 	bridges,
@@ -53,7 +51,8 @@
 	containers
 }
 
-% 2) Helper to load the given module if present
+% helpers ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% - to load the given module if present
 \cs_new_protected_nopar:Npn \__nsk_load_module_if_exists:nn #1#2
 {
 	% #1 = short name (e.g. "bridge"), #2 = actual .sty (e.g. "neural-sketch-bridge.sty")
@@ -63,7 +62,7 @@
 		\RequirePackage{#2}
 	}
 	{
-		% halts exec ······························································· <<<
+		% halts exec ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 		\msg_new:nnn {neural-sketch}{moduleNotFound}{
 			The~requested~module~`#1'~could~not~be~found~while~loading~via~\nskUseModule.
 		}
@@ -71,7 +70,7 @@
 	}
 }
 
-% 3) Load all known modules:
+% known modules ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \__nsk_load_all_modules:
 {
 	\clist_map_inline:Nn \g__nsk_known_modules_clist
@@ -81,7 +80,10 @@
 	}
 }
 
-% 4) The user-facing command \nskUseModule{...}
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface
+% - (user-facing)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskUseModule { m }
 {
 	\__nsk_usemodule_main:n { #1 }
@@ -89,7 +91,7 @@
 
 \cs_new_protected_nopar:Npn \__nsk_usemodule_main:n #1
 {
-	% Check if user wrote '*' => load all modules:
+	% Check if user wrote "*" => load all modules:
 	\tl_if_eq:nnTF {#1}{*}
 	{
 		\__nsk_load_all_modules:
@@ -106,7 +108,6 @@
 }
 
 \ExplSyntaxOff
-%\end{macrocode}
+%    \end{macrocode}
 %</package>
-
 \endinput

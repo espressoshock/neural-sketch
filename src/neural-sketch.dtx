@@ -1,6 +1,6 @@
-% ----------------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %  neural-sketch.dtx
-% ----------------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 % \iffalse
 %<*driver>
 \documentclass{ltxdoc}
@@ -9,30 +9,26 @@
 \RecordChanges
 
 \begin{document}
-  \DocInput{\jobname.dtx}
+\DocInput{\jobname.dtx}
 \end{document}
 %</driver>
 % \fi
 
 \ProvidesFile{neural-sketch.dtx}%
-  [2025/01/22 v0.1 neural-sketch main code]
+[2025/01/22 v0.1 neural-sketch main code]
 
 % \title{neural-sketch.sty (main code)}
 % \author{Vincenzo Buono}
 % \date{\today}
 % \maketitle
-%
-% This dtx file contains the main code for neural-sketch.sty.
-% Everything that should go into the .sty belongs between
-% \begin{macrocode} and \end{macrocode}, guarded by
-% %<*package> ... %</package>.
-%
+
 % \StopEventually{}
 
-% ----------------------------------------------------------------
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 %<*package>
-%\begin{macrocode}
-% RequirePackages ------------------------------------------ <<<
+%    \begin{macrocode}
+
+% external ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \RequirePackage{tikz}
 \RequirePackage{expl3}
 \usetikzlibrary{
@@ -45,50 +41,36 @@
 	arrows.meta,
 	shadows,
 	patterns,
-  fadings,
+	fadings,
 }
-
-% color scheme  -------------------------------------------- <<<
+% internal ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \RequirePackage{neural-sketch-colors}
 \RequirePackage{neural-sketch-styles}
-
-\tikzset{
-	bridging path/.initial=arc,
-	bridging span/.initial=8pt,
-	bridging gap/.initial=4pt,
-	bridge/.style 2 args={
-			spath/split at intersections with={#1}{#2},
-			spath/insert gaps after components={#1}{\pgfkeysvalueof{/tikz/bridging span}},
-			spath/join components upright with={#1}{\pgfkeysvalueof{/tikz/bridging path}},
-
-			spath/split at intersections with={#2}{#1},
-			spath/insert gaps after components={#2}{\pgfkeysvalueof{/tikz/bridging gap}},
-		}
-}
+\RequirePackage{neural-sketch-loader}
 
 \ExplSyntaxOn
 
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Global props -
 % to track auto-increment counters
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \prop_new:N \g_nsk_block_counters_prop
 
-%-----------------------------------------------------------
-% Block Primitive
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main nsk / Block Primitive
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \keys_define:nn {nsk / block}
 {
-	% block type -----------------------------------------------
+	% block type ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	type .tl_set:N = \l_nsk_block_type_tl,
 	type .initial:n = {rectangle},
 	type .default:n = {rectangle},
 
-	% ref-id ---------------------------------------------------
+	% ref-id ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	id .tl_set:N = \l_nsk_block_id_tl,
 	id .initial:n = { },
 
-	% coords  ---------------------------------------------------
+	% coords ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	x .fp_set:N = \l_nsk_block_x_fp,
 	x .initial:n = {0},
 	x .default:n = {0},
@@ -100,7 +82,7 @@
 	pos .tl_set:N = \l_nsk_block_pos_tl,
 	pos .initial:n = { },
 
-	% dimensions  -----------------------------------------------
+	% dimensions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	width .dim_set:N =  \l_nsk_block_width_dim,
 	width .initial:V = \g__nsk_style_block_width_dim,
 	width .default:V = \g__nsk_style_block_width_dim,
@@ -109,7 +91,7 @@
 	height .default:V = \g__nsk_style_block_height_dim,
 	height .initial:V = \g__nsk_style_block_height_dim,
 
-	% styles  ---------------------------------------------------
+	% styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	border-type .choice:,
 	border-type / solid .code:n = \tl_set:Nn \l_nsk_block_border_type_tl { solid },
 	border-type / dashed .code:n = \tl_set:Nn \l_nsk_block_border_type_tl { dashed },
@@ -128,14 +110,19 @@
 	border-size .initial:V = \g__nsk_style_block_border_size_dim,
 	border-size .default:V = \g__nsk_style_block_border_size_dim,
 
-	% importance -----------------------------------------------
-	importance .fp_set:N = \l_nsk_block_importance_fp,
-	importance .initial:n = {1.0},
-	importance .default:n = {1.0},
-
 	fill .tl_set:N = \l_nsk_block_fill_tl,
 	fill .initial:V = \g__nsk_style_block_fill_tl,
 	fill .default:V = \g__nsk_style_block_fill_tl,
+
+	% shadow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	shadow .bool_set:N = \l_nsk_block_shadow_bool,
+	shadow .initial:n = {true},
+	shadow .default:n = {true},
+
+	% importance ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	importance .fp_set:N = \l_nsk_block_importance_fp,
+	importance .initial:n = {1.0},
+	importance .default:n = {1.0},
 
 	% -- The special pass-through key for arbitrary TikZ options.
 	tikz-opts  .code:n =
@@ -147,14 +134,9 @@
 	tikz-opts  .initial:n = {},
 	tikz-opts  .default:n = {},
 
-	% shadow ---------------------------------------------------
-	shadow .bool_set:N = \l_nsk_block_shadow_bool,
-	shadow .initial:n = {true},
-	shadow .default:n = {true},
-
-	% -- text-anchoring
-	% ---------------------------------------
-
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Text Anchoring
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	%---------------------------
 	% text-north
 	%---------------------------
@@ -215,9 +197,9 @@
 	text-center-style .tl_set:N = \l_nsk_text_center_style_tl,
 	text-center-style .initial:n = { },
 
-	%-----------------------------------------------------------
-	% raster-embed
-	%-----------------------------------------------------------
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Embedding
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	embed .tl_set:N = \l_nsk_embed_tl,
 	embed .default:n = {},
 	embed .initial:n = {},
@@ -234,9 +216,9 @@
 	embed-border-radius .initial:V = \g__nsk_style_block_embed_border_radius_dim,
 	embed-border-radius .default:V = \g__nsk_style_block_embed_border_radius_dim,
 
-	%-----------------------------------------------------------
-	% patterns
-	%-----------------------------------------------------------
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Patterns
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	pattern .tl_set:N = \l_nsk_block_pattern_tl,
 	pattern .initial:n = { },
 	pattern .default:n = { },
@@ -246,13 +228,9 @@
 	pattern-color .default:n = { },
 }
 
-%-----------------------------------------------------------
-% Position parsing
-%-----------------------------------------------------------
-
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Auto-generate an ID if user does not supply one
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__maybe_set_id:
 {
 	\tl_if_blank:VTF \l_nsk_block_id_tl
@@ -286,10 +264,9 @@
 	}
 }
 
-
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Border size importance
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__maybe_scale_border_by_importance:
 {
 	% \fp_if_gt:NNT \l_nsk_block_importance_fp \l_nsk_block_importance_fp
@@ -306,11 +283,16 @@
 	}
 }
 
-
-% generate a new variant
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Variant Generation :V
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_generate_variant:Nn \nsk__render_one_text_aux:nnnn { nVVV }
+\cs_generate_variant:Nn \nsk__draw_block_aux:n { V }
 
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Text Rendering
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__render_one_text_aux:nnnn #1 #2 #3 #4
 {
 	% #1 = anchor name (literal or variable),
@@ -340,7 +322,6 @@
 	}
 }
 
-% We'll define a function that calls the above helper for each anchor:
 \cs_new_protected_nopar:Npn \nsk__render_all_text:
 {
 	\nsk__render_one_text:nnnn {north}
@@ -369,7 +350,7 @@
 	{ \l_nsk_text_center_style_tl }
 }
 
-
+% Internal debug/log block ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__block_debug:
 {
 	\iow_term:x {type   = \tl_use:N \l_nsk_block_type_tl}
@@ -379,7 +360,9 @@
 	\iow_term:x {height = \dim_use:N \l_nsk_block_height_dim}
 }
 
-
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Block drawing [Aux]
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__draw_block_aux:n #1
 {
 
@@ -387,7 +370,7 @@
 		#1,
 	] {};
 
-	% embed ----------------------------------------------------
+	% embedding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_if_blank:VF {\l_nsk_embed_tl}
 	{
 		\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
@@ -399,12 +382,11 @@
 			\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
 			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
 
-			% raw embedding --------------------------------------------
+			% raw embedding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 			\tl_use:N \l_nsk_embed_tl
 		\end{scope}
 
 	}
-
 
 	\tl_if_blank:VF {\l_nsk_embed_gfx_tl}
 	{
@@ -417,7 +399,7 @@
 			\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
 			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
 
-			% gfx node ------------------------------------------------
+			% gfx node ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 			\node[]
 			{\includegraphics[width=\l_nsk_block_width_dim, height=\l_nsk_block_height_dim]{\tl_use:N \l_nsk_embed_gfx_tl};};
 		\end{scope}
@@ -427,6 +409,9 @@
 
 }
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Pattern Aliasing resolution
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__resolve_pattern_alias:
 {
 	% If \l_nsk_block_pattern_tl is empty, do nothing
@@ -445,10 +430,6 @@
 		}
 	}
 }
-
-% Generate a "V V V V" variant so that we can pass token-list
-% variables or dimension variables by *value*.
-\cs_generate_variant:Nn \nsk__draw_block_aux:n { V }
 
 \cs_new_protected_nopar:Npn \nsk__build_block_style:
 {
@@ -476,29 +457,29 @@
 		\tl_put_right:No \l_tmps_tl { \l_nsk_block_pos_tl, }
 	}
 
-	% shape-type -----------------------------------------------
+	% shape-type ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_put_right:No \l_tmps_tl {shape=\l_nsk_block_type_tl,}
-	% dims -----------------------------------------------------
+	% dims ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_put_right:No \l_tmps_tl {minimum\space width=\l_nsk_block_width_dim,}
 	\tl_put_right:No \l_tmps_tl {minimum\space height=\l_nsk_block_height_dim,}
-	% borders --------------------------------------------------
+	% borders ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}
 	\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
 	\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}
 	\tl_put_right:No \l_tmps_tl {line\space width=\l_nsk_block_border_size_dim,}
-	% fill -----------------------------------------------------
+	% fill ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}
 
-	% shadow ---------------------------------------------------
+	% shadow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\bool_if:NT \l_nsk_block_shadow_bool
 	{
 		\tl_put_right:No \l_tmps_tl {nskShadow, }
 	}
-	% patterns  -------------------------------------------------
+	% patterns ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_if_blank:VTF \l_nsk_block_pattern_tl
 	{ }
 	{
-		% We'll build something like:
+		% something like:
 		%   postaction={pattern=..., pattern color=...}
 		\tl_clear_new:N \l_tmpb_tl
 		\tl_put_right:Nx \l_tmpb_tl { pattern=\l_nsk_block_pattern_tl, }
@@ -512,7 +493,7 @@
 	}
 
 
-	% pass-through ---------------------------------------------
+	% pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_if_empty:VTF \l_nsk_block_extra_style_tl
 	{ }
 	{
@@ -520,13 +501,16 @@
 	}
 
 
-	% Now call the *variant* function which takes
-	% params by value:
+	% Now call function which takes
+	% params by value: --
 	\nsk__draw_block_aux:V
 	\l_tmps_tl
 }
 
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main block draw
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__draw_block:
 {
 	% 1. draw the main block shape
@@ -536,10 +520,10 @@
 	\nsk__render_all_text:
 }
 
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Public Interface
-% (user-facing)
-%-----------------------------------------------------------
+% - (user-facing)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskBlock { O{} }
 {
 	\group_begin:
@@ -567,16 +551,16 @@
 	\end{tikzpicture}
 }
 
-%-----------------------------------------------------------
-% Miscs utils
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Miscs Utils
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskBlockID {}
 {
 	\tl_use:N \l_nsk_block_id_tl
 }
 
 \ExplSyntaxOff
-%\end{macrocode}
-%</package>
 
+%    \end{macrocode}
+%</package>
 \endinput

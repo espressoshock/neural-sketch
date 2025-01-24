@@ -1,6 +1,6 @@
-% ----------------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %  neural-sketch-coords.dtx
-% ----------------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 % \iffalse
 %<*driver>
 \documentclass{ltxdoc}
@@ -25,16 +25,28 @@
 %
 % \StopEventually{}
 %
-% ----------------------------------------------------------------
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 %<*package>
-%\begin{macrocode}
+%    \begin{macrocode}
 \ExplSyntaxOn
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Global counter -
+% to track auto-increment counters
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\int_new:N \g__nsk_coord_count_int
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main nsk / coord Primitive
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \keys_define:nn {nsk / coord}
 {
+	% ref-id ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	id .tl_set:N = \l_nsk_coord_id_tl,
 	id .initial:n = { },
 
+	% coords ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	x .fp_set:N = \l_nsk_coord_x_fp,
 	x .initial:n = {0},
 	y .fp_set:N = \l_nsk_coord_y_fp,
@@ -52,7 +64,7 @@
 	shift-y .initial:n = {0pt},
 	shift-y .default:n = {0pt},
 
-	% marker ---------------------------------------------------
+	% markers ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	marker .tl_set:N = \l_nsk_coord_marker_tl,
 	marker .initial:n = {none},   % 'none' = disabled
 	marker .default:n = {none},
@@ -66,16 +78,16 @@
 	marker-size .default:n = {1mm},
 }
 
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Markers
-%-----------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__draw_coord_marker:
 {
 	% If marker = none, do nothing
 	% \tl_if_eq:VnT \l_nsk_coord_marker_tl { none } { \skip_0 }
 	\tl_if_eq:VnF \l_nsk_coord_marker_tl { none }
 	{
-		% We'll rely on the node's name \l_nsk_coord_id_tl
+		% rely on the node's name \l_nsk_coord_id_tl
 		\begin{scope}[shift=(\tl_use:N \l_nsk_coord_id_tl)]
 			% color = <marker-color>
 			% We'll define a local style
@@ -93,7 +105,7 @@
 							\draw circle[radius=\l_nsk_coord_marker_size_dim/2];
 						}
 						{x}{
-							% We'll interpret marker-size as the half-diagonal
+							% interpret marker-size as the half-diagonal
 							% so we draw lines from -(size)/2 to +(size)/2
 							\fp_set:Nn \l_tmpa_fp { \dim_to_fp:n {\l_nsk_coord_marker_size_dim}/2 }
 							\dim_set:Nn \l_tmpa_dim { \fp_to_dim:n {\l_tmpa_fp} }
@@ -113,6 +125,9 @@
 	}
 }
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Auto-generate an ID if user does not supply one
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__coord_maybe_set_id:
 {
 	% If the user didn’t supply an ID, automatically generate one
@@ -126,6 +141,9 @@
 	{ }
 }
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Phantom node Style builder
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__build_coord_style:
 {
 	% Construct the node style for the ghost coordinate
@@ -160,16 +178,24 @@
 	\nsk__draw_coord_marker:
 }
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Phantom node Style builder [AUX]
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__build_coord_style_aux:n #1
 {
 	\node[#1] {};
 }
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Variant Generation :V
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_generate_variant:Nn \nsk__build_coord_style_aux:n { V }
 
-% A simple global counter to auto-generate an ID if needed
-\int_new:N \g__nsk_coord_count_int
 
-% The main user command
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface
+% - (user-facing)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskCoord { O{} }
 {
 	\group_begin:
@@ -185,7 +211,6 @@
 }
 
 \ExplSyntaxOff
-%\end{macrocode}
+%    \end{macrocode}
 %</package>
-
 \endinput

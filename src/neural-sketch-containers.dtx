@@ -23,45 +23,46 @@
 % \date{\today}
 % \maketitle
 %
-% \section{Introduction}
-% This file defines the \nskContainer environment, etc.
-%
 % \StopEventually{}
-%
-% ----------------------------------------------------------------
-%<*package>
-%\begin{macrocode}
-\ExplSyntaxOn
-%---------------------------------------------
-% 1) Minimal: We'll define "container" keys,
-%    but basically we just forward them to nskGroup keys.
-%---------------------------------------------
 
-% 1) Declare your custom layers
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+%<*package>
+%    \begin{macrocode}
+\ExplSyntaxOn
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Custom pgf layers
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \pgfdeclarelayer{background}
 \pgfdeclarelayer{interim}
 \pgfdeclarelayer{foreground}
-
-% 2) Set the order in which layers are drawn
-%    (lowest -> highest)
+% layer registration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \pgfsetlayers{background,interim,main,foreground}
 
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Pass-through
+% store unkown keys to pass-through
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \prop_new:N \l_nsk_container_unknown_prop
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Position Parser
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__container_parse_pos_value:nn #1#2
 {
 % #1 = the user’s "right=1cm of X" or "above=2mm of Y" ...
 % #2 = the container’s padding dimension (e.g. 3mm)
 
-% 1) Save the *raw* pos string to \l_nsk_container_pos_tl
+% Save the raw pos string to \l_nsk_container_pos_tl
 \tl_set:Nx \l_nsk_container_pos_tl {#1}
 
-% 2) Split at '=' (only if the user wrote e.g. "right=1cm of X").
+% Split at '=' (only if the user wrote e.g. "right=1cm of X").
 \seq_set_split:Nnn \l_tmpa_seq {=}{#1}
 \seq_show:N \l_tmpa_seq
 
-% 3) If we have exactly 2 items, item 1 is "right" and item 2 is "1cm of X".
+% If we have exactly 2 items, item 1 is "right" and item 2 is "1cm of X".
 \int_compare:nNnT { \seq_count:N \l_tmpa_seq } = {2}
 {
 % The direction (left/right/above/below)
@@ -75,7 +76,7 @@
 \tl_show:N \l_tmpa_tl
 \tl_show:N \l_tmpb_tl
 
-% We'll try to split at " of "
+% split at " of "
 \seq_set_split:Nnx \l_tmpb_seq {of}{\l_tmpb_tl}
 \seq_show:N \l_tmpb_seq
 
@@ -99,8 +100,10 @@
 \dim_add:Nn \l__nsk_tmp_dim  { #2 }
 \dim_show:N \l__nsk_tmp_dim
 
-
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% String buld
 % Rebuild "right=(dist+pad) of X"
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \tl_set:Nx \l_nsk_container_pos_tl
 {
 	\tl_use:N \l_tmpa_tl
@@ -110,17 +113,20 @@
 }
 }
 }
-
 }
 
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main nsk / container Primitive
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \keys_define:nn {nsk / container}
 {
-	% ref-id ---------------------------------------------------
+	% ref-id ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	% todo: passed through
 	id .tl_set:N = \l_nsk_block_id_tl,
 	id .initial:n = { },
 
+	% styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	% Let the user specify fill, border-type, border-color if desired
 	border-type .choice:,
 	border-type / solid .code:n = \tl_set:Nn \l_nsk_container_border_type_tl { solid },
@@ -164,6 +170,8 @@
 	scale .initial:V = \g__nsk_style_container_scale_fp,
 	scale .default:V = \g__nsk_style_container_scale_fp,
 
+
+	% -- The special pass-through key for arbitrary options.
 	% forward unknown props to nsblocks
 	unknown .code:n =
 		{
@@ -175,11 +183,10 @@
 
 }
 
-
-
-%---------------------------------------------
-% 2) \nskContainer macro
-%---------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface
+% - (user-facing)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskContainer { O{} +m }
 {
 	\group_begin:
@@ -211,7 +218,7 @@
 	\group_end:
 }
 
-% block expander -------------------------------------------
+% block expander ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__expand_block_aux:n #1
 {
 
@@ -226,15 +233,15 @@
 	\end{pgfonlayer}
 }
 
-% Generate a "V V V V" variant so that we can pass token-list
-% variables or dimension variables by *value*.
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Variant Generation :V
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_generate_variant:Nn \nsk__expand_block_aux:n { V }
-
-
-% Generate a "V V V V" variant so that we can pass token-list
-% variables or dimension variables by *value*.
 \cs_generate_variant:Nn \nskBlockFromList:V { V }
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main draw
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__container_draw_block:
 {
 % We'll build a token list of block options
@@ -263,7 +270,6 @@
 }
 
 \ExplSyntaxOff
-%\end{macrocode}
+%    \end{macrocode}
 %</package>
-
 \endinput

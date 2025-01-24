@@ -1,6 +1,6 @@
-% ----------------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %  neural-sketch-colors.dtx
-% ----------------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 % \iffalse
 %<*driver>
 \documentclass{ltxdoc}
@@ -23,29 +23,26 @@
 % \date{\today}
 % \maketitle
 %
-% \section{Introduction}
-% This is the color scheme module. The code is moved verbatim
-% from \texttt{neural-sketch-colors.sty}.
-%
 % \StopEventually{}
 %
-% ----------------------------------------------------------------
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 %<*package>
-%\begin{macrocode}
+%    \begin{macrocode}
 \RequirePackage{xcolor}
 
 \ExplSyntaxOn
 
-%=============================================================================
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Internal ("private") color variables
 % Prefix: c__nsk_<descriptor>_clr
-%=============================================================================
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 
-% Core accent colors
+% Core accent colors ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \definecolor{ c__nsk_main_accent_clr }{HTML}{e0cef5}
 \definecolor{ c__nsk_secondary_accent_clr }{HTML}{d6ebff}
 
-% Grays
+% Grays ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \definecolor{ c__nsk_dark_gray_clr }{HTML}{666666}
 \definecolor{ c__nsk_mid_gray_clr } {HTML}{a3a3a3}
 \definecolor{ c__nsk_light_gray_clr }{HTML}{f0f0f5}
@@ -53,7 +50,7 @@
 \definecolor{ c__nsk_lightest_gray_clr }{HTML}{f8f8f9}
 \definecolor{ c__nsk_shadow_clr }{HTML}{d2d2d2}
 
-% Additional accent colors
+% Add. Accent colors ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \definecolor{ c__nsk_red_clr }   {HTML}{f593a2}
 \definecolor{ c__nsk_pink_clr }  {HTML}{ffcdee}
 \definecolor{ c__nsk_blue_clr }  {HTML}{aacece}
@@ -63,21 +60,21 @@
 \definecolor{ c__nsk_strong_blue_clr }{HTML}{005afd}
 \definecolor{ c__nsk_strong_red_clr } {HTML}{d91900}
 
-% For dark background figures
+% Dark bgs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \definecolor{ c__nsk_medium_white_clr } {HTML}{b0b2c1}
 \definecolor{ c__nsk_dark_bg_clr }      {HTML}{03051a}
 \definecolor{ c__nsk_strong_purple_clr }{HTML}{6545d5}
 
-%=============================================================================
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Public color names (user-facing)
 % Prefix: nsk<Descriptor>
-%=============================================================================
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 
-% Core accent colors
+% Core accent colors ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \colorlet{nskMainAccent}{ c__nsk_main_accent_clr }
 \colorlet{nskSecondaryAccent}{ c__nsk_secondary_accent_clr }
 
-% Grays
+% Grays ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \colorlet{nskDarkGray}{ c__nsk_dark_gray_clr }
 \colorlet{nskMidGray}{ c__nsk_mid_gray_clr }
 \colorlet{nskLightGray}{ c__nsk_light_gray_clr }
@@ -85,7 +82,7 @@
 \colorlet{nskLightestGray}{ c__nsk_lightest_gray_clr }
 \colorlet{nskShadow}{ c__nsk_shadow_clr }
 
-% Additional accent colors
+% Add. Accent colors ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \colorlet{nskRed}{ c__nsk_red_clr }
 \colorlet{nskPink}{ c__nsk_pink_clr }
 \colorlet{nskBlue}{ c__nsk_blue_clr }
@@ -95,15 +92,13 @@
 \colorlet{nskStrongBlue}{ c__nsk_strong_blue_clr }
 \colorlet{nskStrongRed}{ c__nsk_strong_red_clr }
 
-% Dark background figure palette
+% Dark bgs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \colorlet{nskMediumWhite}{ c__nsk_medium_white_clr }
 \colorlet{nskDarkBg}{ c__nsk_dark_bg_clr }
 \colorlet{nskStrongPurple}{ c__nsk_strong_purple_clr }
 
 \ExplSyntaxOff
 
-
-%\end{macrocode}
+%    \end{macrocode}
 %</package>
-
 \endinput
