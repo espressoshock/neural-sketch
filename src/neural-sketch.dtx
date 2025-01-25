@@ -571,7 +571,7 @@
 	\seq_gput_right:NV \g_nsk_block_id_history_seq \l_nsk_block_id_tl
 }
 
-\cs_new_nopar:Npn \nsk__internal_get_nth_block_id:n #1
+\cs_new_protected_nopar:Npn \nsk__internal_get_nth_block_id:n #1
 {
 	% #1 => integer offset n (nth-last)
 	% We will reference the global \g_nsk_block_id_history_seq inside.
@@ -603,7 +603,7 @@
 	}
 
 	% Return it by expanding the token list \l_tmpa_tl
-	\tl_use:N \l_tmpa_tl
+	% \tl_use:N \l_tmpa_tl
 	\tl_gset:Nx \g_nsk_block_last_requested_block_id {\l_tmpa_tl}
 }
 
@@ -671,6 +671,7 @@
 \NewDocumentCommand \nskBlockIDLast { O{1} }
 {
 	\nsk__internal_get_nth_block_id:n {#1}
+	\tl_use:N \g_nsk_block_last_requested_block_id
 }
 
 \NewDocumentCommand \nskLastBlockID {} {
