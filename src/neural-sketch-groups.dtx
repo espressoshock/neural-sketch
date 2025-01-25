@@ -53,7 +53,6 @@
 	%    and item 2 is "1cm of A". If there's no '=', there's
 	%    only one item, so you can skip or do fallback logic.
 	\seq_set_split:Nnx \l_tmpa_seq {=}{#1}
-	\seq_show:N \l_tmpa_seq
 
 	% 4) Check if there's at least two items (the part before '=' plus after '=')
 	\int_compare:nNnT { \seq_count:N \l_tmpa_seq } > {1}

@@ -60,7 +60,6 @@
 
 % Split at '=' (only if the user wrote e.g. "right=1cm of X").
 \seq_set_split:Nnn \l_tmpa_seq {=}{#1}
-\seq_show:N \l_tmpa_seq
 
 % If we have exactly 2 items, item 1 is "right" and item 2 is "1cm of X".
 \int_compare:nNnT { \seq_count:N \l_tmpa_seq } = {2}
@@ -78,7 +77,6 @@
 
 % split at " of "
 \seq_set_split:Nnx \l_tmpb_seq {of}{\l_tmpb_tl}
-\seq_show:N \l_tmpb_seq
 
 
 \int_compare:nNnT { \seq_count:N \l_tmpb_seq } = {2}
