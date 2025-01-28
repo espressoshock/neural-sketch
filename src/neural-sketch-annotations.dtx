@@ -1,0 +1,307 @@
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%  neural-sketch-annotations.dtx
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% \iffalse
+%<*driver>
+\documentclass{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+
+\begin{document}
+\DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+
+\ProvidesFile{neural-sketch-annotate.dtx}%
+[2025/01/28 v0.1 neural-sketch-annotate]
+
+% \title{neural-sketch-annotate.sty}
+% \author{Vincenzo Buono}
+% \date{\today}
+% \maketitle
+
+% \StopEventually{}
+
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+%<*package>
+%    \begin{macrocode}
+
+
+\ExplSyntaxOn
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Global props -
+% Autoincremental annotation number
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\int_new:N \g__nsk_annotation_counter_int
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main nsk / annotate Primitive
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\keys_define:nn { nsk / annotate }
+{
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Instead of ref-num, we use ref-tag:
+	% - If the user sets a string, that string is used directly.
+	% - If it's empty, we auto-increment a global annotation counter
+	%   and store that numeric string.
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	ref-tag .tl_set:N            = \l__nsk_annotate_ref_tag_tl,
+	ref-tag .initial:n           = { },
+
+
+	% box-padding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	padding .dim_set:N           = \l__nsk_annotate_box_padding_dim,
+	padding .initial:n           = {3pt},
+
+	% (B) Single pass-through for nskConnect:
+	connect-opts .tl_set:N       = \l__nsk_annotate_connect_opts_tl,
+	connect-opts .initial:n      = {arrow-style = {dotted, thick},color = nskMidGray},
+
+	text-color .tl_set:N         = \l__nsk_annotate_text_color_tl,
+	text-color .initial:n        = { black },
+
+	% anchor target ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	connect-to .tl_set:N         = \l__nsk_annotate_connect_to_tl,
+	connect-to .value_required:n = true,
+	connect-to .initial:n        = { },
+
+	anchor-from .tl_set:N        = \l__nsk_annotate_from_anchor_tl,
+	anchor-from .initial:n       = { east },
+
+	% coords ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	x .fp_set:N                  = \l__nsk_annotate_x_fp,
+	x .initial:n                 = { 0 },
+	y .fp_set:N                  = \l__nsk_annotate_y_fp,
+	y .initial:n                 = { 0 },
+
+	% nat-pos ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	pos .tl_set:N                = \l__nsk_annotate_pos_tl,
+	pos .initial:n               = { },
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Text
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	header .tl_set:N             = \l__nsk_annotate_header_tl,
+	header .initial:n            = { },
+
+	title .tl_set:N              = \l__nsk_annotate_title_tl,
+	title .initial:n             = { },
+
+	text .tl_set:N               = \l__nsk_annotate_text_tl,
+	text .initial:n              = { },
+
+	text-align .choice:,
+	text-align / left    .code:n = { \tl_set:Nn \l__nsk_annotate_text_align_tl { left } },
+	text-align / center  .code:n = { \tl_set:Nn \l__nsk_annotate_text_align_tl { center } },
+	text-align / right   .code:n = { \tl_set:Nn \l__nsk_annotate_text_align_tl { right } },
+	text-align / justify .code:n = { \tl_set:Nn \l__nsk_annotate_text_align_tl { justify } },
+	text-align .initial:n        = { left },
+	text-align .default:n        = { left },
+
+	header-style .tl_set:N  = \l__nsk_annotate_header_style_tl,
+	header-style .initial:n = { \bfseries },
+
+	title-style .tl_set:N   = \l__nsk_annotate_title_style_tl,
+	title-style .initial:n  = { \itshape },
+
+	text-style .tl_set:N         = \l__nsk_annotate_main_style_tl,
+	text-style .initial:n        = { },
+
+	% bounding styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	fill .tl_set:N               = \l__nsk_annotate_fill_tl,
+	fill .initial:n              = { nskLightestGray },
+
+	border-color .tl_set:N       = \l__nsk_annotate_border_color_tl,
+	border-color .initial:n      = { nskMidGray },
+
+	border-type .choice:,
+	border-type / solid .code:n  = { \tl_set:Nn \l__nsk_annotate_border_type_tl { solid } },
+	border-type / dashed .code:n = { \tl_set:Nn \l__nsk_annotate_border_type_tl { dashed } },
+	border-type .initial:n       = { solid },
+	border-type .default:n       = { solid },
+
+	border-radius .dim_set:N     = \l__nsk_annotate_border_radius_dim,
+	border-radius .initial:n     = {1mm},
+
+	rounded-box .bool_set:N      = \l__nsk_annotate_rounded_box_bool,
+	rounded-box .initial:n       = {false},
+
+	width .dim_set:N             = \l__nsk_annotate_width_dim,
+	width .initial:n             = {0cm},
+
+	% pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	tikz-opts .tl_set:N          = \l__nsk_annotate_extra_tl,
+	tikz-opts .initial:n         = { },
+	tikz-opts .default:n         = { },
+
+}
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Internal helper: Build final annotation node text
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\cs_new_protected_nopar:Npn \nsk__annotate_build_text:
+{
+	% If the user has not provided any explicit ref-tag:
+	\tl_if_blank:VTF \l__nsk_annotate_ref_tag_tl
+	{
+		% => auto-increment the global counter and store it
+		\int_gincr:N \g__nsk_annotation_counter_int
+		\tl_set:No \l__nsk_annotate_ref_tag_tl
+		{
+			\int_use:N \g__nsk_annotation_counter_int
+		}
+	}
+	{
+		% user gave a custom ref-tag => do nothing else
+	}
+
+	% We'll build a small \vbox or inline text:
+	\tl_clear_new:N \l__nsk_annotate_textbox_body_tl
+
+	% If the final ref-tag is nonempty, insert “(\ref-tag) ”
+	\tl_if_blank:VF \l__nsk_annotate_ref_tag_tl
+	{
+		\tl_put_right:No \l__nsk_annotate_textbox_body_tl
+		{ \textbf{(\tl_use:N \l__nsk_annotate_ref_tag_tl)}\space }
+	}
+
+	% If header is not blank:
+	\tl_if_blank:VTF \l__nsk_annotate_header_tl
+	{
+		\tl_put_left:Nn \l__nsk_annotate_textbox_body_tl
+		{
+			{~}
+		}
+	}
+	{
+		\tl_put_right:No \l__nsk_annotate_textbox_body_tl
+		{
+			{\l__nsk_annotate_header_style_tl \tl_use:N \l__nsk_annotate_header_tl}
+			\tl_if_blank:VF \l__nsk_annotate_title_tl
+			{\\}
+		}
+	}
+
+	% If title is not blank
+	\tl_if_blank:VTF \l__nsk_annotate_title_tl
+	{}
+	{
+		\tl_put_right:No \l__nsk_annotate_textbox_body_tl
+		{
+			{\l__nsk_annotate_title_style_tl \tl_use:N \l__nsk_annotate_title_tl}
+			\tl_if_blank:VF \l__nsk_annotate_text_tl
+			{\\}
+		}
+	}
+
+	% If main text is not blank
+	\tl_if_blank:VTF \l__nsk_annotate_text_tl
+	{}
+	{
+		\tl_put_right:No \l__nsk_annotate_textbox_body_tl
+		{
+			{\l__nsk_annotate_main_style_tl \tl_use:N \l__nsk_annotate_text_tl}
+		}
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface
+% - (user-facing)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\NewDocumentCommand \nskAnnotate { O{} }
+{
+	\group_begin:
+
+	% parse user keys
+	\keys_set:nn { nsk / annotate } { #1 }
+
+	% build the annotation text
+	\nsk__annotate_build_text:
+
+	\tl_set:Nx \l__nsk_annotate_this_id_tl
+	{nskAnnotation\int_use:N \g__nsk_annotation_counter_int}
+
+	\nsk__annotate_get_position:
+
+	% draw the annotation text node:
+	\use:x {\exp_not:N \node[
+			name=\l__nsk_annotate_this_id_tl,
+			text=\l__nsk_annotate_text_color_tl,
+
+			\bool_if:NTF \l__nsk_annotate_rounded_box_bool
+			{ shape=rounded~rectangle, }
+			{ shape=rectangle, },
+
+			draw=\l__nsk_annotate_border_color_tl,
+			fill=\l__nsk_annotate_fill_tl,
+			minimum~width=\dim_use:N \l__nsk_annotate_width_dim,
+
+			align=\l__nsk_annotate_text_align_tl,
+			rounded~corners=\l__nsk_annotate_border_radius_dim,
+
+			% minimum size plus box-padding around text:
+			inner~sep=\l__nsk_annotate_box_padding_dim,
+
+			\l__nsk_annotate_pos_tl,
+			\exp_not:V \l__nsk_annotate_extra_tl,
+		]
+		\tl_if_blank:VT \l__nsk_annotate_pos_tl {
+			at \tl_use:N \l_anpos
+		}
+	}
+	{\tl_use:N \l__nsk_annotate_textbox_body_tl};
+
+	% We place a connect from <annotation>.east to connect-to
+	\nsk__annotate_draw_connector:
+
+	% Add to the block history so it can be found by \nskBlockIDLast, etc.
+	\seq_gput_right:NV \g_nsk_block_id_history_seq \l__nsk_annotate_this_id_tl
+
+	\group_end:
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Positioning logic
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\cs_new_protected_nopar:Npn \nsk__annotate_get_position:
+{
+	% If pos= is blank => use (x,y). Else use standard TikZ pos syntax
+	\tl_if_blank:VTF \l__nsk_annotate_pos_tl
+	{
+		% -> "( x , y )"
+		\tl_set:Nx \l_anpos {( \fp_use:N \l__nsk_annotate_x_fp , \fp_use:N \l__nsk_annotate_y_fp )}
+	}
+	{
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Drawing the connecting arrow
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\cs_new_protected_nopar:Npn \nsk__annotate_draw_connector:
+{
+	% if connect-to is blank => do nothing
+	\tl_if_blank:VF \l__nsk_annotate_connect_to_tl
+	{
+		\use:x {
+			\exp_not:N \nskConnect
+			[
+				from=\l__nsk_annotate_this_id_tl.\l__nsk_annotate_from_anchor_tl,
+				to=\l__nsk_annotate_connect_to_tl,
+				\l__nsk_annotate_connect_opts_tl
+			]
+
+		}
+	}
+}
+
+\ExplSyntaxOff
+
+%    \end{macrocode}
+%</package>
+\endinput
