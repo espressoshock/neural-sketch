@@ -621,6 +621,23 @@
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main nsk / figure Primitive
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+\keys_define:nn { nsk / figure }
+{
+	center .bool_set:N = \l_nsk_figure_center_bool,
+	center .initial:n  = { false },
+	center .default:n  = { true },
+
+	% pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	unknown .code:n =
+		{
+			\prop_put:NVn \l_nsk_figure_unknown_prop { \l_keys_key_tl } { #1 }
+		},
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -650,12 +667,35 @@
 
 \NewDocumentEnvironment{nskFigure}{O{}}
 {
+\prop_gclear:N \g_nsk_block_counters_prop
+% (b) Clear the unknown-props container
+\prop_clear:N \l_nsk_figure_unknown_prop
 
-	\prop_gclear:N \g_nsk_block_counters_prop
-	\begin{tikzpicture}[#1]
+% (c) Parse the user-provided options
+\keys_set:nn { nsk / figure } { #1 }
+
+% (d) Convert the unknown key=value pairs into a comma list
+\tl_clear_new:N \l_nsk_figure_opts_tl
+\prop_map_inline:Nn \l_nsk_figure_unknown_prop
+{
+	\tl_put_right:Nx \l_nsk_figure_opts_tl { ##1 = { ##2 }, }
+}
+
+% (e) If center=true, wrap the tikzpicture in a center environment
+\bool_if:NTF \l_nsk_figure_center_bool
+{
+	\begin{center}
+	\begin{tikzpicture}[\tl_use:N \l_nsk_figure_opts_tl]
+}
+{
+	\begin{tikzpicture}[\tl_use:N \l_nsk_figure_opts_tl]
 		}
-		{
+		}{
 	\end{tikzpicture}
+	\bool_if:NT \l_nsk_figure_center_bool
+	{
+		\end{center}
+	}
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
