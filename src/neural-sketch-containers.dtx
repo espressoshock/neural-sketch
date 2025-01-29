@@ -125,12 +125,19 @@
 	id .initial:n = { },
 
 	% styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	% Let the user specify fill, border-type, border-color if desired
-	border-type .choice:,
-	border-type / solid .code:n = \tl_set:Nn \l_nsk_container_border_type_tl { solid },
-	border-type / dashed .code:n = \tl_set:Nn \l_nsk_container_border_type_tl { dashed },
-	border-type .initial:n = { dashed },
-	border-type .default:n = { dashed },
+	border-type .code:n =
+		{
+			\tl_if_eq:nnTF {#1}{none}
+			{
+				\tl_set:Nn \l_nsk_container_border_type_tl {draw=none}
+			}
+			{
+				\tl_set:Nn \l_nsk_container_border_type_tl {#1}
+			}
+
+		},
+	border-type .initial:n = {solid},
+	border-type .default:n = {solid},
 
 	border-color .tl_set:N = \l_nsk_container_border_color_tl,
 	border-color .initial:V = \g__nsk_style_container_border_color_tl,

@@ -117,11 +117,24 @@
 	border-color .tl_set:N       = \l__nsk_annotate_border_color_tl,
 	border-color .initial:n      = { nskMidGray },
 
-	border-type .choice:,
-	border-type / solid .code:n  = { \tl_set:Nn \l__nsk_annotate_border_type_tl { solid } },
-	border-type / dashed .code:n = { \tl_set:Nn \l__nsk_annotate_border_type_tl { dashed } },
-	border-type .initial:n       = { solid },
-	border-type .default:n       = { solid },
+
+	border-type .code:n =
+		{
+			\tl_if_eq:nnTF {#1}{none}
+			{
+				\tl_set:Nn \l_nsk_annotate_border_type_tl {draw=none}
+			}
+			{
+				\tl_set:Nn \l_nsk_annotate_border_type_tl {#1}
+			}
+
+		},
+	border-type .initial:n = {solid},
+	border-type .default:n = {solid},
+
+	border-size .dim_set:N = \l_nsk_annotate_border_size_dim,
+	border-size .initial:n = .4mm,
+	border-size .default:n = .4mm,
 
 	border-radius .dim_set:N     = \l__nsk_annotate_border_radius_dim,
 	border-radius .initial:n     = {1mm},
@@ -246,6 +259,10 @@
 
 			% minimum size plus box-padding around text:
 			inner~sep=\l__nsk_annotate_box_padding_dim,
+
+			% border-type
+			\l_nsk_annotate_border_type_tl,
+			line~width=\l_nsk_annotate_border_size_dim,
 
 			\l__nsk_annotate_pos_tl,
 			\exp_not:V \l__nsk_annotate_extra_tl,
