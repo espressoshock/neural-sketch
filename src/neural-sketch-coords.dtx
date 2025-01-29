@@ -207,6 +207,10 @@
 
 	% 3) Build the node style & place the coordinate
 	\nsk__build_coord_style:
+
+	% Push the current block's ID into the global sequence
+	\seq_gput_right:NV \g_nsk_block_id_history_seq \l_nsk_coord_id_tl
+
 	\group_end:
 }
 
