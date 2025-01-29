@@ -101,7 +101,10 @@
 	height .default:V = \g__nsk_style_block_height_dim,
 	height .initial:V = \g__nsk_style_block_height_dim,
 
-	% styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Inner (regular) border
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	border-type .code:n =
 		{
 			\tl_if_eq:nnTF {#1}{none}
@@ -113,6 +116,7 @@
 			}
 
 		},
+
 	border-type .initial:n = {solid},
 	border-type .default:n = {solid},
 
@@ -128,6 +132,38 @@
 	border-size .initial:V = \g__nsk_style_block_border_size_dim,
 	border-size .default:V = \g__nsk_style_block_border_size_dim,
 
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Outer (halo) border
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+	outer-border-type .code:n =
+		{
+			\tl_if_eq:nnTF {#1}{none}
+			{
+				\tl_set:Nn \l_nsk_block_outer_border_type_tl {draw=none}
+			}
+			{
+				\tl_set:Nn \l_nsk_block_outer_border_type_tl {#1}
+			}
+
+		},
+
+	outer-border-type .initial:n = {none},
+	outer-border-type .default:n = {none},
+
+	outer-border-color .tl_set:N = \l_nsk_block_outer_border_color_tl,
+	outer-border-color .initial:n = { nskMainAccent },
+	outer-border-color .default:n = { nskMainAccent },
+
+	outer-border-radius .dim_set:N = \l_nsk_block_outer_border_radius_dim,
+	outer-border-radius .initial:V = \g__nsk_style_block_border_radius_dim,
+	outer-border-radius .default:V = \g__nsk_style_block_border_radius_dim,
+
+	outer-border-size .dim_set:N = \l_nsk_block_outer_border_size_dim,
+	outer-border-size .initial:n = {7mm},
+	outer-border-size .default:n = {7mm},
+
+	% styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	fill .tl_set:N = \l_nsk_block_fill_tl,
 	fill .initial:V = \g__nsk_style_block_fill_tl,
 	fill .default:V = \g__nsk_style_block_fill_tl,
@@ -498,6 +534,8 @@
 	% Build the style token list incrementally:
 	\tl_clear_new:N \l_tmps_tl
 
+	\tl_set:Nn \l_tmp_pre_acts {}
+
 	\nsk__resolve_pattern_alias:
 
 	% Possibly scale border-size according to importance:
@@ -529,6 +567,12 @@
 	\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
 	\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}
 	\tl_put_right:No \l_tmps_tl {line\space width=\l_nsk_block_border_size_dim,}
+	% outer border ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\tl_put_right:No \l_tmp_pre_acts {draw=\l_nsk_block_outer_border_color_tl,}
+	\tl_put_right:No \l_tmp_pre_acts {\l_nsk_block_outer_border_type_tl,}
+	\tl_put_right:No \l_tmp_pre_acts {rounded\space corners=\l_nsk_block_outer_border_radius_dim,}
+	\tl_put_right:No \l_tmp_pre_acts {line\space width=\l_nsk_block_outer_border_size_dim,}
+
 	% fill ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}
 
@@ -562,6 +606,9 @@
 		\tl_put_right:NV \l_tmps_tl {\l_nsk_block_extra_style_tl,}
 	}
 
+
+	% add any pre-actions ~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\tl_put_right:Nx \l_tmps_tl { preaction={\tl_use:N \l_tmp_pre_acts}, }
 
 	% Now call function which takes
 	% params by value: --
