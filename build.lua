@@ -1,7 +1,7 @@
 #!/usr/bin/env texlua
 
 module = "neural-sketch"
-bundle = "neural-sketch"
+-- bundle = "neural-sketch"
 
 uploadconfig = {
 	author = "Vincenzo Buono",
