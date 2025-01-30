@@ -1,0 +1,101 @@
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%  neural-sketch-decorations.dtx
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% \iffalse
+%<*driver>
+\documentclass{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+
+\begin{document}
+\DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+
+\ProvidesFile{neural-sketch-decorations.dtx}%
+[2025/01/22 v0.1 neural-sketch-decorations]
+
+% \title{neural-sketch-decorations.sty\\[1ex]
+%        Simple decoration system for neural-sketch}
+% \author{Vincenzo Buono}
+% \date{\today}
+% \maketitle
+%
+% \StopEventually{}
+%
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+%<*package>
+%    \begin{macrocode}
+\ExplSyntaxOn
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main nsk / Decoration Primitive
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\keys_define:nn { nsk / decoratepath }
+{
+	start .fp_set:N = \l_nsk_decoratepath_start_fp,
+	start .initial:n = { 0 },
+	start .default:n = { 0 },
+
+	end .fp_set:N = \l_nsk_decoratepath_end_fp,
+	end .initial:n = { 1 },
+	end .default:n = { 1 },
+
+	step .dim_set:N = \l_nsk_decoratepath_step_dim,
+	step .initial:n = {10mm},
+	step .default:n = {10mm},
+
+	% Users might want to pick a color or line width, etc.
+	% You can define more keys if you wish, for example:
+	color .tl_set:N = \l_nsk_decoratepath_color_tl,
+	color .initial:n = {black},
+	color .default:n = {black},
+
+	% unknown keys => throw error or ignore
+	unknown .code:n =
+		{
+			\msg_warning:nn {nsk-decoratepath}
+			{ Unrecognized~key~`\l_keys_key_tl'~will~be~ignored. }
+		},
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface
+% - (user-facing)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\NewDocumentCommand \nskMarkPath { O{} m m }
+{
+	\group_begin:
+	% 1) Parse the optional key=value list
+	\keys_set:nn { nsk / decoratepath } {#1}
+
+	% 2) Draw the “phantom” path
+	%    using the user-supplied #2 (the path),
+	%    and injecting #3 inside ‘mark=... with { ... }’
+	\draw[
+		draw=none,
+		postaction=decorate,
+		decoration={
+				markings,
+				mark=between~positions
+				\fp_use:N \l_nsk_decoratepath_start_fp
+				and
+				\fp_use:N \l_nsk_decoratepath_end_fp
+				step
+				\dim_use:N \l_nsk_decoratepath_step_dim
+				with
+					{
+						#3
+					}
+			}
+	]  #2;
+
+	\group_end:
+}
+\ExplSyntaxOff
+%    \end{macrocode}
+%</package>
+\endinput
