@@ -41,7 +41,7 @@
 	arrows.meta,
 	shadows,
 	patterns,
-	fadings,
+	decorations.markings,
 }
 % internal ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \RequirePackage{neural-sketch-colors}
@@ -430,7 +430,8 @@
 		}
 		{
 			% exec last block id retrieval ~~~~~~~~~~~~~~~ <<<
-			\nsk__internal_get_nth_block_id:n{1}
+			% block is already registered, so get prev
+			\nsk__internal_get_nth_block_id:n{2}
 			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
 
 			\str_if_in:NnTF \l_nsk_block_last_pos_tl {=}
@@ -444,6 +445,7 @@
 				{
 					\exp_not:V \l_nsk_block_last_pos_tl\space of~\exp_not:V \l_tmpa_tl
 				}
+				\tl_show:N \l_nsk_block_pos_tl
 			}
 			{
 				% case (b) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -529,13 +531,16 @@
 	}
 }
 
+
 \cs_new_protected_nopar:Npn \nsk__build_block_style:
 {
 	% Build the style token list incrementally:
 	\tl_clear_new:N \l_tmps_tl
 
 	\tl_set:Nn \l_tmp_pre_acts {}
+	\tl_set:Nn \l_tmp_post_acts {}
 
+	% extras ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\nsk__resolve_pattern_alias:
 
 	% Possibly scale border-size according to importance:
@@ -594,8 +599,9 @@
 		{
 			\tl_put_right:Nx \l_tmpb_tl { pattern\space color=\l_nsk_block_pattern_color_tl, }
 		}
-		% Finally add 'postaction={...},' to the main style
-		\tl_put_right:Nx \l_tmps_tl { postaction={\tl_use:N \l_tmpb_tl}, }
+
+		% append to post-actions
+		\tl_put_right:No \l_tmp_post_acts {\l_tmpb_tl}
 	}
 
 
@@ -609,6 +615,8 @@
 
 	% add any pre-actions ~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_put_right:Nx \l_tmps_tl { preaction={\tl_use:N \l_tmp_pre_acts}, }
+	% add any post-actions ~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\tl_put_right:No \l_tmps_tl { postaction={\tl_use:N \l_tmp_post_acts}, }
 
 	% Now call function which takes
 	% params by value: --
@@ -623,13 +631,14 @@
 \cs_new_protected_nopar:Npn \nsk__store_block_in_history:
 {
 	% Push the current block's ID into the global sequence
-	\seq_gput_right:NV \g_nsk_block_id_history_seq \l_nsk_block_id_tl
+	\seq_gput_right:Nx \g_nsk_block_id_history_seq \l_nsk_block_id_tl
 }
 
 \cs_new_protected_nopar:Npn \nsk__internal_get_nth_block_id:n #1
 {
 	% #1 => integer offset n (nth-last)
 	% We will reference the global \g_nsk_block_id_history_seq inside.
+
 
 	\seq_if_empty:NTF \g_nsk_block_id_history_seq
 	{
@@ -657,9 +666,13 @@
 			}
 	}
 
+
 	% Return it by expanding the token list \l_tmpa_tl
 	% \tl_use:N \l_tmpa_tl
 	\tl_gset:Nx \g_nsk_block_last_requested_block_id {\l_tmpa_tl}
+
+	\seq_show:N \g_nsk_block_id_history_seq
+	\tl_show:N \g_nsk_block_last_requested_block_id
 }
 
 
@@ -706,6 +719,10 @@
 	% possibly autogenerate the id
 	\nsk__maybe_set_id:
 
+	% store id in history
+	\nsk__store_block_in_history:
+
+
 	% process last-pos -> set cpos if neeeded
 	\nsk__process_last_pos:
 
@@ -713,9 +730,6 @@
 
 	% actually draw the block
 	\nsk__draw_block:
-
-	% store id in history
-	\nsk__store_block_in_history:
 
 	\group_end:
 }
@@ -770,8 +784,9 @@
 }
 
 \NewDocumentCommand \nskLastBlockID {} {
-	% "Alias" for the single last block (i.e., \nskBlockIDLast[1])
-	\nskBlockIDLast[1]
+	% "Alias" for the single last block (i.e., \nskBlockIDLast[])
+	% block is already registered, so get prev ->2
+	\nskBlockIDLast[2]
 }
 
 
