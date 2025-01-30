@@ -366,8 +366,6 @@ arc[
 		\clist_set:Nn \l_tmpa_clist { ##1 }
 		\exp_args:NNx \seq_put_right:No \l__nsk_tmp_paths_seq
 		{ \clist_item:Nn \l_tmpa_clist {1}, \clist_item:Nn \l_tmpa_clist {4} }
-
-		\seq_show:N \l__nsk_tmp_paths_seq
 	}
 
 	% Copy bridging info into a local seq, for iteration
@@ -411,11 +409,13 @@ arc[
 
 
 		% finally draw the path with color
-		\expandafter\draw\expandafter[
-			\l__nsk_arrowstyle_tl,
-			draw=\l__nsk_color_tl,
-			spath/use=\l__nsk_pathname_tl
-		];
+		\use:x {
+			\exp_not:N \draw[
+				\l__nsk_arrowstyle_tl,
+				draw=\l__nsk_color_tl,
+				spath/use=\l__nsk_pathname_tl
+			];
+		}
 	}
 
 	% Clear bridging items so not redrawn
@@ -432,8 +432,6 @@ arc[
 	% Clear and split the input on spaces. E.g. "double up=10mm" -> "double", "up=10mm"
 	\seq_clear_new:N \l__nsk_tmp_seq
 	\seq_set_split:Nnn \l__nsk_tmp_seq { ~ } { #1 }
-
-	\seq_show:N \l__nsk_tmp_seq
 
 	% Attempt to read the first token => single/double
 	\seq_if_empty:NF \l__nsk_tmp_seq
@@ -454,7 +452,6 @@ arc[
 			\seq_clear_new:N \l__nsk_tmp_seqb
 			\seq_set_split:Nnx \l__nsk_tmp_seqb { = } { \l_tmpb_tl }
 
-			\seq_show:N \l__nsk_tmp_seqb
 
 			% the first part is direction, second is dimension
 			\seq_pop_left:NN \l__nsk_tmp_seqb \l_tmpc_tl % e.g. "up"
@@ -468,10 +465,6 @@ arc[
 			\tl_set_eq:NN \l__nsk_connect_bend_direction_tl \l_tmpb_tl
 		}
 	}
-
-	\tl_show:N \l__nsk_connect_bend_type_tl
-	\tl_show:N \l__nsk_connect_bend_direction_tl
-	\dim_show:N \l__nsk_connect_bend_amount_dim
 }
 
 

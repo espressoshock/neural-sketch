@@ -50,6 +50,7 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Position Parser
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\dim_new:N \l__nsk_tmp_dim
 \cs_new_protected_nopar:Npn \nsk__container_parse_pos_value:nn #1#2
 {
 % #1 = the user’s "right=1cm of X" or "above=2mm of Y" ...
@@ -91,7 +92,6 @@
 
 
 % Convert "1cm" to a dimension variable
-\dim_new:N \l__nsk_tmp_dim
 \dim_set:Nn \l__nsk_tmp_dim {\tl_use:N \l_tmpc_tl}
 \dim_show:N \l__nsk_tmp_dim
 % Now add the container's padding
