@@ -42,6 +42,7 @@
 	shadows,
 	patterns,
 	decorations.markings,
+	tikzmark,
 }
 % internal ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \RequirePackage{neural-sketch-colors}
@@ -445,7 +446,6 @@
 				{
 					\exp_not:V \l_nsk_block_last_pos_tl\space of~\exp_not:V \l_tmpa_tl
 				}
-				\tl_show:N \l_nsk_block_pos_tl
 			}
 			{
 				% case (b) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -601,7 +601,7 @@
 		}
 
 		% append to post-actions
-		\tl_put_right:No \l_tmp_post_acts {\l_tmpb_tl}
+		\tl_put_right:Nx \l_tmp_post_acts {\l_tmpb_tl}
 	}
 
 
@@ -616,7 +616,7 @@
 	% add any pre-actions ~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_put_right:Nx \l_tmps_tl { preaction={\tl_use:N \l_tmp_pre_acts}, }
 	% add any post-actions ~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_put_right:No \l_tmps_tl { postaction={\tl_use:N \l_tmp_post_acts}, }
+	\tl_put_right:Nx \l_tmps_tl { postaction={\tl_use:N \l_tmp_post_acts}, }
 
 	% Now call function which takes
 	% params by value: --
@@ -671,8 +671,8 @@
 	% \tl_use:N \l_tmpa_tl
 	\tl_gset:Nx \g_nsk_block_last_requested_block_id {\l_tmpa_tl}
 
-	\seq_show:N \g_nsk_block_id_history_seq
-	\tl_show:N \g_nsk_block_last_requested_block_id
+	% \seq_show:N \g_nsk_block_id_history_seq
+	% \tl_show:N \g_nsk_block_last_requested_block_id
 }
 
 
