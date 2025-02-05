@@ -323,18 +323,18 @@
 
 	\keys_set:nn { nsk / group } {#1}
 
+  \tl_show:N \l_nsk_group_pos_tl
 
 	\nsk__process_last_pos_for_group:
 
 	% maybe detect anchor pos
 	\nsk__detect_anchor_pos:
 
-
 	% Build a comma-separated style in \l_tmpa_tl
 	\nsk__build_group_style:
 
+  \tl_show:N \l_nsk_group_pos_tl
 
-	\tl_show:N \l_tmpa_tl
 	% draw
 	\nsk__draw_group_scope_aux:VVn \l_nsk_group_pos_tl \l_tmpa_tl {#2}
 }

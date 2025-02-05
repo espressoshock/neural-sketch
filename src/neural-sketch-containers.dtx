@@ -85,6 +85,14 @@
 % item 1 = "1cm", item 2 = "X"
 \tl_set:Nx \l_tmpc_tl { \seq_item:Nn \l_tmpb_seq {1} }
 \tl_trim_spaces:N \l_tmpc_tl
+
+\tl_if_empty:NTF \l_tmpc_tl
+  {
+    % No distance was provided; use default distance.
+    \tl_set:Nn \l_tmpc_tl {2cm}
+  }
+  {}
+
 \tl_set:Nx \l_tmpd_tl { \seq_item:Nn \l_tmpb_seq {2} }
 \tl_trim_spaces:N \l_tmpd_tl
 \tl_show:N \l_tmpc_tl
@@ -95,6 +103,8 @@
 \dim_set:Nn \l__nsk_tmp_dim {\tl_use:N \l_tmpc_tl}
 \dim_show:N \l__nsk_tmp_dim
 % Now add the container's padding
+\dim_add:Nn \l__nsk_tmp_dim  { #2 }
+\dim_add:Nn \l__nsk_tmp_dim  { #2 }
 \dim_add:Nn \l__nsk_tmp_dim  { #2 }
 \dim_show:N \l__nsk_tmp_dim
 
@@ -175,6 +185,14 @@
 	scale .initial:V = \g__nsk_style_container_scale_fp,
 	scale .default:V = \g__nsk_style_container_scale_fp,
 
+	group-opts .code:n =
+		{
+			% #1 is exactly what is inside { ... }, including any commas.
+			% store it literally into \l_nsk_block_extra_style_tl
+			\tl_set:Nn \l_nsk_group_extra_style_tl {#1}
+		},
+	group-opts .initial:n = {},
+	group-opts .default:n = {},
 
 	% -- The special pass-through key for arbitrary options.
 	% forward unknown props to nsblocks
@@ -194,34 +212,55 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskContainer { O{} +m }
 {
-	\group_begin:
+  \group_begin:
 
 	% (a) Clear the property list so it doesn't retain any old unknown keys
-	% \prop_clear_new:N \l_nsk_container_unknown_prop
+	\prop_clear_new:N \l_nsk_container_unknown_prop
 
 	% (b) Parse recognized container keys + store unknown keys
 	\keys_set:nn {nsk / container}{#1}
 
 	% (c) Now call \nskGroup, passing the same #1 so that shift-x, rotate, etc.
 	%     get recognized by nsk / group (or remain unknown for that domain).
-	\nskGroup[
-		shift-x=\fp_use:N \l_nsk_container_x_fp,
-		shift-y=\fp_use:N \l_nsk_container_y_fp,
-		rotate=\fp_use:N \l_nsk_container_rotate_fp,
-		scale=\fp_use:N \l_nsk_container_scale_fp,
-		pos=\tl_use:N \l_nsk_container_pos_tl,
-	]
+
+  \tl_show:N \l_nsk_container_pos_tl
+	\tl_set:Nx \l_tmpx_tl
 	{
-		% user content
-		#2
+		shift-x=\l_nsk_container_x_fp,
+		shift-y=\l_nsk_container_y_fp,
+		rotate=\l_nsk_container_rotate_fp,
+		scale=\l_nsk_container_scale_fp,
+    pos={\l_nsk_container_pos_tl},
 	}
+
+  \tl_show:N \l_tmpx_tl
+
+	% % pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+	{ }
+	{
+		\tl_put_right:Nx \l_tmpx_tl {\l_nsk_block_extra_style_tl,}
+	}
+
+
+	\nsk__expand_group_aux:Vn \l_tmpx_tl {#2}
 
 	% (d) Build an \nskBlock that fits the bounding box, plus any unknown keys
 	%     stored in \l_nsk_container_unknown_prop. We'll do a small helper:
 	\nsk__container_draw_block:
 
-	\group_end:
+  \group_end:
+
 }
+
+\cs_new_protected_nopar:Npn \nsk__expand_group_aux:nn #1 #2
+{
+	\nskGroup[#1]
+	{
+		#2
+	}
+}
+
 
 % block expander ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__expand_block_aux:n #1
@@ -242,6 +281,7 @@
 % Variant Generation :V
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_generate_variant:Nn \nsk__expand_block_aux:n { V }
+\cs_generate_variant:Nn \nsk__expand_group_aux:nn { Vn }
 \cs_generate_variant:Nn \nskBlockFromList:V { V }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
