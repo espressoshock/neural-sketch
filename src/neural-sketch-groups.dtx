@@ -33,60 +33,68 @@
 % ---------------------------------------------------------------------
 % 1) Global Data Structures
 % ---------------------------------------------------------------------
-\tl_set:Nn \l_nsk_group_refnode_id_tl {__nsk_phantom_refnode}
 \prop_new:N \l_nsk_group_unknown_prop
+\tl_set:Nn \l_nsk_group_refnode_id_tl {__nsk_phantom_refnode}
 
-%-----------------------------------------------------------
-% parse pos
-%-----------------------------------------------------------
-\cs_new_protected_nopar:Npn \nsk__group_parse_pos_value:V #1
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Positioning parsing and smart anchor detections
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__group_parse_pos:
 {
-	% 1) Store the user’s "pos={...}" string in a variable
-	\tl_set:Nx \l_nsk_group_pos_tl { #1 }
 
-	% 2) Default anchor is "center"
-	\tl_set:Nn \l_nsk_group_anchor_tl { center }
+% "below right=0cm and 0cm of basics"
+\seq_set_split:Nnx \l_tmpa_seq {=}{\l_nsk_group_pos_tl}
+\seq_show:N \l_tmpa_seq
 
-	% 3) Split #1 at the '=' sign into a sequence \l_tmpa_seq
-	%    For example, "below right=0cm and 0cm of basics" 
-	%    becomes item 1: "below right", item 2: "0cm and 0cm of basics"
-	\seq_set_split:Nnx \l_tmpa_seq {=}{#1}
+% dira/b
+\tl_clear_new:N \l_nsk_group_ps_dira_tl
+\tl_clear_new:N \l_nsk_group_ps_dirb_tl
 
-	% 4) If there's at least two items, we can inspect the first part 
-	%    (the directions) to pick a multi‐word anchor.
-	\int_compare:nNnT { \seq_count:N \l_tmpa_seq } > {1}
-		{
-			% \l_tmpa_tl := "below right" (for example)
-			\tl_set:Nx \l_tmpa_tl { \seq_item:Nn \l_tmpa_seq {1} }
+% If there's at least two items, we can inspect the first part
+%    (the directions) to pick a multi‐word anchor.
+\int_compare:nNnT { \seq_count:N \l_tmpa_seq } > {1}
+{
+% \l_tmpa_tl := "below right" (for example)
+\tl_set:Nx \l_tmpa_lx_tl { \seq_item:Nn \l_tmpa_seq {1} }
+% 0cm and 0cm of basics.<..>
+\tl_set:Nx \l_tmpa_rx_tl { \seq_item:Nn \l_tmpa_seq {2} }
 
-			% We will parse each “direction” word—e.g., "below" then "right" 
-			%—and build up the final anchor like "north west".
-			\tl_clear_new:N \l_tmpc_tl  % will accumulate e.g. " north west"
+% split lx side ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% split below right
+\seq_set_split:Nnx \l_tmpa_ps_seq {~} { \tl_use:N \l_tmpa_lx_tl }
 
-			% Split "below right" by spaces into a sequence 
-			\seq_set_split:Nnx \l_tmpb_seq {~} { \tl_use:N \l_tmpa_tl }
+\int_compare:nNnT { \seq_count:N \l_tmpa_ps_seq } = {1}
+{
+\tl_set:Nx \l_nsk_group_ps_dira_tl { \seq_item:Nn \l_tmpa_ps_seq {1} }
+}
 
-			\seq_map_inline:Nn \l_tmpb_seq
-			{
-				% If we see "above", we append "south" (the opposite anchor)
-				\str_case:nnF {##1}
-				{
-					{above} { \tl_put_right:No \l_tmpc_tl {south} }
-						{below} { \tl_put_right:No \l_tmpc_tl {north} }
-						{left}  { \tl_put_right:No \l_tmpc_tl {east} }
-						{right} { \tl_put_right:No \l_tmpc_tl {west} }
-				}
-				{
-					% If it doesn't match above/below/left/right, do nothing
-				}
-			}
-			% If we found any recognized directions, update the anchor
-			\tl_if_empty:NF \l_tmpc_tl
-			{
-				\tl_set_eq:NN \l_nsk_group_anchor_tl \l_tmpc_tl
-			}
-			\tl_show:N \l_tmpc_tl
-		}
+\int_compare:nNnT { \seq_count:N \l_tmpa_ps_seq } = {2}
+{
+\tl_set:Nx \l_nsk_group_ps_dira_tl { \seq_item:Nn \l_tmpa_ps_seq {1} }
+\tl_set:Nx \l_nsk_group_ps_dirb_tl { \seq_item:Nn \l_tmpa_ps_seq {2} }
+}
+}
+
+% prepend proper alignmet ~~~~~~~~~~~~~~~~~~~~~ <<<
+\str_if_in:NnTF \l_nsk_group_pos_tl {.}
+{}
+{
+	% not given --
+	\tl_clear_new:N \l_anchor_tl
+	\str_case:Vn \l_nsk_group_ps_dira_tl
+	{
+		{above}{\tl_set:Nn \l_anchor_tl {north}}
+			{below}{\tl_set:Nn \l_anchor_tl {south}}
+			{left}{\tl_set:Nn \l_anchor_tl {west}}
+			{right}{\tl_set:Nn \l_anchor_tl {east}}
+	}
+	\tl_show:N \l_anchor_tl
+
+	\tl_put_right:Nx \l_nsk_group_pos_tl
+	{.\l_anchor_tl}
+}
+\tl_show:N \l_nsk_group_pos_tl
 
 }
 
@@ -133,8 +141,43 @@
 			}
 		}
 	}
-  \tl_show:n \l_nsk_group_pos_tl
+	\tl_show:n \l_nsk_group_pos_tl
 }
+
+\cs_new_protected_nopar:Npn \nsk__detect_anchor_pos:
+{
+	\nsk__group_parse_pos:
+
+	% vertical  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\tl_if_blank:VTF \l_nsk_group_pos_tl
+	{}
+	{
+		\tl_if_blank:VT \l_nsk_pos_align_tl
+		{
+			\tl_if_blank:VF \l_nsk_group_ps_dira_tl
+			{
+				\str_case:Vn \l_nsk_group_ps_dira_tl {
+					{above}{\tl_set:Nn \l_nsk_pos_align_tl {south~}}
+						{below}{\tl_set:Nn \l_nsk_pos_align_tl {north~}}
+						{right}{\tl_set:Nn \l_nsk_pos_align_tl {west~}}
+						{left}{\tl_set:Nn \l_nsk_pos_align_tl {east~}}
+				}
+			}
+
+			\tl_if_blank:VF \l_nsk_group_ps_dirb_tl
+			{
+				\str_case:Vn \l_nsk_group_ps_dirb_tl {
+					{right}{\tl_put_right:Nn \l_nsk_pos_align_tl {west}}
+						{left}{\tl_put_right:Nn \l_nsk_pos_align_tl {east}}
+				}
+			}
+		}
+	}
+
+	\tl_show:N \l_nsk_pos_align_tl
+
+}
+
 
 %-----------------------------------------------------------
 % Group
@@ -147,17 +190,18 @@
 	bounds-name .initial:n = {__nsk_container_bounds},
 	bounds-name .default:n = {__nsk_container_bounds},
 
+	% natural positioning using positioning library
+	pos .tl_set:N = \l_nsk_group_pos_tl,
+	pos .initial:n = { },
+	pos .default:n = { },
+
 	last-pos .tl_set:N = \l_nsk_group_last_pos_tl,
 	last-pos .initial:n = { },
 
-	% natural positioning using positioning library
-	pos .code:n =
-		{
-			\nsk__group_parse_pos_value:V {#1}
-			% \tl_set:Nn \l_nsk_group_pos_tl {#1}
-		},
-	pos .initial:n = { },
-	pos .default:n = { },
+	% pos-alignment (edge flush) ~~~~~~~~~~~~~~~~~ <<<
+	pos-align .tl_set:N = \l_nsk_pos_align_tl,
+	pos-align .default:n = { },
+	pos-align .initial:n = { },
 
 	shift-x .fp_set:N = \l_nsk_group_x_fp,
 	shift-x .initial:n = {0},
@@ -167,6 +211,7 @@
 	shift-y .initial:n = {0},
 	shift-y .default:n = {0},
 
+
 	rotate .fp_set:N = \l_nsk_group_rotate_fp,
 	rotate .initial:n = {0},
 	rotate .default:n = {0},
@@ -174,15 +219,6 @@
 	scale .fp_set:N = \l_nsk_group_scale_fp,
 	scale .initial:n = {1},
 	scale .default:n = {1},
-
-	% todo: this requires proper expansion
-	% Optional "group-style" pass-through
-	group-style .code:n =
-		{
-			\tl_set:Nn \l_nsk_group_extra_style_tl {#1}
-		},
-	group-style .initial:n = {},
-	group-style .default:n = {},
 
 	% forward unknown props to scope
 	unknown .code:n =
@@ -194,53 +230,43 @@
 		},
 }
 
-
-
 %-----------------------------------------------------------------
-% 3) Internal: build the final TikZ style as a comma-separated list
+% () Internal: build the final TikZ style as a comma-separated list
 %    We'll store it in \l_tmpa_tl.
 %-----------------------------------------------------------------
+
 \cs_new_protected_nopar:Npn \nsk__build_group_style:
 {
-	% We'll create \l_tmpa_tl anew each time
+	% styles
 	\tl_clear_new:N \l_tmpa_tl
 
-
 	\tl_put_right:Nx \l_tmpa_tl
-	{ local\space bounding\space box=\tl_use:N \l_nsk_group_bounds_name_tl, }
+	{local~bounding~box=\l_nsk_group_bounds_name_tl, }
+
+	\tl_if_blank:VF \l_nsk_group_pos_tl
+	{
+		\tl_put_right:Nx \l_tmpa_tl
+		{ shift={(\l_nsk_group_refnode_id_tl)}, }
+
+	}
+
+	\tl_if_blank:VF \l_nsk_pos_align_tl
+	{
+		\tl_put_right:Nx \l_tmpa_tl
+		{anchor={\l_nsk_pos_align_tl}, }
+
+		% use pic workaround / wait for buffer write
+		\tl_put_right:Nn \l_tmpa_tl
+		{scope~anchor, }
+	}
 
 
-	% {x,y} pos ------------------------------------------------
-	\tl_if_blank:VTF \l_nsk_group_pos_tl
-	{
-		% shift=(...)
-		\tl_put_right:Nx \l_tmpa_tl
-		{ shift={(\fp_use:N \l_nsk_group_x_fp,\fp_use:N \l_nsk_group_y_fp)}, }
-	}
-	{
-		% -- pos is given => shift to reference phantom node
-		\tl_put_right:Nx \l_tmpa_tl
-		{ shift={(\tl_use:N \l_nsk_group_refnode_id_tl)}, }
-	}
 	% rotate=...
 	\tl_put_right:Nx \l_tmpa_tl { rotate=\fp_use:N \l_nsk_group_rotate_fp, }
 
 	% scale=...
 	\tl_if_eq:nnF {\fp_to_decimal:N \l_nsk_group_scale_fp}{1.0}
 	{ \tl_put_right:Nx \l_tmpa_tl { scale=\fp_use:N \l_nsk_group_scale_fp, } }
-
-	% anchor=
-	% for relative naural positionig/alignment
-	\tl_put_right:Nx \l_tmpa_tl
-	{ anchor=\tl_use:N \l_nsk_group_anchor_tl, }
-
-	% user-supplied style pass-through
-	\tl_if_empty:VTF \l_nsk_group_extra_style_tl
-	{ % do nothing if empty
-	}
-	{
-		\tl_put_right:Nx \l_tmpa_tl { \l_nsk_group_extra_style_tl, }
-	}
 
 	% forward unknown keys as-is
 	\prop_map_inline:Nn \l_nsk_group_unknown_prop
@@ -250,6 +276,7 @@
 			##1 = ##2,
 		}
 	}
+
 }
 
 %-----------------------------------------------------------------
@@ -257,61 +284,61 @@
 %    #1 -> the style token list (passed by value)
 %    #2 -> user content
 %-----------------------------------------------------------------
+
 \cs_new_protected_nopar:Npn \nsk__draw_group_scope_aux:nnn #1 #2 #3
 {
-
-	% phantom reference node for natural positioning
+	% phantom node ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_if_blank:VF \l_nsk_group_pos_tl
 	{
-		\node[#3, anchor=center] (\l_nsk_group_refnode_id_tl) {};
+		\node[
+			#1,
+			draw=none,
+			fill=none,
+			name=\l_nsk_group_refnode_id_tl,
+			anchor=center
+		] {};
 	}
 
-	\begin{scope}[#1]
-		#2
+
+	% actual draw ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\begin{scope}[#2]
+		\pgftransformshift{
+			\pgfpoint{\fp_use:N \l_nsk_group_x_fp}{\fp_use:N \l_nsk_group_y_fp}
+		}
+		#3
 	\end{scope}
-
-	% FIXME: delete me
-	% \tl_if_blank:VF \l_nsk_group_pos_tl
-	% {
-	% 	\fill[green] (\l_nsk_group_refnode_id_tl) circle (1mm);
-	%
-	% 	\draw[green,thick]
-	% 	(\l_nsk_group_bounds_name_tl.south\space west) rectangle
-	% 	(\l_nsk_group_bounds_name_tl.north\space east);
-	% }
-	%
-	% \tl_if_blank:VT \l_nsk_group_pos_tl
-	% {
-	% 	\draw[red,thick]
-	% 	(\l_nsk_group_bounds_name_tl.south\space west) rectangle
-	% 	(\l_nsk_group_bounds_name_tl.north\space east);
-	% }
-
 }
-\cs_generate_variant:Nn \nsk__draw_group_scope_aux:nnn { Vnx }
-% ^ so we can pass \l_tmpa_tl by value (like :Vn)
 
-%-----------------------------------------------------------------
-% 5) Public macro \nskGroup
-%-----------------------------------------------------------------
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Variant Generation :V
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_generate_variant:Nn \nsk__draw_group_scope_aux:nnn { VVn }
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface
+% - (user-facing)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskGroup { O{} +m }
 {
-	\group_begin:
 
-	% (a) Parse user-supplied keys
-	\keys_set:nn {nsk / group} {#1}
+	\keys_set:nn { nsk / group } {#1}
+
 
 	\nsk__process_last_pos_for_group:
 
-	% (b) Build a comma-separated style in \l_tmpa_tl
+	% maybe detect anchor pos
+	\nsk__detect_anchor_pos:
+
+
+	% Build a comma-separated style in \l_tmpa_tl
 	\nsk__build_group_style:
 
 
-	% (c) Draw the scope, passing the style "by value"
-	\nsk__draw_group_scope_aux:Vnx \l_tmpa_tl {#2} \l_nsk_group_pos_tl
-
-	\group_end:
+	\tl_show:N \l_tmpa_tl
+	% draw
+	\nsk__draw_group_scope_aux:VVn \l_nsk_group_pos_tl \l_tmpa_tl {#2}
 }
+
 
 \ExplSyntaxOff
 %\end{macrocode}
