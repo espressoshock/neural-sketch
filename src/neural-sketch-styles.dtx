@@ -71,16 +71,16 @@
 
 	% text-anchoring ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	text-north-loc .tl_set:N = \g__nsk_style_text_north_loc_tl,
-	text-north-loc .initial:n = {above},
+	text-north-loc .initial:n = {},
 
 	text-south-loc .tl_set:N = \g__nsk_style_text_south_loc_tl,
-	text-south-loc .initial:n = {below},
+	text-south-loc .initial:n = {},
 
 	text-east-loc .tl_set:N = \g__nsk_style_text_east_loc_tl,
-	text-east-loc .initial:n = {right},
+	text-east-loc .initial:n = {},
 
 	text-west-loc .tl_set:N = \g__nsk_style_text_west_loc_tl,
-	text-west-loc .initial:n = {left},
+	text-west-loc .initial:n = {},
 
 	text-center-loc .tl_set:N = \g__nsk_style_text_center_loc_tl,
 	text-center-loc .initial:n = { },
@@ -161,6 +161,11 @@
 	\keys_set:nn { nsk / style }{ #1 }
 }
 
+% TODO: move to quick utils
+\usepackage{ifthen}
+\newcommand{\ifstreq}[4]{%
+	\ifthenelse{\equal{#1}{#2}}{#3}{#4}%
+}
 
 \ExplSyntaxOff
 %\end{macrocode}
