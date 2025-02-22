@@ -40,6 +40,10 @@
 	start .initial:n = { 0 },
 	start .default:n = { 0 },
 
+	at .tl_set:N = \l_nsk_decoratepath_at_tl,
+	at .initial:n = { },
+	at .default:n = { },
+
 	end .fp_set:N = \l_nsk_decoratepath_end_fp,
 	end .initial:n = { 1 },
 	end .default:n = { 1 },
@@ -54,6 +58,15 @@
 	color .initial:n = {black},
 	color .default:n = {black},
 
+	% skips ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	path-width .dim_set:N = \l_nsk_decoratepath_path_width_dim,
+	path-width .initial:n = {0pt},
+
+	skip-first .bool_set:N = \l_nsk_decoratepath_skip_first_bool,
+	skip-first .initial:n = {false},
+	skip-last .bool_set:N = \l_nsk_decoratepath_skip_last_bool,
+	skip-last .initial:n = {false},
+
 	% unknown keys => throw error or ignore
 	unknown .code:n =
 		{
@@ -62,38 +75,139 @@
 		},
 }
 
+\cs_new_protected_nopar:Npn \nsk__decorate_path_skips:
+{
+
+	\dim_compare:nNnT { \l_nsk_decoratepath_path_width_dim } > { 0pt }
+		{
+			\bool_if:NT \l_nsk_decoratepath_skip_first_bool
+			{
+				\fp_set:Nn \l_tmpa_fp
+				{
+					{ \dim_to_fp:n
+							{ \l_nsk_decoratepath_step_dim } / \dim_to_fp:n
+							{ \l_nsk_decoratepath_path_width_dim } }
+				}
+				\fp_add:Nn \l_nsk_decoratepath_start_fp {\l_tmpa_fp}
+			}
+
+			\bool_if:NT \l_nsk_decoratepath_skip_last_bool
+			{
+				\fp_set:Nn \l_tmpa_fp
+				{ \dim_to_fp:n { \l_nsk_decoratepath_step_dim } / \dim_to_fp:n
+					{ \l_nsk_decoratepath_path_width_dim } }
+				\fp_add:Nn \l_nsk_decoratepath_end_fp { -\l_tmpa_fp }
+			}
+		}
+}
+
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskMarkPath { O{} m m }
 {
-	\group_begin:
-	% 1) Parse the optional key=value list
-	\keys_set:nn { nsk / decoratepath } {#1}
+\group_begin:
+% 1) Parse the optional key=value list
+\keys_set:nn { nsk / decoratepath } {#1}
 
-	% 2) Draw the “phantom” path
-	%    using the user-supplied #2 (the path),
-	%    and injecting #3 inside ‘mark=... with { ... }’
-	\draw[
-		draw=none,
-		postaction=decorate,
-		decoration={
-				markings,
-				mark=between~positions
-				\fp_use:N \l_nsk_decoratepath_start_fp
-				and
-				\fp_use:N \l_nsk_decoratepath_end_fp
-				step
-				\dim_use:N \l_nsk_decoratepath_step_dim
-				with
-					{
-						#3
+% path skips
+\nsk__decorate_path_skips:
+
+% 2) Draw the “phantom” path
+%    using the user-supplied #2 (the path),
+%    and injecting #3 inside ‘mark=... with { ... }’
+\tl_if_head_eq_charcode:nNTF {#2} (
+{
+		% TODO: refactor this spaghetti stuff
+		\tl_if_empty:VTF \l_nsk_decoratepath_at_tl
+		{
+			% -True
+			\draw[
+				draw=none,
+				postaction=decorate,
+				decoration={
+						markings,
+						mark=
+						between~positions
+						\fp_use:N \l_nsk_decoratepath_start_fp
+						and
+						\fp_use:N \l_nsk_decoratepath_end_fp
+						step
+						\dim_use:N \l_nsk_decoratepath_step_dim
+						with
+							{
+								#3
+							}
 					}
-			}
-	]  #2;
+			]  #2;
 
-	\group_end:
+		}
+		{
+			% -False
+			\draw[
+				draw=none,
+				postaction=decorate,
+				decoration={
+						markings,
+						mark=
+						at~position
+						\tl_use:N \l_nsk_decoratepath_at_tl
+						with
+							{
+								#3
+							}
+					}
+			]  #2;
+
+		}
+
+	}{
+
+		% TODO: refactor this spaghetti stuff
+		\tl_if_empty:VTF \l_nsk_decoratepath_at_tl
+		{
+			% true
+			\draw[
+				draw=none,
+				spath/use=#2,
+				postaction=decorate,
+				decoration={
+						markings,
+						mark=between~positions
+						\fp_use:N \l_nsk_decoratepath_start_fp
+						and
+						\fp_use:N \l_nsk_decoratepath_end_fp
+						step
+						\dim_use:N \l_nsk_decoratepath_step_dim
+						with
+							{
+								#3
+							}
+					}
+			] ;
+		}
+		{
+			% false
+			\draw[
+				draw=none,
+				spath/use=#2,
+				postaction=decorate,
+				decoration={
+						markings,
+						mark=at~position
+						\tl_use:N \l_nsk_decoratepath_at_tl
+						with
+							{
+								#3
+							}
+					}
+			] ;
+		}
+
+	}
+
+\group_end:
 }
 \ExplSyntaxOff
 %    \end{macrocode}
