@@ -155,6 +155,15 @@
 	bend-distance .initial:n  = {1cm},
 	bend-distance .default:n  = {1cm},
 
+	% shorten ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	shorten-from .dim_set:N = \l__nsk_connect_shorten_from_dim,
+	shorten-from .initial:n = {0pt},
+	shorten-from .default:n = {0pt},
+
+	shorten-to .dim_set:N = \l__nsk_connect_shorten_to_dim,
+	shorten-to .initial:n = {0pt},
+	shorten-to .default:n = {0pt},
+
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Bend route
 	% convenience key that allows user to write something like
@@ -195,6 +204,8 @@
 		#1,
 		draw=#2,
 		spath/save~global=#3,
+		shorten~<=\l__nsk_connect_shorten_from_dim,
+		shorten~>=\l__nsk_connect_shorten_to_dim,
 	]
 	(\l_nsk_connect_from_tl)
 	\l_nsk_connect_route_tl
