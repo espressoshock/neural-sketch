@@ -83,6 +83,11 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \keys_define:nn { nsk / connect }
 {
+	% ref-id ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	id .tl_set:N = \l_nsk_connect_id_tl,
+	id .initial:n = { },
+	id .default:n = { },
+
 	% end-points ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	from .tl_set:N           = \l_nsk_connect_from_tl,
 	from .value_required:n   = true,
@@ -107,18 +112,23 @@
 
 	bridging-path .tl_set:N         = \l_nsk_connect_bridging_path_tl,
 	bridging-path .initial:n        = { arc },
+	bridging-path .default:n        = { arc },
 
 	bridging-span .tl_set:N         = \l_nsk_connect_bridging_span_tl,
 	bridging-span .initial:n        = { 8pt },
+	bridging-span .default:n        = { 8pt },
 
 	bridging-gap .tl_set:N          = \l_nsk_connect_bridging_gap_tl,
 	bridging-gap .initial:n         = { 4pt },
+	bridging-gap .default:n         = { 4pt },
 
 	arrow-style .tl_set:N           = \l_nsk_connect_arrow_style_tl,
 	arrow-style .initial:n          = {ultra\space thick, >=Triangle},
+	arrow-style .default:n          = {ultra\space thick, >=Triangle},
 
 	color .tl_set:N                 = \l_nsk_connect_color_tl,
 	color .initial:n                = { black },
+	color .default:n                = { black },
 
 	% corner-radius ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	corner-radius .dim_set:N = \l__nsk_connect_corner_radius_dim,
@@ -161,10 +171,10 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Connect Drawing --
 %  Immediate draw if bridging is false:
-%   \nsk__draw_connect:VV
-%  #1 => arrow-style, #2 => color
+%   \nsk__draw_connect:VVV
+%  #1 => arrow-style, #2 => color, #3 => id
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\cs_new_protected_nopar:Npn \nsk__draw_connect:VV #1#2
+\cs_new_protected_nopar:Npn \nsk__draw_connect:VVV #1#2#3
 {
 	% if \l__nsk_connect_bend_bool is true, generate route accordingly:
 	\tl_if_eq:NnF \l__nsk_connect_bend_type_tl {none}
@@ -184,6 +194,7 @@
 	\expandafter\draw\expandafter[
 		#1,
 		draw=#2,
+		spath/save~global=#3,
 	]
 	(\l_nsk_connect_from_tl)
 	\l_nsk_connect_route_tl
@@ -250,9 +261,10 @@
 	}
 	{
 		% bridging == false => draw it now
-		\nsk__draw_connect:VV
+		\nsk__draw_connect:VVV
 		\l_nsk_connect_arrow_style_tl
 		\l_nsk_connect_color_tl
+		\l_nsk_connect_id_tl
 	}
 
 	\group_end:
@@ -407,11 +419,11 @@ arc[
 		{\l__nsk_pathname_tl}
 		{\l__nsk_tmp_paths_seq}
 
-
 		% finally draw the path with color
 		\use:x {
 			\exp_not:N \draw[
 				\l__nsk_arrowstyle_tl,
+				spath/save global=\l_nsk_connect_id_tl,
 				draw=\l__nsk_color_tl,
 				spath/use=\l__nsk_pathname_tl
 			];
@@ -680,6 +692,7 @@ arc[
 	% draw ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\begin{pgfonlayer}{interim}
 		\draw[
+			spath/save global=\tl_use:N \l_nsk_connect_id_tl,
 			fill=\l_nsk_fillbetween_fill_tl,
 			draw=\l_nsk_fillbetween_draw_tl,
 			opacity=\fp_use:N \l_nsk_fillbetween_opacity_fp
