@@ -158,11 +158,11 @@
 		\tl_put_right:Nx \l_tmpa_tl { at={(\fp_use:N \l_nsk_coord_x_fp,\fp_use:N \l_nsk_coord_y_fp)}, }
 	}
 	{
-		\tl_put_right:No \l_tmpa_tl { \l_nsk_coord_pos_tl, }
+		\tl_put_right:Nx \l_tmpa_tl { \l_nsk_coord_pos_tl, }
 	}
 
 	% shift-x/y
-	\tl_put_right:No \l_tmpa_tl
+	\tl_put_right:Nx \l_tmpa_tl
 	{
 		shift={ (\dim_use:N \l_nsk_coord_shift_x_dim, \dim_use:N \l_nsk_coord_shift_y_dim) },
 	}

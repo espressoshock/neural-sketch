@@ -1,0 +1,128 @@
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%  neural-sketch-render.dtx
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% \iffalse
+%<*driver>
+\documentclass{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+
+\begin{document}
+\DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+
+\ProvidesFile{neural-sketch-render.dtx}%
+[2025/01/22 v0.1 neural-sketch-render]
+
+% \title{neural-sketch-render.sty\\[1ex]
+%        Conditional multi-type code render for neural-sketch}
+% \author{Vincenzo Buono}
+% \date{\today}
+% \maketitle
+%
+% \section{Introduction}
+% This file provides conditional code rendering in a switch-like interface
+%
+% \StopEventually{}
+%
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+%<*package>
+%    \begin{macrocode}
+\ExplSyntaxOn
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Internal variables -
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_clear_new:N \l__nsk_switch_type_tl
+\tl_clear_new:N \l__nsk_switch_operand_tl
+\bool_new:N \l__nsk_switch_matched_bool
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main nsk / render Primitive
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\keys_define:nn { nsk / render }
+{
+	type .choice:,
+	type / string .code:n = { \tl_set:Nn \l__nsk_switch_type_tl { string } },
+	type / int    .code:n = { \tl_set:Nn \l__nsk_switch_type_tl { int } },
+	type / float  .code:n = { \tl_set:Nn \l__nsk_switch_type_tl { float } },
+	type / bool   .code:n = { \tl_set:Nn \l__nsk_switch_type_tl { bool } },
+	type .initial:n = { string },
+}
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface
+% - (user-facing)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\NewDocumentEnvironment{nskSwitch}{ O{} m }
+{
+	\group_begin:
+	\keys_set:nn { nsk / render } {#1}
+	\tl_set:Nx \l__nsk_switch_operand_tl {#2}
+	\bool_set_false:N \l__nsk_switch_matched_bool
+}
+{ \group_end: }
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% If no previous case has matched, compares the switch operand with the
+% provided case value (according to the chosen type) and, if they match,
+% sets the flag and executes the code in a group.
+\NewDocumentCommand{\nskCase}{ m +m }
+{
+	\bool_if:NTF \l__nsk_switch_matched_bool
+	{ } % already matched: do nothing
+	{
+		\tl_show:N \l__nsk_switch_operand_tl
+		\str_if_eq:VnTF \l__nsk_switch_type_tl { string }
+		{
+			\str_if_eq:VnTF \l__nsk_switch_operand_tl  {#1}
+			{ \bool_set_true:N \l__nsk_switch_matched_bool \group_begin: #2 \group_end: }
+			{ }
+		}
+		{
+			\str_if_eq:VnTF \l__nsk_switch_type_tl { int }
+			{ \int_compare:nTF
+				{ \int_eval:n { \l__nsk_switch_operand_tl } = \int_eval:n {#1} }
+				{ \bool_set_true:N \l__nsk_switch_matched_bool \group_begin: #2 \group_end: }
+				{ } }
+			{
+				\str_if_eq:VnTF \l__nsk_switch_type_tl { float }
+				{ \fp_compare:nTF
+					{ \fp_eval:n { \l__nsk_switch_operand_tl } == \fp_eval:n {#1} }
+					{ \bool_set_true:N \l__nsk_switch_matched_bool \group_begin: #2 \group_end: }
+					{ } }
+				{
+					\str_if_eq:VnTF \l__nsk_switch_type_tl { bool }
+					{ \str_if_eq:nnTF { \l__nsk_switch_operand_tl } {#1}
+						{ \bool_set_true:N \l__nsk_switch_matched_bool \group_begin: #2 \group_end: }
+						{ } }
+					{ % fallback: treat as string
+						\str_if_eq:nnTF { \l__nsk_switch_operand_tl } {#1}
+						{
+							\bool_set_true:N \l__nsk_switch_matched_bool \group_begin: #2 \group_end:
+						}
+						{ } } } }
+		}
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% If no case has matched, execute the default code.
+\NewDocumentCommand{\nskDefault}{ +m }
+{
+	\bool_if:NF \l__nsk_switch_matched_bool
+	{
+		\group_begin: #1 \group_end:
+	}
+}
+
+\ExplSyntaxOff
+
+%    \end{macrocode}
+%</package>
+\endinput
