@@ -52,6 +52,10 @@
 	y .fp_set:N = \l_nsk_coord_y_fp,
 	y .initial:n = {0},
 
+	at .tl_set:N = \l_nsk_coord_at_tl,
+	at .initial:n = {},
+	at .default:n = {},
+
 	% Let the user specify the "pos" usage from TikZ [right=1cm of something]:
 	pos .tl_set:N = \l_nsk_coord_pos_tl,
 	pos .initial:n = { },
@@ -152,13 +156,20 @@
 	% name=<id>
 	\tl_put_right:Nx \l_tmpa_tl { name=\l_nsk_coord_id_tl, }
 
-	% If pos is blank, we place it at (x,y). Otherwise, we place it using [pos=...]
-	\tl_if_blank:VTF \l_nsk_coord_pos_tl
+
+	\tl_if_blank:VTF \l_nsk_coord_at_tl
 	{
-		\tl_put_right:Nx \l_tmpa_tl { at={(\fp_use:N \l_nsk_coord_x_fp,\fp_use:N \l_nsk_coord_y_fp)}, }
+		% If pos is blank, we place it at (x,y). Otherwise, we place it using [pos=...]
+		\tl_if_blank:VTF \l_nsk_coord_pos_tl
+		{
+			\tl_put_right:Nx \l_tmpa_tl { at={(\fp_use:N \l_nsk_coord_x_fp,\fp_use:N \l_nsk_coord_y_fp)}, }
+		}
+		{
+			\tl_put_right:Nx \l_tmpa_tl { \l_nsk_coord_pos_tl, }
+		}
 	}
 	{
-		\tl_put_right:Nx \l_tmpa_tl { \l_nsk_coord_pos_tl, }
+		\tl_put_right:Nx \l_tmpa_tl { at={(\l_nsk_coord_at_tl)}, }
 	}
 
 	% shift-x/y
