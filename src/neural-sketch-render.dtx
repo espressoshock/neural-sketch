@@ -72,7 +72,7 @@
 % If no previous case has matched, compares the switch operand with the
 % provided case value (according to the chosen type) and, if they match,
 % sets the flag and executes the code in a group.
-\NewDocumentCommand{\nskCase}{ m +m }
+\NewDocumentCommand{\nskCase}{ d[] +m }
 {
 	\bool_if:NTF \l__nsk_switch_matched_bool
 	{ } % already matched: do nothing
