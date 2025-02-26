@@ -89,13 +89,10 @@
 			{left}{\tl_set:Nn \l_anchor_tl {west}}
 			{right}{\tl_set:Nn \l_anchor_tl {east}}
 	}
-	\tl_show:N \l_anchor_tl
 
 	\tl_put_right:Nx \l_nsk_group_pos_tl
 	{.\l_anchor_tl}
 }
-\tl_show:N \l_nsk_group_pos_tl
-
 }
 
 % ---------------------------------------------------------------------
@@ -127,7 +124,6 @@
 				{
 					\exp_not:V \l_nsk_group_last_pos_tl\space of~\exp_not:V \l_tmpa_tl
 				}
-				\tl_show:N \l_nsk_group_pos_tl
 			}
 			{
 				% case (b) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -141,7 +137,6 @@
 			}
 		}
 	}
-	\tl_show:n \l_nsk_group_pos_tl
 }
 
 \cs_new_protected_nopar:Npn \nsk__detect_anchor_pos:
@@ -173,9 +168,6 @@
 			}
 		}
 	}
-
-	\tl_show:N \l_nsk_pos_align_tl
-
 }
 
 
@@ -322,7 +314,6 @@
 
 	\keys_set:nn { nsk / group } {#1}
 
-  \tl_show:N \l_nsk_group_pos_tl
 
 	\nsk__process_last_pos_for_group:
 
@@ -332,10 +323,26 @@
 	% Build a comma-separated style in \l_tmpa_tl
 	\nsk__build_group_style:
 
-  \tl_show:N \l_nsk_group_pos_tl
 
 	% draw
 	\nsk__draw_group_scope_aux:VVn \l_nsk_group_pos_tl \l_tmpa_tl {#2}
+}
+
+\NewDocumentCommand \nskOnlayer { m +m }
+{
+	\begin{pgfonlayer}{#1}
+		#2
+	\end{pgfonlayer}
+}
+
+\NewDocumentCommand \nskOnbg { +m }
+{
+	\nskOnlayer{background}{#1}
+}
+
+\NewDocumentCommand \nskOnfg { +m }
+{
+	\nskOnlayer{foreground}{#1}
 }
 
 
