@@ -797,6 +797,69 @@ arc[
 	\group_end:
 }
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Angled Connect
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\keys_define:nn { nsk/angles }
+{
+	dir .choice:,
+	dir / left .code:n = { \tl_set:Nn \l__nsk_dir_tl {left} },
+	dir / right .code:n = { \tl_set:Nn \l__nsk_dir_tl {right} },
+	dir / up .code:n = { \tl_set:Nn \l__nsk_dir_tl {up} },
+	dir / down .code:n = { \tl_set:Nn \l__nsk_dir_tl {down} },
+
+	dir-align .default:n = {down},
+	dir-align .initial:n = {down},
+
+	alpha .fp_set:N = \l__nsk_alpha_fp
+}
+
+\NewDocumentCommand{\nskAngledc}{ O{} }
+{
+	\keys_set:nn { nsk/angles } { #1 }
+
+
+	\tikzmath{
+		\da=\fp_use:N \l__nsk_alpha_fp;
+	}
+
+	\str_case:Nn \l__nsk_dir_tl
+	{
+		{down}{
+				\tikzmath{
+					\i = 180;
+					\o = -\da;
+					\ii = 0;
+					\oo = 180 + \da;
+				}
+			}
+			{up}{
+				\tikzmath{
+					\i = 180;
+					\o = \da;
+					\ii = 0;
+					\oo = 180 - \da;
+				}
+			}
+			{right}{
+				\tikzmath{
+					\i = 90;
+					\o = -\da;
+					\ii = -90;
+					\oo = \da;
+				}
+			}
+			{left}{
+				\tikzmath{
+					\i = 90;
+					\o = 180 + \da;
+					\ii = -90;
+					\oo = 180 - \da;
+				}
+			}
+
+	}
+}
 
 \ExplSyntaxOff
 %    \end{macrocode}
