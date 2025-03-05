@@ -51,6 +51,9 @@
 	ref-tag .tl_set:N            = \l__nsk_annotate_ref_tag_tl,
 	ref-tag .initial:n           = { },
 
+	disable-tag .bool_set:N      = \l__nsk_annotate_disable_tag_bool,
+	disable-tag .initial:n       = {false},
+	disable-tag .default:n       = {false},
 
 	% box-padding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	padding .dim_set:N           = \l__nsk_annotate_box_padding_dim,
@@ -61,7 +64,7 @@
 	connect-opts .initial:n      = {arrow-style = {dotted, thick},color = nskMidGray},
 
 	text-color .tl_set:N         = \l__nsk_annotate_text_color_tl,
-	text-color .initial:n        = { black },
+	text-color .initial:n        = { c__nsk_principal },
 
 	% anchor target ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	connect-to .tl_set:N         = \l__nsk_annotate_connect_to_tl,
@@ -176,11 +179,15 @@
 	\tl_clear_new:N \l__nsk_annotate_textbox_body_tl
 
 	% If the final ref-tag is nonempty, insert “(\ref-tag) ”
-	\tl_if_blank:VF \l__nsk_annotate_ref_tag_tl
+	\bool_if:NF \l__nsk_annotate_disable_tag_bool
 	{
-		\tl_put_right:No \l__nsk_annotate_textbox_body_tl
-		{ \textbf{(\tl_use:N \l__nsk_annotate_ref_tag_tl)}\space }
+		\tl_if_blank:VF \l__nsk_annotate_ref_tag_tl
+		{
+			\tl_put_right:No \l__nsk_annotate_textbox_body_tl
+			{ \textbf{(\tl_use:N \l__nsk_annotate_ref_tag_tl)}\space }
+		}
 	}
+
 
 	% If header is not blank:
 	\tl_if_blank:VTF \l__nsk_annotate_header_tl
