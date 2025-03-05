@@ -127,8 +127,8 @@
 	arrow-style .default:n          = {ultra\space thick, >=Triangle},
 
 	color .tl_set:N                 = \l_nsk_connect_color_tl,
-	color .initial:n                = { black },
-	color .default:n                = { black },
+	color .initial:n                = { c__nsk_principal },
+	color .default:n                = { c__nsk_principal },
 
 	% corner-radius ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	corner-radius .dim_set:N = \l__nsk_connect_corner_radius_dim,
@@ -434,7 +434,7 @@ arc[
 		\use:x {
 			\exp_not:N \draw[
 				\l__nsk_arrowstyle_tl,
-				spath/save global=\l_nsk_connect_id_tl,
+				spath/save~global=\l_nsk_connect_id_tl,
 				draw=\l__nsk_color_tl,
 				spath/use=\l__nsk_pathname_tl
 			];
