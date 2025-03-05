@@ -31,6 +31,11 @@
 % external ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \RequirePackage{tikz}
 \RequirePackage{expl3}
+\RequirePackage{kvoptions}
+\SetupKeyvalOptions{
+	family=nsk,
+	prefix=nsk@
+}
 \usetikzlibrary{
 	calc, fit, intersections, spath3,
 	shapes.geometric,
@@ -47,6 +52,31 @@
 	tikzmark,
 	math,
 }
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Visible opts
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\DeclareBoolOption[false]{dark_mode}
+\ProcessKeyvalOptions*\relax
+
+\ExplSyntaxOn
+\bool_new:N \g__nsk_dark_mode_bool
+\ifnsk@dark_mode
+\bool_set_true:N \g__nsk_dark_mode_bool
+\definecolor{ c__nsk_dark_bg_clr }      {HTML}{1d2021}
+\definecolor{ c__nsk_principal } {HTML}{ebdbb2}
+\pagecolor{c__nsk_dark_bg_clr}
+\colorlet{nskBg}{c__nsk_dark_bg_clr}
+\colorlet{nskFg}{c__nsk_principal}
+\color{c__nsk_principal}
+\else
+\bool_set_false:N \g__nsk_dark_mode_bool
+\definecolor{ c__nsk_principal } {HTML}{000000}
+\colorlet{nskBg}{c__nsk_principal}
+\colorlet{nskFg}{black}
+\fi
+\ExplSyntaxOff
+
 % internal ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \RequirePackage{neural-sketch-colors}
 \RequirePackage{neural-sketch-styles}
@@ -86,6 +116,10 @@
 	y .fp_set:N = \l_nsk_block_y_fp,
 	y .initial:n  = {0},
 	y .default:n = {0},
+
+	anchor .tl_set:N = \l_nsk_block_anchor_tl,
+	anchor .default:n = {},
+	anchor .initial:n = {},
 
 	% natural positioning using positioning library
 	pos .tl_set:N = \l_nsk_block_pos_tl,
@@ -637,6 +671,11 @@
 		% -- pos is given => place the node by raw TikZ positioning
 		% i.e., [right=2cm of otherNode]
 		\tl_put_right:No \l_tmps_tl { \l_nsk_block_pos_tl, }
+	}
+
+	\tl_if_blank:VF \l_nsk_block_anchor_tl
+	{
+		\tl_put_right:No \l_tmps_tl {anchor=\l_nsk_block_anchor_tl,}
 	}
 
 	% shape-type ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<

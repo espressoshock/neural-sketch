@@ -34,42 +34,84 @@
 
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Internal Global
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% \bool_new:N \g__nsk_dark_mode_bool
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Internal ("private") color variables
 % Prefix: c__nsk_<descriptor>_clr
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 
 % Core accent colors ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\definecolor{ c__nsk_main_accent_clr }{HTML}{E8D4FF}
+\definecolor{ c__nsk_main_accent_clr }{HTML}{e8d4ff}
+\definecolor{ c__nsk_main_accent_inv_clr }{HTML}{e8d4ff}
+
 \definecolor{ c__nsk_secondary_accent_clr }{HTML}{d6ebff}
+\definecolor{ c__nsk_secondary_accent_inv_clr }{HTML}{2e3e4d}
 
 % Grays ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\definecolor{ c__nsk_dark_gray_inv_clr }{HTML}{9d937b}
 \definecolor{ c__nsk_dark_gray_clr }{HTML}{666666}
-\definecolor{ c__nsk_mid_gray_clr } {HTML}{a3a3a3}
+
+\definecolor{ c__nsk_mid_gray_clr } {HTML}{6e695a}
+\definecolor{ c__nsk_mid_gray_inv_clr } {HTML}{7e7867}
+
+\definecolor{ c__nsk_light_gray_inv_clr }{HTML}{33332d}
 \definecolor{ c__nsk_light_gray_clr }{HTML}{f0f0f5}
+
+\definecolor{ c__nsk_lighter_gray_inv_clr }{HTML}{5b574b}
 \definecolor{ c__nsk_lighter_gray_clr }{HTML}{bcbcbf}
+
+\definecolor{ c__nsk_lightest_gray_inv_clr }{HTML}{2d2d2b}
 \definecolor{ c__nsk_lightest_gray_clr }{HTML}{f8f8f9}
+
 \definecolor{ c__nsk_shadow_clr }{HTML}{d2d2d2}
+\definecolor{ c__nsk_shadow_inv_clr }{HTML}{37352f}
+
 
 % Add. Accent colors ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\definecolor{ c__nsk_red_clr }   {HTML}{FF99A1}
-\definecolor{ c__nsk_pink_clr }  {HTML}{FFCCEE}
-\definecolor{ c__nsk_blue_clr }  {HTML}{A3CCCC}
-\definecolor{ c__nsk_green_clr } {HTML}{9BFF99}
-\definecolor{ c__nsk_yellow_clr }{HTML}{FFFF99}
-\definecolor{ c__nsk_orange_clr }{HTML}{FFCF99}
-\definecolor{ c__nsk_lime_clr }{HTML}{BDFF99}
-\definecolor{ c__nsk_cyan_clr }{HTML}{99FFFC}
-\definecolor{ c__nsk_magenta_clr }{HTML}{FF4DB8}
+\definecolor{ c__nsk_red_clr }   {HTML}{ff99a1}
+\definecolor{ c__nsk_red_inv_clr }{HTML}{4d2e30}
+
+\definecolor{ c__nsk_pink_clr }  {HTML}{ffccee}
+\definecolor{ c__nsk_pink_inv_clr }  {HTML}{663d58}
+
+\definecolor{ c__nsk_blue_clr }  {HTML}{a0d0d0}
+\definecolor{ c__nsk_blue_inv_clr }  {HTML}{264040}
+
+\definecolor{ c__nsk_green_clr } {HTML}{9bff99}
+\definecolor{ c__nsk_green_inv_clr } {HTML}{74285f}
+
+\definecolor{ c__nsk_yellow_clr }{HTML}{ffff99}
+\definecolor{ c__nsk_yellow_inv_clr }{HTML}{28285f}
+
+\definecolor{ c__nsk_orange_clr }{HTML}{ffcf99}
+\definecolor{ c__nsk_orange_inv_clr }{HTML}{284a5f}
+
+\definecolor{ c__nsk_lime_clr }{HTML}{bdff99}
+\definecolor{ c__nsk_lime_inv_clr }{HTML}{5a285f}
+
+\definecolor{ c__nsk_cyan_clr }{HTML}{99fffc}
+\definecolor{ c__nsk_cyan_inv_clr }{HTML}{76282a}
+
+\definecolor{ c__nsk_magenta_clr }{HTML}{ff4db8}
+\definecolor{ c__nsk_magenta_inv_clr }{HTML}{28a54e}
+
+\definecolor{ c__nsk_brown_clr }{HTML}{664729}
+\definecolor{ c__nsk_brown_inv_clr }{HTML}{332414}
+
 \definecolor{ c__nsk_strong_blue_clr }{HTML}{005afd}
+\definecolor{ c__nsk_strong_blue_inv_clr }{HTML}{eb9c29}
+
 \definecolor{ c__nsk_strong_red_clr } {HTML}{d91900}
+\definecolor{ c__nsk_strong_red_inv_clr } {HTML}{45c9b2}
 
 % Dark bgs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \definecolor{ c__nsk_medium_white_clr } {HTML}{b0b2c1}
-\definecolor{ c__nsk_dark_bg_clr }      {HTML}{03051a}
+\definecolor{ c__nsk_dark_bg_clr }      {HTML}{1d2021}
 \definecolor{ c__nsk_strong_purple_clr }{HTML}{6545d5}
-
-% Alt lights.
-\definecolor{ c__nsk_cream_white_clr } {HTML}{eddfd1}
+\definecolor{ c__nsk_cream_white_clr } {HTML}{ebdbb2}
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Public color names (user-facing)
@@ -77,36 +119,123 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 
 % Core accent colors ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\colorlet{nskMainAccent}{ c__nsk_main_accent_clr }
-\colorlet{nskSecondaryAccent}{ c__nsk_secondary_accent_clr }
+\colorlet{nskMainAccent}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_main_accent_inv_clr }
+	{ c__nsk_main_accent_clr }
+}
+\colorlet{nskSecondaryAccent}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_secondary_accent_inv_clr }
+	{ c__nsk_secondary_accent_clr }
+}
 
 % Grays ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\colorlet{nskDarkGray}{ c__nsk_dark_gray_clr }
-\colorlet{nskMidGray}{ c__nsk_mid_gray_clr }
-\colorlet{nskLightGray}{ c__nsk_light_gray_clr }
-\colorlet{nskLighterGray}{ c__nsk_lighter_gray_clr }
-\colorlet{nskLightestGray}{ c__nsk_lightest_gray_clr }
-\colorlet{nskShadow}{ c__nsk_shadow_clr }
+\colorlet{nskDarkGray}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_dark_gray_inv_clr }
+	{ c__nsk_dark_gray_clr }
+}
+\colorlet{nskMidGray}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_mid_gray_inv_clr }
+	{ c__nsk_mid_gray_clr }
+}
+\colorlet{nskLightGray}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_light_gray_inv_clr }
+	{ c__nsk_light_gray_clr }
+}
+\colorlet{nskLighterGray}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_lighter_gray_inv_clr }
+	{ c__nsk_lighter_gray_clr }
+}
+\colorlet{nskLightestGray}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_lightest_gray_inv_clr }
+	{ c__nsk_lightest_gray_clr }
+}
+\colorlet{nskShadow}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_shadow_inv_clr }
+	{ c__nsk_shadow_clr }
+}
 
 % Add. Accent colors ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\colorlet{nskRed}{ c__nsk_red_clr }
-\colorlet{nskPink}{ c__nsk_pink_clr }
-\colorlet{nskBlue}{ c__nsk_blue_clr }
-\colorlet{nskGreen}{ c__nsk_green_clr }
-\colorlet{nskLime}{ c__nsk_lime_clr }
-\colorlet{nskCyan}{ c__nsk_cyan_clr }
-\colorlet{nskMagenta}{ c__nsk_magenta_clr }
-\colorlet{nskYellow}{ c__nsk_yellow_clr }
-\colorlet{nskOrange}{ c__nsk_orange_clr }
-\colorlet{nskStrongBlue}{ c__nsk_strong_blue_clr }
-\colorlet{nskStrongRed}{ c__nsk_strong_red_clr }
+\colorlet{nskRed}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_red_inv_clr }
+	{ c__nsk_red_clr }
+}
+\colorlet{nskPink}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_pink_inv_clr }
+	{ c__nsk_pink_clr }
+}
+\colorlet{nskBlue}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_blue_inv_clr }
+	{ c__nsk_blue_clr }
+}
+\colorlet{nskGreen}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_green_inv_clr }
+	{ c__nsk_green_clr }
+}
+\colorlet{nskYellow}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_yellow_inv_clr }
+	{ c__nsk_yellow_clr }
+}
+\colorlet{nskOrange}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_orange_inv_clr }
+	{ c__nsk_orange_clr }
+}
+\colorlet{nskLime}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_lime_inv_clr }
+	{ c__nsk_lime_clr }
+}
+\colorlet{nskCyan}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_cyan_inv_clr }
+	{ c__nsk_cyan_clr }
+}
+\colorlet{nskMagenta}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_magenta_inv_clr }
+	{ c__nsk_magenta_clr }
+}
+\colorlet{nskBrown}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_brown_inv_clr }
+	{ c__nsk_brown_clr }
+}
+\colorlet{nskStrongBlue}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_strong_blue_inv_clr }
+	{ c__nsk_strong_blue_clr }
+}
+\colorlet{nskStrongRed}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_strong_red_inv_clr }
+	{ c__nsk_strong_red_clr }
+}
+
+% additional inv
+\colorlet{nskRedInv}{ c__nsk_red_inv_clr }
+\colorlet{nskOrangeInv}{ c__nsk_orange_inv_clr }
+\colorlet{nskBlueInv}{ c__nsk_blue_inv_clr }
+\colorlet{nskLightestGrayInv}{ c__nsk_lightest_gray_inv_clr }
+\colorlet{nskMainAccentInv}{ c__nsk_main_accent_inv_clr }
+\colorlet{nskSecondaryAccentInv}{ c__nsk_secondary_accent_inv_clr }
 
 % Dark bgs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \colorlet{nskMediumWhite}{ c__nsk_medium_white_clr }
 \colorlet{nskDarkBg}{ c__nsk_dark_bg_clr }
 \colorlet{nskStrongPurple}{ c__nsk_strong_purple_clr }
-
-% Alt lights.
 \colorlet{nskCreamWhite}{ c__nsk_cream_white_clr }
 
 \ExplSyntaxOff
