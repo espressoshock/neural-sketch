@@ -1,4 +1,4 @@
-# Neural Sketch
+# ![logo dark](https://github.com/user-attachments/assets/80788604-6e25-417d-a543-70fc9991f003) Neural Sketch
 
 **A modern, opinionated, yet highly customizable LaTeX package for crafting consistent, publication-ready diagrams.**
 
@@ -18,6 +18,9 @@
 Neural Sketch is a LaTeX package meticulously designed to simplify the creation of visually compelling diagrams primarily for AI and Machine Learning publications. It provides intuitive, robust defaults, while offering extensive customizability, enabling you to create diagrams tailored precisely to your requirements for top-tier conferences, journals, and presentations.
 
 ---
+
+![header-v08](https://github.com/user-attachments/assets/fac69bc8-ae89-450c-9f8a-537d878b1ffe)
+
 
 ## Key Features
 
