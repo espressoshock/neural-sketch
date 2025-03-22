@@ -31,11 +31,6 @@
 % external ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \RequirePackage{tikz}
 \RequirePackage{expl3}
-\RequirePackage{kvoptions}
-\SetupKeyvalOptions{
-	family=nsk,
-	prefix=nsk@
-}
 \usetikzlibrary{
 	calc, fit, intersections, spath3,
 	shapes.geometric,
@@ -53,28 +48,67 @@
 	math,
 }
 
-% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-% Visible opts
-% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\DeclareBoolOption[false]{dark_mode}
-\ProcessKeyvalOptions*\relax
 
 \ExplSyntaxOn
-\bool_new:N \g__nsk_dark_mode_bool
-\ifnsk@dark_mode
-\bool_set_true:N \g__nsk_dark_mode_bool
-\definecolor{ c__nsk_dark_bg_clr }      {HTML}{1d2021}
-\definecolor{ c__nsk_principal } {HTML}{ebdbb2}
-\pagecolor{c__nsk_dark_bg_clr}
-\colorlet{nskBg}{c__nsk_dark_bg_clr}
-\colorlet{nskFg}{c__nsk_principal}
-\color{c__nsk_principal}
-\else
-\bool_set_false:N \g__nsk_dark_mode_bool
-\definecolor{ c__nsk_principal } {HTML}{000000}
-\colorlet{nskBg}{c__nsk_principal}
-\colorlet{nskFg}{black}
-\fi
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Pkg opts
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\prop_new:N \l__nsk_pkgopts_opts_prop
+\keys_define:nn { nsk / pkgopts }
+{
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Dark mode
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	dark-mode .bool_gset:N = \g__nsk_dark_mode_bool,
+	dark-mode .initial:n   = {false},
+	dark-mode .default:n   = {false},
+
+	unknown .code:n =
+		{
+			\prop_put:Nxx \l__nsk_pkgopts_opts_prop
+			{ \tl_use:N \l_keys_key_tl }
+			{ #1 }
+		},
+
+}
+\ProcessKeysOptions { nsk / pkgopts }
+
+\prop_show:N \l__nsk_pkgopts_opts_prop
+
+% prop->tl
+\tl_new:N \l__nsk_pkgopts_opts_tl
+\tl_clear:N \l__nsk_pkgopts_opts_tl
+
+\prop_map_inline:Nn \l__nsk_pkgopts_opts_prop
+{
+	\tl_put_right:Nx \l__nsk_pkgopts_opts_tl
+	{
+		#1 = #2,
+	}
+}
+
+\tl_show:N \l__nsk_pkgopts_opts_tl
+
+% dark-mode ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\bool_if:NTF \g__nsk_dark_mode_bool
+{
+	\definecolor{ c__nsk_dark_bg_clr }      {HTML}{1d2021}
+	\definecolor{ c__nsk_principal } {HTML}{ebdbb2}
+	\pagecolor{c__nsk_dark_bg_clr}
+	\colorlet{nskBg}{c__nsk_dark_bg_clr}
+	\colorlet{nskFg}{c__nsk_principal}
+	\tikzset{
+		every~node/.append~style={text=c__nsk_principal},
+		% every~path/.append~style={draw=red}
+	}
+}
+{
+	\definecolor{ c__nsk_principal } {HTML}{000000}
+	\colorlet{nskBg}{c__nsk_principal}
+	\colorlet{nskFg}{black}
+}
+
 \ExplSyntaxOff
 
 % internal ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -83,6 +117,11 @@
 \RequirePackage{neural-sketch-loader}
 
 \ExplSyntaxOn
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Pass-through nsk / style
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\keys_set:nx { nsk / style } { \l__nsk_pkgopts_opts_tl }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Global props -

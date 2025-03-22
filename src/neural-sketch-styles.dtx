@@ -41,97 +41,90 @@
 \keys_define:nn { nsk / style }
 {
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	% Dark mode
-	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	dark-mode .bool_set:N = \g__nsk_dark_mode_bool,
-	dark-mode .initial:n   = {false},
-	dark-mode .default:n   = {false},
-
-	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% nsk / Block
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	block-fill .tl_set:N = \g__nsk_style_block_fill_tl,
+	block-fill .tl_gset:N = \g__nsk_style_block_fill_tl,
 	block-fill .initial:n = { nskLightGray },
 	block-fill .default:n = { nskLightGray },
 
-	block-border-color .tl_set:N = \g__nsk_style_block_border_color_tl,
+	block-border-color .tl_gset:N = \g__nsk_style_block_border_color_tl,
 	block-border-color .initial:n = { nskDarkGray },
 	block-border-color .default:n = { nskDarkGray },
 
-	block-border-radius .dim_set:N = \g__nsk_style_block_border_radius_dim,
+	block-border-radius .dim_gset:N = \g__nsk_style_block_border_radius_dim,
   block-border-radius .initial:n = {2.5mm},
   block-border-radius .default:n = {2.5mm},
 
-	block-embed-border-radius .dim_set:N = \g__nsk_style_block_embed_border_radius_dim,
+	block-embed-border-radius .dim_gset:N = \g__nsk_style_block_embed_border_radius_dim,
   block-embed-border-radius.initial:n = {1.3mm},
   block-embed-border-radius.default:n = {1.3mm},
 
-	block-embed-padding .dim_set:N = \g__nsk_style_block_embed_padding_dim,
+	block-embed-padding .dim_gset:N = \g__nsk_style_block_embed_padding_dim,
   block-embed-padding .initial:n = {1mm},
   block-embed-padding .default:n = {1mm},
 
-	block-border-size .dim_set:N = \g__nsk_style_block_border_size_dim,
+	block-border-size .dim_gset:N = \g__nsk_style_block_border_size_dim,
   block-border-size .initial:n = {.4mm},
   block-border-size .default:n = {.4mm},
 
-	block-width  .dim_set:N = \g__nsk_style_block_width_dim,
+	block-width  .dim_gset:N = \g__nsk_style_block_width_dim,
 	block-width  .initial:n = {1cm},
 	block-width  .default:n = {1cm},
 
-	block-height .dim_set:N = \g__nsk_style_block_height_dim,
+	block-height .dim_gset:N = \g__nsk_style_block_height_dim,
 	block-height .initial:n = {1cm},
 	block-height .default:n = {1cm},
 
-	shadow .bool_set:N = \g__nsk_style_block_shadow_bool,
+	shadow .bool_gset:N = \g__nsk_style_block_shadow_bool,
 
 	% text-anchoring ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	text-north-loc .tl_set:N = \g__nsk_style_text_north_loc_tl,
+	text-north-loc .tl_gset:N = \g__nsk_style_text_north_loc_tl,
 	text-north-loc .initial:n = {},
 	text-north-loc .default:n = {},
 
-	text-south-loc .tl_set:N = \g__nsk_style_text_south_loc_tl,
+	text-south-loc .tl_gset:N = \g__nsk_style_text_south_loc_tl,
 	text-south-loc .initial:n = {},
 	text-south-loc .default:n = {},
 
-	text-east-loc .tl_set:N = \g__nsk_style_text_east_loc_tl,
+	text-east-loc .tl_gset:N = \g__nsk_style_text_east_loc_tl,
 	text-east-loc .initial:n = {},
 	text-east-loc .default:n = {},
 
-	text-west-loc .tl_set:N = \g__nsk_style_text_west_loc_tl,
+	text-west-loc .tl_gset:N = \g__nsk_style_text_west_loc_tl,
 	text-west-loc .initial:n = {},
 	text-west-loc .default:n = {},
 
-	text-center-loc .tl_set:N = \g__nsk_style_text_center_loc_tl,
+	text-center-loc .tl_gset:N = \g__nsk_style_text_center_loc_tl,
 	text-center-loc .initial:n = {},
 	text-center-loc .default:n = {},
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% nsk / Container
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	container-border-color .tl_set:N = \g__nsk_style_container_border_color_tl,
+	container-border-color .tl_gset:N = \g__nsk_style_container_border_color_tl,
 	container-border-color .initial:n = { nskLighterGray },
 
-	container-fill .tl_set:N = \g__nsk_style_container_fill_tl,
+	container-fill .tl_gset:N = \g__nsk_style_container_fill_tl,
 	container-fill .initial:n = { nskLightestGray },
 	container-fill .default:n = { nskLightestGray },
 
-	container-padding .dim_set:N = \g__nsk_style_container_padding_dim,
+	container-padding .dim_gset:N = \g__nsk_style_container_padding_dim,
 	container-padding .initial:n = { .5cm },
 	container-padding .default:n = { .5cm },
 
-	container-shift-x .fp_set:N = \g__nsk_style_container_x_fp,
+	container-shift-x .fp_gset:N = \g__nsk_style_container_x_fp,
 	container-shift-x .initial:n = { 0 },
 	container-shift-x .default:n = { 0 },
 
-	container-shift-y .fp_set:N = \g__nsk_style_container_y_fp,
+	container-shift-y .fp_gset:N = \g__nsk_style_container_y_fp,
 	container-shift-y .initial:n = { 0 },
 	container-shift-y .default:n = { 0 },
 
-	container-rotate .fp_set:N = \g__nsk_style_container_rotate_fp,
+	container-rotate .fp_gset:N = \g__nsk_style_container_rotate_fp,
 	container-rotate .initial:n = { 0 },
 	container-rotate .default:n = { 0 },
 
-	container-scale .fp_set:N = \g__nsk_style_container_scale_fp,
+	container-scale .fp_gset:N = \g__nsk_style_container_scale_fp,
 	container-scale .initial:n = { 1 },
 	container-scale .default:n = { 1 },
 
@@ -181,6 +174,7 @@
 % - (user-facing)
 % () Provide a simple public macro to set these style keys in one line:
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% WARNING: only for internal-use, deprecated in favor of pkgopts
 \NewDocumentCommand \nskSetStyle { O{} }
 {
 	% #1 is the keyval list, e.g.  block-fill=yellow, block-border=blue
