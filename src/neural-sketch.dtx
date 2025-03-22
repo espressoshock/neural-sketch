@@ -93,20 +93,20 @@
 % dark-mode ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \bool_if:NTF \g__nsk_dark_mode_bool
 {
-	\definecolor{ c__nsk_dark_bg_clr }      {HTML}{1d2021}
-	\definecolor{ c__nsk_principal } {HTML}{ebdbb2}
-	\pagecolor{c__nsk_dark_bg_clr}
-	\colorlet{nskBg}{c__nsk_dark_bg_clr}
-	\colorlet{nskFg}{c__nsk_principal}
-	\tikzset{
-		every~node/.append~style={text=c__nsk_principal},
-		% every~path/.append~style={draw=red}
-	}
+\definecolor{ c__nsk_dark_bg_clr }      {HTML}{1d2021}
+\definecolor{ c__nsk_principal } {HTML}{ebdbb2}
+\pagecolor{c__nsk_dark_bg_clr}
+\colorlet{nskBg}{c__nsk_dark_bg_clr}
+\colorlet{nskFg}{c__nsk_principal}
+\tikzset{
+every~node/.append~style={text=c__nsk_principal},
+% every~path/.append~style={draw=red}
+}
 }
 {
-	\definecolor{ c__nsk_principal } {HTML}{000000}
-	\colorlet{nskBg}{c__nsk_principal}
-	\colorlet{nskFg}{black}
+\definecolor{ c__nsk_principal } {HTML}{000000}
+\colorlet{nskBg}{white}
+\colorlet{nskFg}{black}
 }
 
 \ExplSyntaxOff
@@ -234,16 +234,16 @@
 	outer-border-type .default:n = {none},
 
 	outer-border-color .tl_set:N = \l_nsk_block_outer_border_color_tl,
-	outer-border-color .initial:n = { nskMainAccent },
-	outer-border-color .default:n = { nskMainAccent },
+	outer-border-color .initial:n = { nskMainAccent!50!nskBg },
+	outer-border-color .default:n = { nskMainAccent!50!nskBg },
 
 	outer-border-radius .dim_set:N = \l_nsk_block_outer_border_radius_dim,
 	outer-border-radius .initial:V = \g__nsk_style_block_border_radius_dim,
 	outer-border-radius .default:V = \g__nsk_style_block_border_radius_dim,
 
 	outer-border-size .dim_set:N = \l_nsk_block_outer_border_size_dim,
-	outer-border-size .initial:n = {7mm},
-	outer-border-size .default:n = {7mm},
+	outer-border-size .initial:n = {4mm},
+	outer-border-size .default:n = {4mm},
 
 	% styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	fill .tl_set:N = \l_nsk_block_fill_tl,
