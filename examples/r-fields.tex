@@ -1,0 +1,194 @@
+\documentclass{standalone}
+% \standaloneconfig{border=10mm}
+
+\usepackage{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}
+	% block 0 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\nskBlock[
+		id=ba,
+		width=8cm, height=1cm,
+		border-radius=1mm,
+	]
+	\nskMarkPath[
+		path-width=8cm,
+		skip-first=true,
+		skip-last=true,
+		step=10mm
+	]{(ba.south west) -- (ba.south east)}{
+		\draw[black] (0,0) -- (0,1cm);
+	}
+
+	\foreach \i in {0,...,8}
+		{
+			\nskCoord[
+				id=rat\i,
+				pos={left=0mm of ba.north west},
+				shift-x=(10mm*\i),
+				shift-y=4mm,
+				marker=none,
+			]
+			\nskCoord[
+				id=ra\i,
+				pos={left=0mm of ba.south west},
+				shift-x=(10mm*\i),
+				shift-y=0mm,
+				marker=none,
+			]
+		}
+
+	\nskBlock[
+		id=rb00,
+		fill=none,
+		shadow=false,
+		border-color=none, border-radius=0mm,
+		width=3cm, height=1cm,
+		pos={above right=-1.3mm and 0mm of ra0},
+		tikz-opts={anchor=south west},
+	]
+	\nskBlock[
+		id=rb01,
+		fill=none,
+		shadow=false,
+		border-color=none, border-radius=0mm,
+		width=3cm, height=1cm,
+		pos={above right=-1.3mm and 0mm of ra5},
+		tikz-opts={anchor=south west},
+	]
+
+	% block 1 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\nskBlock[
+		id=bb,
+		width=2cm, height=1cm,
+		pos={below=3cm of ba},
+		border-radius=1mm,
+	]
+	\nskMarkPath[
+		path-width=2cm,
+		skip-first=true,
+		skip-last=true,
+		step=10mm
+	]{(bb.south west) -- (bb.south east)}{
+		\draw[black] (0,0) -- (0,1cm);
+	}
+
+	\nskBlock[
+		id=rb10,
+		fill=none,
+		shadow=false,
+		border-color=none,
+		width=1cm, height=1cm,
+		pos={above right=0cm of bb.south west},
+		tikz-opts={anchor=south west},
+	]
+	\nskBlock[
+		id=rb11,
+		fill=none,
+		shadow=false,
+		border-color=none,
+		width=1cm, height=1cm,
+		pos={above right=0cm and 1cm of bb.south west},
+		tikz-opts={anchor=south west},
+	]
+
+	% measures ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\nskConnect[
+		id=t0,
+		from=rat0,
+		to=rat3,
+		arrow-tip={|-},
+		arrow-style={very thick},
+		shorten-to=-2mm,
+	]
+	\nskConnect[
+		id=t1,
+		from=rat3,
+		to=rat5,
+		color=nskStrongRed,
+		arrow-tip={|-|},
+		arrow-style={very thick},
+		shorten-to=-2mm,
+	]
+	\nskConnect[
+		id=t2,
+		from=rat5,
+		to=rat8,
+		arrow-tip={-|},
+		arrow-style={very thick},
+		shorten-to=-2mm,
+	]
+
+	% ttext ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\nskMarkPath[at=.5,]{t0}{\node[above] {$s_l\cdot r_l$};}
+  \nskMarkPath[at=.5,]{t1}{\node[above] {$r_l=2$};}
+  \nskMarkPath[at=.5,]{t2}{\node[above] {$s_{l-1}$};}
+
+	% fills ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+	\nskFillBetween[
+		from=ba,
+		to=bb,
+		edge=curved,
+		orientation=vertical,
+	]
+
+	\nskFillBetween[
+		from=rb00,
+		to=rb10,
+		edge=curved,
+		orientation=vertical,
+	]
+
+	\nskFillBetween[
+		from=rb01,
+		to=rb11,
+		edge=curved,
+		orientation=vertical,
+	]
+	% annotate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\nskAnnotate[
+		pos={right=2cm of ba},
+		anchor-from=west,
+		connect-to=ba.east,
+		header={\nskBlockIDLast[1]},
+		fill=none,
+		header={Explanation},
+		border-type=none,
+		title={Key Observations},
+		text={
+				This is an important portion.
+			},
+		text-align=justify,
+		connect-opts = {
+				arrow-style={dotted, thick},
+			},
+		tikz-opts={},
+	]
+
+	\nskAnnotate[
+		pos={right=5cm of rb11},
+		anchor-from=west,
+		connect-to=rb11.east,
+		header={\nskBlockIDLast[1]},
+		fill=none,
+		header={Explanation},
+		border-type=none,
+		title={Key Observations},
+		text={
+				This is an important portion.
+			},
+		text-align=justify,
+		connect-opts = {
+				arrow-style={dotted, thick},
+			},
+		tikz-opts={},
+	]
+
+
+
+\end{nskFigure}
+
+\end{document}

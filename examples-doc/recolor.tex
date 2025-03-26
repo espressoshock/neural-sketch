@@ -1,0 +1,94 @@
+\documentclass{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage[]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}
+
+	\nskContainer[
+		id=cc,
+		type=circle,
+		text-north=$c$,
+		padding=1mm,
+	]{
+		\nskBlock[
+			id=a,
+			type=circle,
+			text-north={value},
+			width=.5cm, height=.5cm,
+			fill=nskRed,
+			text-north=$a$,
+		]
+		\nskBlock[
+			id=b,
+			type=circle,
+			text-north={value},
+			width=.5cm, height=.5cm,
+			fill=nskBlue,
+			text-north=$b$,
+			x=1, y=1,
+		]
+		\nskBlock[
+			id=c,
+			type=circle,
+			text-north={value},
+			width=.5cm, height=.5cm,
+			fill=nskOrange,
+			text-north=$c$,
+			x=-.4, y=2,
+		]
+	}
+
+	\nskContainer[
+		type=circle,
+		text-north=$c'$,
+		padding=1mm,
+		pos={right=1cm of cc.east},
+		border-type=dashed,
+	]{
+		\nskBlock[
+			id=ap,
+			type=circle,
+			text-north={value},
+			width=.5cm, height=.5cm,
+			fill=none,
+			text-north=$a$,
+			border-type=dashed,
+			shadow=false,
+		]
+		\nskBlock[
+			id=bp,
+			type=circle,
+			text-north={value},
+			width=.5cm, height=.5cm,
+			fill=none,
+			text-north=$b$,
+			x=1, y=1,
+			shadow=false,
+			border-type=dashed,
+		]
+		\nskBlock[
+			id=cp,
+			type=circle,
+			text-north={value},
+			width=.5cm, height=.5cm,
+			fill=none,
+			text-north=$b$,
+			x=-.2, y=2,
+			shadow=false,
+			border-type=dashed,
+		]
+	}
+
+	\foreach \f/\t in {a/ap, b/bp, c/cp} {
+			\nskConnect[
+				from=\f,
+				to=\t,
+				arrow-style={thick, -stealth, bend left, dashed},
+				route={to}
+			]
+		}
+\end{nskFigure}
+\end{document}

@@ -1,0 +1,58 @@
+\documentclass{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage[dark_mode=true]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[
+		id=ac,
+		border-type=dashdotted,
+    text-north=Down,
+    text-north-style={nskMidGray},
+    text-north-loc=west,
+	]{
+		\nskBlock[
+			id=ab,
+			type=rectangle,
+			width=1cm, height=1cm,
+			text-center=A,
+		]
+		\nskBlock[
+			id=bb,
+			type=rectangle,
+			width=1cm, height=1cm,
+			text-center=B,
+			last-pos={right=4cm}
+		]
+		\nskBlock[
+			id=op,
+			type=rounded rectangle,
+			height=1cm,
+			border-radius=0mm,
+			text-center=node,
+			fill=nskSecondaryAccent,
+			pos={below right=1cm and 1.5cm of ab}
+		]
+
+		\nskAngledc[dir=down, alpha=60]
+		\nskConnect[
+			from=ab.south,
+			to=op.west,
+			arrow-style={ultra thick, {Rays[n=9]}-},
+			route={to[out=\o, in=\i]},
+			shorten-from=2mm,
+		]
+		\nskConnect[
+			id=cn2,
+			from=bb.south,
+			to=op.east,
+			route={to[out=\oo, in=\ii]},
+			arrow-style={ultra thick, stealth-},
+      % color=lightForeground,
+			shorten-from=2mm,
+		]
+	}
+\end{nskFigure}
+\end{document}

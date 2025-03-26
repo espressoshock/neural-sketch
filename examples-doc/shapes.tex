@@ -1,0 +1,158 @@
+\documentclass{standalone}
+% \standaloneconfig{border=10mm}
+
+\usepackage{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	% \nskContainer[
+	% 	border-type=dashdotted,
+	% 	text-north=Basic Shapes,
+	% 	text-north-style={nskMidGray},
+	% 	text-north-loc=west,
+	% 	fill=nskMainAccent!20,
+	% 	border-color=nskMainAccent,
+	% ]{
+	% 	\foreach \shape in
+	% 		{rectangle, circle, diamond, ellipse, trapezium, semicircle}{
+	% 			\nskBlock[
+	% 				type=\shape,
+	% 				width=1cm, height=1cm,
+	% 				last-pos-s={right=.8cm}
+	% 			]
+	% 		}
+	% }
+	%
+	% \nskContainer[
+	% 	border-type=dashdotted,
+	% 	text-north=Basic Shapes,
+	% 	text-north-style={nskMidGray},
+	% 	text-north-loc=west,
+	% 	fill=nskMainAccent!20,
+	% 	border-color=nskMainAccent,
+	% ]{
+	% 	\foreach \ns in {3,...,6}{
+	% 			\nskBlock[
+	% 				type=regular polygon,
+	% 				width=1.5cm, height=1.5cm,
+	% 				tikz-opts={regular polygon sides=\ns},
+	% 				last-pos-s={right=.8cm},
+	% 			]
+	% 		}
+	% }
+	%
+	% \nskContainer[
+	% 	id=ac,
+	% 	border-type=dashdotted,
+	% 	text-north=Specials,
+	% 	text-north-style={nskMidGray},
+	% 	text-north-loc=west,
+	% 	fill=nskMainAccent!20,
+	% 	border-color=nskMainAccent,
+	% ]{
+	% 	\foreach \shape in {isosceles triangle, kite, dart}{
+	% 			\nskBlock[
+	% 				type=\shape,
+	% 				id=ablock,
+	% 				last-pos-s={right=.8cm},
+	% 			]
+	% 		}
+	% }
+	%
+	% \nskContainer[
+	% 	pos={right=5cm of ac},
+	% 	border-type=dashdotted,
+	% 	text-north=Specials,
+	% 	text-north-style={nskMidGray},
+	% 	text-north-loc=west,
+	% 	fill=nskMainAccent!20,
+	% 	border-color=nskMainAccent,
+	% ]{
+	%
+	% 	\foreach \shape in {cylinder, cloud, signal, tape}{
+	% 			\nskBlock[
+	% 				id=ablock,
+	% 				type=\shape,
+	% 				last-pos-s={right=.8cm},
+	% 				border-radius=0mm,
+	% 			]
+	% 		}
+	% }
+
+	\nskContainer[
+		id=ac,
+		border-type=dashdotted,
+		text-west=Rounded Rects,
+		text-north-style={nskMidGray},
+		fill=nskMainAccent!20,
+		border-color=nskMainAccent,
+	]{
+		\foreach \a in {180, 120, 90}{
+				\nskBlock[
+					type=rounded rectangle,
+					text-center={hello},
+					id=ablock,
+					width=2cm, height=1cm,
+					border-radius=0,
+					pos={right=.8cm of ablock},
+					tikz-opts={rounded rectangle arc length=\a},
+				]
+			}
+	}
+
+	\nskContainer[
+		border-type=dashdotted,
+		text-west=Chamfered Rects,
+		text-north-style={nskMidGray},
+		fill=nskMainAccent!20,
+		border-color=nskMainAccent,
+		shift-y=-3cm,
+	]{
+		\foreach \a in {180, 120, 90}{
+				\nskBlock[
+					type=chamfered rectangle,
+					text-center={hello},
+					id=bblock,
+					width=2cm, height=1cm,
+					border-radius=.6mm,
+					pos={right=.8cm of bblock},
+					tikz-opts={rounded rectangle arc length=\a},
+				]
+			}
+	}
+
+	\nskContainer[
+		border-type=dashdotted,
+		text-west=Custom Chamfer,
+		text-north-style={nskMidGray},
+		fill=nskMainAccent!20,
+		border-color=nskMainAccent,
+		shift-y=-6cm,
+	]{
+		\nskBlock[
+			type=chamfered rectangle,
+			text-center={hello},
+			id=cblock,
+			width=2cm, height=1cm,
+			border-radius=.6mm,
+			pos={right=.8cm of cblock},
+			tikz-opts={chamfered rectangle corners={north east, south east}},
+		]
+		\nskBlock[
+			type=chamfered rectangle,
+			text-center={hello},
+			id=cblock,
+			width=2cm, height=1cm,
+			border-radius=.6mm,
+			pos={right=.8cm of cblock},
+			tikz-opts={chamfered rectangle corners={north west, south west}},
+		]
+	}
+
+
+\end{nskFigure}
+\end{document}
+
+

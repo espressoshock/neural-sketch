@@ -1,0 +1,108 @@
+\documentclass{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage[]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskContainer[
+		text-north={Raster Block Embedding},
+		text-north-loc=west,
+		border-type=dashed,
+		fill=nskSecondaryAccent!30,
+		border-color=nskSecondaryAccent,
+	]{
+		\nskBlock[
+			type=rectangle,
+			id=rembed,
+			width=4cm, height=2cm,
+			text-north = {raw embed},
+			border-type=solid,
+			embed={
+					\node[]
+					{\includegraphics[width=4cm, height=2cm]{../assets/in.png};};
+				},
+		]
+		\nskBlock[
+			type = rectangle,
+			pos={right=1cm of rembed},
+			width=2cm, height=2cm,
+			text-north      = {gfx embed},
+			border-type=solid,
+			embed-gfx={../assets/in.png},
+		]
+	}
+\end{nskFigure}
+
+\begin{nskFigure}[]
+	\nskContainer[
+		text-north={Custom shapes Block Embedding},
+		text-north-loc=west,
+		border-type=dashed,
+		fill=nskMainAccent!30,
+		border-color=nskMainAccent,
+	]{
+
+		\foreach \shape in
+			{rectangle, circle, diamond, trapezium, semicircle}{
+				\nskBlock[
+					id=a,
+					type=\shape,
+					width=2cm, height=2cm,
+					last-pos-s={right=.8cm},
+					embed={
+							\node[]
+							{\includegraphics[width=4cm, height=2cm]{../assets/in.png};};
+						},
+				]
+			}
+	}
+\end{nskFigure}
+
+\begin{nskFigure}[]
+	\nskContainer[
+		text-north={Variable Embed Padding},
+		text-north-loc=west,
+		border-type=dashed,
+		fill=nskSecondaryAccent!30,
+		border-color=nskSecondaryAccent,
+	]{
+		\foreach \p in {0,...,4} {
+				\nskBlock[
+					type = rectangle,
+					last-pos-s={right=1cm},
+					width=2cm, height=2cm,
+					text-north= {\p mm},
+					border-type=solid,
+					embed-gfx={../assets/in.png},
+          embed-padding={\p mm}
+				]
+			}
+	}
+\end{nskFigure}
+
+\begin{nskFigure}[]
+	\nskContainer[
+		text-north={Variable Embed B-Radii},
+		text-north-loc=west,
+		border-type=dashed,
+		fill=nskSecondaryAccent!30,
+		border-color=nskSecondaryAccent,
+	]{
+		\foreach \r in {0,...,4} {
+				\nskBlock[
+					type = rectangle,
+					last-pos-s={right=1cm},
+					width=2cm, height=2cm,
+					text-north= {\r mm},
+					border-type=solid,
+					embed-gfx={../assets/in.png},
+          embed-border-radius={\r mm},
+          border-radius={\r mm},
+				]
+			}
+	}
+\end{nskFigure}
+\end{document}

@@ -1,0 +1,257 @@
+\documentclass[multi=false]{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage[]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[
+		id=ab,
+		text-north=Connection,
+		text-north-loc=west,
+		border-type=dashed,
+		fill=nskMainAccent!20,
+		border-color=nskMainAccent,
+	]{
+		\nskBlock[
+			type=rectangle,
+			id=ablock,
+			text-center=A,
+			importance=1.2,
+			outer-border-type=solid,
+			outer-border-size=3mm,
+		]
+		\nskBlock[
+			type=rectangle,
+			id=bblock,
+			last-pos={right=1cm},
+			text-center=B,
+		]
+		\nskConnect[
+			from=ablock.east,
+			to=bblock.west,
+		]
+	}
+
+	\nskContainer[
+		text-north=Arrow,
+		text-north-loc=west,
+		border-type=dashed,
+		pos={right=0cm of ab},
+		fill=nskSecondaryAccent!30,
+		border-color=nskSecondaryAccent,
+	]{
+		\nskBlock[
+			type=rectangle,
+			id=cblock,
+			text-center=C,
+			importance=1.2,
+			outer-border-type=solid,
+			outer-border-color=nskSecondaryAccent,
+			outer-border-size=3mm,
+		]
+		\nskBlock[
+			type=rectangle,
+			id=dblock,
+			last-pos={right=1cm},
+			text-center=D,
+		]
+		\nskConnect[
+			from=cblock.east,
+			to=dblock.west,
+			arrow-style={ultra thick, ->},
+		]
+	}
+\end{nskFigure}
+
+\begin{nskFigure}[]
+
+	\nskContainer[
+		id=ab,
+		text-north=Single Bend,
+		text-north-loc={above},
+		text-north-loc=west,
+		border-type=dashed,
+		fill=nskMainAccent!20,
+		border-color=nskMainAccent,
+	]{
+		\nskBlock[
+			type=circle,
+			id=ablock,
+			text-center=A,
+		]
+		\nskBlock[
+			type=rectangle,
+			id=bblock,
+			text-center=B,
+			pos={above right=1cm of ablock},
+		]
+		\nskConnect[
+			from=ablock.east,
+			to=bblock.south,
+			bend-type=single,
+			bend-direction=down,
+		]
+	}
+
+	\nskContainer[
+		id=ab,
+		text-north=Double Bend,
+		text-north-loc=above,
+		text-north-loc=west,
+		border-type=dashed,
+		fill=nskMainAccent!20,
+		border-color=nskMainAccent,
+		pos={right=0cm of ab},
+	]{
+		\nskBlock[
+			type=circle,
+			id=ablock,
+			text-center=A,
+		]
+		\nskBlock[
+			type=rectangle,
+			id=bblock,
+			text-center=B,
+			pos={right=1cm of ablock},
+		]
+		\nskConnect[
+			from=ablock.north,
+			to=bblock.north,
+			bend-type=double,
+			bend-direction=up,
+		]
+	}
+
+	\nskContainer[
+		text-north=Arcs,
+		text-north-loc=west,
+		border-type=dashed,
+		pos={right=0cm of ab},
+		fill=nskSecondaryAccent!30,
+		border-color=nskSecondaryAccent,
+	]{
+		\nskBlock[
+			type=circle,
+			id=ablock,
+			text-center=A,
+		]
+		\nskBlock[
+			type=rectangle,
+			id=bblock,
+			text-center=B,
+			pos={right=1cm of ablock},
+		]
+		\nskConnect[
+			from=ablock.north,
+			to=bblock.north,
+			arrow-style={ultra thick, ->, bend left=90},
+      route={to}
+		]
+		\nskConnect[
+			from=bblock.south,
+			to=ablock.south,
+			arrow-style={ultra thick, ->, rounded corners=3mm, bend left=90},
+			route={to }
+		]
+	}
+\end{nskFigure}
+
+
+\begin{nskFigure}[]
+	\nskContainer[
+		id=ab,
+		text-north=No Arrow Hopping,
+		text-north-loc=west,
+		border-type=dashed,
+		fill=nskRed!30,
+		border-color=nskRed,
+	]{
+		\nskBlock[
+			type=rectangle,
+			id=ablock,
+			text-center=A,
+		]
+		\nskBlock[
+			type=rectangle,
+			id=bblock,
+			text-center=B,
+			last-pos={right=2cm},
+		]
+		\nskBlock[
+			type=circle,
+			id=cblock,
+			text-center=C,
+			border-type=dashed,
+			pos={above right=.6cm and .6cm of ablock},
+		]
+		\nskBlock[
+			type=circle,
+			id=dblock,
+			text-center=D,
+			border-type=dashed,
+			pos={below right=.6cm and .6cm of ablock},
+		]
+		\nskConnect[
+			from=ablock.east,
+			to=bblock.west,
+			arrow-style={ultra thick, ->},
+		]
+		\nskConnect[
+			from=cblock.south,
+			to=dblock.north,
+			arrow-style={ultra thick, ->, rounded corners=3mm},
+		]
+	}
+	\nskContainer[
+		text-north=Arrow Hopping,
+		text-north-loc=west,
+		border-type=dashed,
+		pos={right=0cm of ab},
+		fill=nskGreen!30,
+		border-color=nskGreen,
+	]{
+		\nskBlock[
+			type=rectangle,
+			id=ablock,
+			text-center=A,
+		]
+		\nskBlock[
+			type=rectangle,
+			id=bblock,
+			text-center=B,
+			last-pos={right=2cm},
+		]
+		\nskBlock[
+			type=circle,
+			id=cblock,
+			text-center=C,
+			border-type=dashed,
+			pos={above right=.6cm and .6cm of ablock},
+		]
+		\nskBlock[
+			type=circle,
+			id=dblock,
+			text-center=D,
+			border-type=dashed,
+			pos={below right=.6cm and .6cm of ablock},
+		]
+		\nskConnect[
+			from=ablock.east,
+			to=bblock.west,
+			arrow-style={ultra thick, ->, rounded corners=2mm},
+			bridging=true,
+			bridging-style=over,
+		]
+		\nskConnect[
+			from=cblock.south,
+			to=dblock.north,
+			arrow-style={ultra thick, ->, rounded corners=3mm},
+			bridging=true,
+		]
+		\nskDoBridging
+	}
+
+\end{nskFigure}
+\end{document}

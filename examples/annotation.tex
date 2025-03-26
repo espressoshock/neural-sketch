@@ -1,0 +1,58 @@
+\documentclass{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage[]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskBlock[
+		id=a,
+		outer-border-type=solid,
+		outer-border-color=nskSecondaryAccent!50,
+	]
+	\nskAnnotate[
+		pos={left=2cm of a},
+		anchor-from=east,
+		connect-to=a.west,
+		header={Explanation},
+		title={Key Observations},
+		text={This is an important portion.},
+		fill=none,
+		border-type=none,
+	]
+	\nskAnnotate[
+		pos={above right=1cm of a},
+		anchor-from=south,
+		connect-to=a.east,
+		header={Explanation},
+		border-type=dashed,
+		title={Key Observations},
+		text={This is an important portion.},
+		text-align=justify,
+		connect-opts = {
+				corner-radius=4mm,
+				bend-route={single down},
+			},
+		tikz-opts={},
+	]
+
+	\nskAnnotate[
+		ref-tag=a,
+		pos={above=4cm of a},
+		anchor-from=south,
+		connect-to=a.north,
+		header={\nskBlockIDLast[1]},
+		rounded-box,
+		fill=none,
+		border-type=solid,
+		connect-opts = {
+				arrow-style={dotted, thick},
+				bend-route={single down}
+			},
+		tikz-opts={},
+	]
+
+\end{nskFigure}
+\end{document}
