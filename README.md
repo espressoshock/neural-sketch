@@ -79,13 +79,13 @@ Here's a quick example to create a simple diagram:
 
 Extensive documentation, examples, and best practices can be found at:
 
-- 📚 **[Neural Sketch Documentation](https://neural-sketch-doc.vercel.app/)**
+- 📚 **[Neural Sketch Documentation](https://neural-sketch.app/)**
 
 Key documentation sections:
-- [Getting Started Guide]((https://neural-sketch-doc.vercel.app/docs/core)
-- [Core Components Overview](https://neural-sketch-doc.vercel.app/docs/core/what-is-nsk)
-- [Customization and Styling](https://neural-sketch-doc.vercel.app/docs/core/palette)
-- [Automatic Dark Mode](https://neural-sketch-doc.vercel.app/docs/core/dark-mode)
+- [Getting Started Guide](https://neural-sketch-doc.vercel.app/docs/core)
+- [Core Components Overview](https://neural-sketch.app/docs/core/what-is-nsk)
+- [Customization and Styling](https://neural-sketch.app/docs/core/palette)
+- [Automatic Dark Mode](https://neural-sketch.app/docs/core/dark-mode)
 
 ---
 
