@@ -9,7 +9,7 @@
 
 \usepackage[T1]{fontenc}
 
-\usepackage{neural-sketch}
+\usepackage[block-width=2cm, block-height=2cm]{neural-sketch}
 \usetikzlibrary{backgrounds}
 \nskUseModule{*}
 
@@ -81,7 +81,7 @@
 % front-matter ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \title{The \pkg{neural-sketch} Package: Documentation}
 \author{Vincenzo Buono}
-\date{\fileversion~ from 2025/02/04}
+\date{\fileversion~ from 2025/03/22}
 % \date{\fileversion~ from \filedate}
 
 \begin{document}
@@ -96,7 +96,7 @@
 	diagrams, primarily in AI and ML. It supplies
 	\emph{opinionated} defaults for shapes, colors, bridging lines, and
 	group transformations, while enabling deeper fine-tuning via a cohesive
-	key--value system.
+  key--value system.\footnote{This is a preliminary draft. For a more up-to-date version checkout our docs at \href{https://neuralsketch.app/}{https://neuralsketch.app/} or code on \href{https://github.com/espressoshock/neural-sketch}{https://github.com/espressoshock/neural-sketch}}
 \end{abstract}
 % b-g ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 
@@ -348,7 +348,7 @@ However, you can also select from a broader collection of shape names recognized
 					type=\shape,
 					id=ablock,
 					width=1cm, height=1cm,
-					last-pos={right=.8cm}
+					last-pos-s={right=.8cm}
 				]
 			}
 	\end{nskFigure}
@@ -452,7 +452,7 @@ However, you can also select from a broader collection of shape names recognized
 			id=cblock,
 			width=2cm, height=1cm,
 			border-radius=.6mm,
-			pos={right=.8cm of cblock},
+			last-pos-s={right=.8cm of},
 			tikz-opts={chamfered rectangle corners={north east, south east}},
 		]
 		\nskBlock[
@@ -774,7 +774,7 @@ Because the container knows about the bounding box of the grouped elements, it c
 	\begin{nskFigure}[center]
 		\nskContainer[
 			text-north={Block Embedding},
-			text-north-loc={above},
+			text-north-loc={west},
 		]{
 			\foreach \i/\c in {1/nskLightGray, 2/nskMainAccent, 3/nskSecondaryAccent}{
 					\nskBlock[

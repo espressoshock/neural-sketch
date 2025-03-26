@@ -127,8 +127,16 @@
 	arrow-style .default:n = {ultra~thick, line~cap=round},
 
 	arrow-tip .tl_set:N = \l_nsk_connect_arrow_tip_tl,
-	arrow-tip .initial:n = {->},
-	arrow-tip .default:n = {->},
+	arrow-tip .initial:n = {-},
+	arrow-tip .default:n = {-},
+
+	shift-x .dim_set:N = \l_nsk_connect_shift_x_dim,
+	shift-x .initial:n = {0mm},
+	shift-x .default:n = {0mm},
+
+	shift-y .dim_set:N = \l_nsk_connect_shift_y_dim,
+	shift-y .initial:n = {0mm},
+	shift-y .default:n = {0mm},
 
 	color .tl_set:N                 = \l_nsk_connect_color_tl,
 	color .initial:n                = { c__nsk_principal },
@@ -211,9 +219,9 @@
 		shorten~<=\l__nsk_connect_shorten_from_dim,
 		shorten~>=\l__nsk_connect_shorten_to_dim,
 	]
-	(\l_nsk_connect_from_tl)
+  ([xshift=\l_nsk_connect_shift_x_dim, yshift=\l_nsk_connect_shift_y_dim]\l_nsk_connect_from_tl)
 	\l_nsk_connect_route_tl
-	(\l_nsk_connect_to_tl);
+	([xshift=\l_nsk_connect_shift_x_dim, yshift=\l_nsk_connect_shift_y_dim]\l_nsk_connect_to_tl);
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -709,7 +717,7 @@ arc[
 	% draw ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\begin{pgfonlayer}{interim}
 		\draw[
-			spath/save global=\tl_use:N \l_nsk_connect_id_tl,
+			spath/save~global=\tl_use:N \l_nsk_connect_id_tl,
 			fill=\l_nsk_fillbetween_fill_tl,
 			draw=\l_nsk_fillbetween_draw_tl,
 			opacity=\fp_use:N \l_nsk_fillbetween_opacity_fp
