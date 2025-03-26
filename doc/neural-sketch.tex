@@ -1,0 +1,924 @@
+% doc/neural-sketch.tex
+% ------------------------------------------------------------------------------
+% Standalone documentation for the core module of the neural-sketch package.
+% Uses l3doc conventions and best practices
+
+\documentclass[show-experimental]{l3doc}
+
+\usepackage{docmfp}
+
+\usepackage[T1]{fontenc}
+
+\usepackage[block-width=2cm, block-height=2cm]{neural-sketch}
+\usetikzlibrary{backgrounds}
+\nskUseModule{*}
+
+
+\usepackage{listings}
+\usepackage{fancyvrb}
+\fvset{gobble=0}
+\lstset{
+  breakatwhitespace=true,
+  breaklines=true,
+  language=[LaTeX]TeX,
+  basicstyle=\small\ttfamily,
+  keepspaces=false,
+  columns=fullflexible,
+  tabsize=2,
+  xleftmargin=0em,
+}
+
+\pdfstringdefDisableCommands{%
+  \def\\{}%
+  \def\url#1{<#1>}%
+}
+
+\usepackage[most]{tcolorbox}
+\newtcblisting{nskusage}{
+  colback=white,
+  coltitle=white,
+  colframe=black,
+  title=,
+  left=1mm,
+  right=1mm,
+  top=0mm,
+  bottom=0mm,
+  boxrule=0.2mm,
+  arc=1mm,
+  listing only,
+  listing options={
+    basicstyle=\ttfamily\small,
+    frame=none,
+    breaklines=true
+  },
+}
+
+\newtcblisting{nskexample}[1][]{
+  colback=white,
+  coltitle=white,
+  colframe=black,
+  title=,
+  top=2mm,
+  bottom=2mm,
+  boxrule=0.2mm,
+  arc=1mm,
+  listing options={
+    basicstyle=\ttfamily\small,
+    frame=none,
+    breaklines=true
+  },
+  #1,
+}
+
+\NewDocumentCommand \DescribeModule { m }
+{
+    \Describe{mod}{module}{#1 (\textsc{module})}
+    \vspace{1em}\\
+    % \\\\
+}
+
+
+% front-matter ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\title{The \pkg{neural-sketch} Package: Documentation}
+\author{Vincenzo Buono}
+\date{\fileversion~ from 2025/03/22}
+% \date{\fileversion~ from \filedate}
+
+\begin{document}
+% b-g ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\maketitle
+\tableofcontents
+
+\begin{abstract}
+	\noindent
+	\pkg{neural-sketch} is a modern \LaTeX{} package offering
+	a curated yet customizable environment for crafting publication-ready
+	diagrams, primarily in AI and ML. It supplies
+	\emph{opinionated} defaults for shapes, colors, bridging lines, and
+	group transformations, while enabling deeper fine-tuning via a cohesive
+  key--value system.\footnote{This is a preliminary draft. For a more up-to-date version checkout our docs at \href{https://neuralsketch.app/}{https://neuralsketch.app/} or code on \href{https://github.com/espressoshock/neural-sketch}{https://github.com/espressoshock/neural-sketch}}
+\end{abstract}
+% b-g ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Part I: User Manual
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\section{Introduction}
+
+\subsection{Philosophy \& Motivation}
+
+The \pkg{neural-sketch} package rests on two intertwined principles: an \emph{opinionated} default configuration for generating crisp, publication-ready diagrams, and a \emph{highly customizable} key–value system that grants creative latitude to those who need it. By embracing these two perspectives, it provides authors and researchers with a system that transitions fluidly from rapid, out-of-the-box usage to more intricate, precise diagram design. Through this design, authors can focus on communicating their content without wrestling with endless lines of \TeX\ or \pkg{TikZ} boilerplate.
+
+% Though it is especially attuned to the shapes, flows, and bridging arcs commonly found in AI or machine-learning diagrams (for instance, neural network architectures or algorithmic flowcharts), the core mechanisms also prove beneficial for more general schematic tasks. Its architecture uses \LaTeX3 principles and the \pkg{expl3} (L3) programming layer, making it both robust and accessible for those who wish to extend or adapt its internals.
+
+While \pkg{neural-sketch} particularly shines in AI or machine-learning contexts—where neural network layers, algorithmic flowcharts, and bridging arcs are commonplace—its core principles also extend to more general schematic work. Beneath its user-facing commands, this package is built with \LaTeX3 paradigms and the \pkg{expl3} programming layer, making it robust, internally coherent, and inviting to authors who wish to adapt its internals for specialized or evolving use cases.
+
+
+\subsection{Key Features}
+
+By default, \pkg{neural-sketch} sets up consistent color palettes, thick yet neat border styles, and built-in shape anchors to produce a professional appearance in minimal lines of code. Overriding any of these preferences is straightforward, allowing you to alter border widths, node fills, or coordinate shifting with a simple key assignment. Consequently, one can generate consistent, rigorously styled, conference-ready figures easily without repeated styling instructions across figures, projects and publications. Internally, the system fuses a modern \LaTeX3 toolchain (\pkg{expl3}, \pkg{l3keys}, and \pkg{l3build}) with well-established and familiar \pkg{TikZ} ecosystem. It harnesses \cs{spath3} library behind the scenes for bridging arcs and advanced path manipulations. It also draws upon \cs{expl3} modern data structures, property lists and sequences for robust type parsing, key management and configuration.
+
+\noindent By default, \pkg{neural-sketch} provides the following modules:
+
+\DescribeModule{block} Offers primitives to draw and style fundamental shapes (e.g., rectangles, circles, diamonds). The \cs{nskBlock} macro exposes shape-specific parameters for border style, fill, radius, size, and text placement. All shapes from the \pkg{TikZ} \meta{shapes.geometric} library are supported, and they can serve as building blocks for more complex diagram elements.
+
+\DescribeModule{loader} Coordinates the loading of optional modules (such as bridges, containers, coords) via \cs{nskUseModule}. This allows you to load only the functionality you need or quickly enable all available features with \cs{nskUseModule}\Arg{*}.
+
+\DescribeModule{styles} Holds global style definitions controlled through a cohesive key–value interface. Users can quickly restyle blocks, containers, and connectors, ensuring consistent visuals throughout a document.
+
+\DescribeModule{colors} Defines and exposes a curated palette of color macros (\cs{nskBlue}, \cs{nskGray}, \cs{nskOrange}, etc.). Authors can readily extend or override this set to match personal or institutional style guidelines.
+
+\DescribeModule{groups} Implements \cs{nskGroup} for logically grouping multiple shapes or diagram segments under a shared transformation. Typical transformations include shift, rotate, or scale, all governed by a simple key–value syntax.
+
+\DescribeModule{containers} Implements \cs{nskContainer} to create bounding regions around sets of blocks or shapes, visually separating a subdiagram from the remainder. These containers support fill, borders, corner rounding, and adjustable padding.
+
+\DescribeModule{coords} Enables the placement of named coordinates, optionally with visible markers. Such coordinates act as anchors in diagrams, facilitating precise alignment or adjacency across distinct elements.
+
+\DescribeModule{bridges} Automatically Manages lines, arrows and bridging arcs whenever lines overlap or intersect, using \pkg{spath3} to split and reorder segments. This module gracefully handles crossing lines in dense diagrams, producing tidy arcs where one path passes over another.
+
+
+The default color set provides optimized, publication-ready tints (for instance, \cs{nskBlue}, \cs{nskGray}, or \cs{nskOrange}) but can be readily extended. Authors wishing to unify the color scheme across all blocks or containers need only issue a concise \cs{nskSetStyle} directive, instantly updating the entire document’s appearance.
+
+\section{Loading the Package}
+
+\begin{lstlisting}
+\usepackage{neural-sketch}
+\end{lstlisting}
+
+To begin, load the package in the preamble of your document:
+
+
+\subsection{\cs{nskUseModule}: Selective Loading of Features}
+
+Internally, \pkg{neural-sketch} \textit{only load the core modules and commands}. Optional modules for bridging lines, coordinate helpers, grouping containers, and additional color expansions can be loaded with:
+
+\begin{function}{\nskUseModule}
+	\begin{syntax}
+		\cs{nskUseModule} \marg{module\_list}
+	\end{syntax}
+	This command loads one or more optional modules from the
+	\pkg{neural-sketch} library. The \meta{module\_list} is a comma-separated
+	set of module names. Currently recognized modules include
+	\texttt{bridges}, \texttt{coords}, \texttt{groups}, and
+	\texttt{containers}. Passing \verb|*| loads all available modules at once.
+\end{function}
+
+\begin{nskusage}
+	% Load two specific modules:
+	\nskUseModule{bridges, coords}
+	\nskUseModule{containers}
+
+	% Or load everything at once:
+	\nskUseModule{*}
+\end{nskusage}
+
+
+\section{Getting Started}
+
+\subsection{Minimal Example}
+
+A minimal usage scenario involves loading the package and drawing a simple shape with default styles.
+
+\begin{nskexample}[]
+	\begin{nskFigure}
+		\foreach \i [count=\x from 0] in
+			{nskLightGray, nskBlue, nskRed, nskOrange, nskYellow} {
+				\nskBlock[
+					type=rectangle,
+					id=ablock,
+					x={2.6*\x},
+					fill=\i,
+					text-center={A block},
+				]
+			}
+	\end{nskFigure}
+\end{nskexample}
+
+\section{Core Components \& Concepts}
+
+
+\subsection{\texorpdfstring{\cs{nskFigure}}{}: Creating a Diagram Environment}
+
+
+\begin{function}{\nskFigure}
+	\begin{syntax}
+		\env{nskFigure}\oarg{tikz~options}
+	\end{syntax}
+	The \env{nskFigure} environment encloses a \env{tikzpicture} and automatically
+	resets internal counters for \cs{nskBlock} usage. It also accepts an optional
+	argument, which is passed directly as styling or transformation settings to the
+	underlying \env{tikzpicture}.
+
+	When you begin \env{nskFigure} with an optional key--value list, these options are
+	applied directly to the underlying \env{tikzpicture}. Internally, \env{nskFigure}
+	also clears all \cs{nskBlock} type counters, ensuring each new figure starts with a
+	fresh naming scheme (such as \texttt{rectangle1}, \texttt{rectangle2}, and so on).
+
+	\begin{texnote}
+		Technically, \env{nskFigure} invokes:
+		\begin{verbatim}
+      \prop_gclear:N \g_nsk_block_counters_prop
+      \begin{tikzpicture}[#1]
+        ...
+      \end{tikzpicture}
+    \end{verbatim}
+		Any blocks, coordinates, containers, and connections you define inside this
+		environment inherit the \meta{tikz-options} from the optional argument.
+	\end{texnote}
+
+	The content of \env{nskFigure} can be freely placed as an in-text figure or wrapped
+	by a standard \env{figure} environment for floating placement. Either way,
+	\env{nskFigure} is designed to keep each diagram self-contained, with a fully reset
+	\cs{nskBlock} counter scope and an optional \meta{tikz-options} interface.
+
+\end{function}
+
+\subsection{\texorpdfstring{\cs{nskBlock}}{}: Building Blocks}
+A block is the core unit from which users construct shapes in \pkg{neural-sketch}. Invoking \cs{nskBlock}\Arg{key-value settings} yields a shape—typically a \emph{rectangle}—that can be relocated, scaled, or annotated. If you do not override any parameters, you receive a rectangle with a subtle fill and a neatly drawn border. You can specify shape type, fill color, border thickness, and text anchors.
+
+\begin{function}{\nskBlock}
+	\begin{syntax}
+		\cs{nskBlock} \oarg{key=value list}
+	\end{syntax}
+	The command \cs{nskBlock} serves as the primary mechanism for creating
+	individual shapes (a.k.a. “blocks”) in \pkg{neural-sketch}.
+	By default, each block is drawn as a \emph{rectangle} if no further
+	shape information is given. One may, however, specify a shape with the
+	\verb|type| key, for instance:
+
+	\begin{nskusage}
+		\nskBlock[
+			type=diamond,
+			fill=nskBlue,
+			text-center={Diamond Shape}
+		]
+	\end{nskusage}
+\end{function}
+
+
+\subsubsection{Basic styling}
+
+\begin{function}{\nskBlock (Styling)}
+	\begin{syntax}
+		\cs{nskBlock} \oarg{key = value list}
+	\end{syntax}
+	In addition to the \texttt{type} or geometric shape keys, the user can specify
+	stylistic options for each block. These options include (but are not limited to)
+	changing borders, shadows, or even “importance” (which may scale the border width).
+	Below are three representative keys:
+
+	\begin{itemize}
+		\item \verb|border-type|: Accepts \texttt{solid} or \texttt{dashed} to style
+		      the block’s outer boundary.
+		\item \verb|shadow|: A boolean to enable or disable shadows around the block.
+		      The default is \texttt{true}.
+		\item \verb|importance|: A floating-point multiplier for the border thickness.
+		      For instance, \verb|importance=2| doubles the default border width.
+	\end{itemize}
+\end{function}
+
+\begin{nskexample}[]
+	\begin{nskFigure}[center]
+		\nskBlock[
+			id=A,
+			text-north = {solid},
+			border-type=solid,
+		]
+		\nskBlock[
+			id=B,
+			text-north = {dashed},
+			border-type=dashed,
+			pos={right=.5cm of A},
+		]
+		\nskBlock[
+			id=C,
+			text-north = {shadow=true},
+			shadow=true,
+			pos={right=.5cm of B},
+		]
+		\nskBlock[
+			id=D,
+			text-north = {shadow=false},
+			shadow=false,
+			pos={right=.5cm of C},
+		]
+		\nskBlock[
+			id=E,
+			text-north = {important},
+			shadow=false,
+			importance=2,
+			pos={right=.5cm of D},
+		]
+	\end{nskFigure}
+\end{nskexample}
+
+
+\subsubsection{Supported primitives}
+
+As a default, \cs{nskBlock} assumes a \meta{rectangle} shape if none is specified.
+However, you can also select from a broader collection of shape names recognized by
+\pkg{TikZ}'s \meta{shapes.geometric} library. For instance, users commonly employ
+\texttt{circle}, \texttt{diamond}, \texttt{ellipse}, \texttt{trapezium}, or
+\texttt{regular polygon} shapes. Additional specialty forms such as
+\texttt{semicircle}, \texttt{chamfered rectangle}, \texttt{cylinder}, and
+\texttt{cloud} are equally accessible.
+
+\begin{texnote}
+	The \cs{nskBlock} macro supports any \texttt{TikZ} shape that can be set via
+	\verb|shape=<shape-name>|. A few popular shapes include:
+	\begin{verbatim}
+   rectangle, circle, diamond, ellipse,
+   trapezium, chamfered rectangle, semicircle,
+   cylinder, cloud, signal, tape,
+   regular polygon sides=<n>,
+   kite, dart, isosceles triangle,
+   ...
+\end{verbatim}
+	Some shapes, such as \texttt{regular polygon}, allow additional options through
+	\cs{tikz-opts} (for example, \verb|tikz-opts={regular polygon sides=5}| to
+	produce a pentagon).
+\end{texnote}
+
+\begin{nskexample}[]
+	\begin{nskFigure}[center]
+		\foreach \shape in
+			{rectangle, circle, diamond, ellipse, trapezium, semicircle}{
+				\nskBlock[
+					type=\shape,
+					id=ablock,
+					width=1cm, height=1cm,
+					last-pos-s={right=.8cm}
+				]
+			}
+	\end{nskFigure}
+\end{nskexample}
+
+\begin{nskexample}[]
+	\begin{nskFigure}[center]
+		\foreach \ns in {3,...,6}{
+				\nskBlock[
+					type=regular polygon,
+					id=ablock,
+					width=1.5cm, height=1.5cm,
+					tikz-opts={regular polygon sides=\ns},
+					pos={right=.8cm of ablock}
+				]
+			}
+	\end{nskFigure}
+\end{nskexample}
+
+
+\begin{nskexample}[sidebyside, righthand width=5cm]
+	\begin{nskFigure}[center]
+		\nskCoord[id=ablock, y=0]
+		\nskCoord[id=bblock, x=2.7]
+		\nskContainer[
+			text-north={Specials},
+			id=ag,
+		]{
+			\foreach \shape in {isosceles triangle, kite, dart}{
+					\nskBlock[
+						type=\shape,
+						id=ablock,
+						width=1cm, height=1cm,
+						pos={below=.8cm of ablock},
+					]
+				}
+		}
+		\nskContainer[
+			text-north={Specials},
+		]{
+			\foreach \shape in {cylinder, cloud, signal, tape}{
+					\nskBlock[
+						type=\shape,
+						id=bblock,
+						width=1cm, height=1cm,
+						pos={below=.8cm of bblock},
+						border-radius=0mm,
+					]
+				}
+		}
+	\end{nskFigure}
+\end{nskexample}
+
+
+\begin{nskexample}[]
+	\begin{nskFigure}[center]
+		\nskCoord[id=ablock, y=0]
+		\nskCoord[id=bblock, y=2.6]
+		\nskContainer[
+			text-west={Rounded Rects},
+			id=rrects,
+			text-north={},
+		]{
+			\foreach \a in {180, 120, 90}{
+					\nskBlock[
+						type=rounded rectangle,
+						text-center={hello},
+						id=ablock,
+						width=2cm, height=1cm,
+						border-radius=0,
+						pos={right=.8cm of ablock},
+						tikz-opts={rounded rectangle arc length=\a},
+					]
+				}
+		}
+		\nskContainer[
+			text-west={Chamfered Rects},
+			text-north={},
+		]{
+			\foreach \a in {180, 120, 90}{
+					\nskBlock[
+						type=chamfered rectangle,
+						text-center={hello},
+						id=bblock,
+						width=2cm, height=1cm,
+						border-radius=.6mm,
+						pos={right=.8cm of bblock},
+						tikz-opts={rounded rectangle arc length=\a},
+					]
+				}
+		}
+	\end{nskFigure}
+\end{nskexample}
+
+
+\begin{nskexample}[]
+	\begin{nskFigure}[center]
+		\nskBlock[
+			type=chamfered rectangle,
+			text-center={hello},
+			id=cblock,
+			width=2cm, height=1cm,
+			border-radius=.6mm,
+			last-pos-s={right=.8cm of},
+			tikz-opts={chamfered rectangle corners={north east, south east}},
+		]
+		\nskBlock[
+			type=chamfered rectangle,
+			text-center={hello},
+			id=cblock,
+			width=2cm, height=1cm,
+			border-radius=.6mm,
+			pos={right=.8cm of cblock},
+			tikz-opts={chamfered rectangle corners={north west, south west}},
+		]
+	\end{nskFigure}
+
+\end{nskexample}
+
+You may further customize each shape with \cs{nskBlock} keys like
+\verb|width|, \verb|height|, \verb|fill|, \verb|border-type|, and more.
+Moreover, anything you would ordinarily pass in a
+\verb|\node[...]{...}| statement can be placed under the \texttt{tikz-opts}
+key of \cs{nskBlock}, if needed.
+
+
+\subsection{ID Generation}
+
+When a new block is drawn with \cs{nskBlock}, its \meta{id} key determines
+how the shape is referenced in subsequent operations, including positioning
+(\verb|pos=|, \verb|last-pos=|) and bridging. Users may explicitly set:
+
+\begin{lstlisting}
+  \nskBlock[id=myrect, ...]
+\end{lstlisting}
+
+to assign a custom block ID \texttt{myrect}. If none is specified, an ID is
+\emph{automatically} generated. The automatic name takes the form
+\texttt{<type><counter>}, e.g., \texttt{rectangle1}, \texttt{diamond2}, etc.,
+derived from the shape’s type and a global counter. This counter
+increments each time a shape of that type is placed, ensuring uniqueness
+within the same \env{nskFigure}.
+
+\begin{function}{\nskBlockID}
+	\begin{syntax}
+		\cs{nskBlockID}
+	\end{syntax}
+	Expands to the \meta{id} of the block currently being drawn. This is
+	particularly useful for styling or annotation that depends on the block’s
+	assigned name, for instance to label it or connect to it immediately
+	afterwards.
+\end{function}
+
+\begin{function}{\nskBlockIDLast}
+	\begin{syntax}
+		\cs{nskBlockIDLast} \oarg{n}
+	\end{syntax}
+	Retrieves the ID of the \emph{n-th last} created block. By default,
+	\cs{nskBlockIDLast} references the most recently drawn block (\texttt{n}=1).
+	Passing, for example, \cs{nskBlockIDLast}\oarg{2} returns the next-to-last
+	block. This command becomes quite convenient in \emph{relative}
+	positioning scenarios, where you wish to specify something like:
+
+	\begin{lstlisting}
+    pos={right=1cm of \nskBlockIDLast[2]}
+  \end{lstlisting}
+
+	for precise linking with previously created shapes.
+\end{function}
+
+\begin{texnote}
+	Internally, these IDs (whether user-supplied or auto-generated) are stored
+	in a global sequence, \cs{g_nsk_block_id_history_seq}, and are reset each
+	time a new \env{nskFigure} environment begins. Consequently, IDs are
+	scoped \emph{per figure}: once a figure closes, the recorded IDs are no longer
+	carried over.
+\end{texnote}
+
+\begin{nskexample}[sidebyside, righthand width=6cm]
+	\begin{nskFigure}[center]
+		\nskContainer[
+			text-north={Auto-generated ID},
+		]{
+			\nskBlock[
+				text-center={\nskBlockID},
+			]
+			\nskBlock[
+				pos={right=1cm of rectangle1},
+				text-center={\nskBlockID},
+			]
+		}
+		\nskContainer[
+			text-north={Manual ID},
+			shift-y={4.5cm}
+		]{
+			\nskBlock[
+				% default to type=rectangle,
+				id=ablock,
+				x=0, y=0,
+				text-center={\nskBlockID},
+			]
+			\nskBlock[
+				id=bblock,
+				y=0,
+				pos={right=1cm of ablock},
+				text-center={\nskBlockID},
+			]
+		}
+	\end{nskFigure}
+\end{nskexample}
+
+\subsection{Positioning Mechanisms{}}
+
+When placing blocks with \cs{nskBlock}, you have several pathways for specifying their position on the page. These options include straightforward \emph{absolute positioning} with the \verb|x=|, \verb|y=| keys, and more nuanced \emph{relative placement} either via the \verb|pos=| key or by referencing the last-placed block with \verb|last-pos=|.
+
+\begin{function}{\nskBlock (Positioning)}
+	\begin{syntax}
+		\cs{nskBlock} \oarg{keys}
+	\end{syntax}
+	Below are the principal keys for controlling \emph{where} a block appears. They may be combined or overridden according to your layout needs.
+
+	\begin{texnote}
+		Under the hood, these keys rely on \cs{expl3} property lists to unify
+		the logic for coordinate parsing, enabling a seamless interplay
+		with the \pkg{tikz} \meta{positioning} library and the
+		\cs{nskBlockID}, \cs{nskBlockIDLast} systems.
+	\end{texnote}
+\end{function}
+
+\begin{variable}{Absolute Positioning}
+	\begin{syntax}
+		\cs{nskBlock}\oarg{x=<fp>, y=<fp>}
+	\end{syntax}
+	\emph{Absolute positioning} is the simplest approach: specify \verb|x=| and
+	\verb|y=| as floating-point values or zero for the origin. For instance:
+	\begin{nskusage}
+		\nskBlock[
+			x=0, y=0,
+			text-center={First block}
+		]
+		\nskBlock[
+			x=3.5, y=2,
+			text-center={Moved block}
+		]
+	\end{nskusage}
+
+	Here, the second block appears at coordinates \((3.5, 2)\). This method is
+	straightforward but can become cumbersome in large diagrams requiring repeated
+	relative placements.
+\end{variable}
+
+\begin{variable}{Relative Positioning}
+	\begin{syntax}
+		\cs{nskBlock}\oarg{pos=\meta{<anchor spec>}}
+	\end{syntax}
+	When you prefer the high-level \meta{TikZ} \meta{positioning} syntax, set
+	\verb|pos=...|. Typical usage includes:
+	\begin{nskusage}
+		\nskBlock[
+			id=A,
+			text-center={Reference}
+		]
+		\nskBlock[
+			id=B,
+			pos={right=1.5cm of A},
+			text-center={Relative}
+		]
+	\end{nskusage}
+
+	The block \texttt{B} is then placed such that its left edge is \(1.5\)cm
+	to the right of block \texttt{A}. You can also specify directions like
+	\verb|below=|, \verb|above=|, \verb|left=|, and so on, or combine them:
+
+	\begin{lstlisting}
+    pos={above right=1cm of XblockID}
+  \end{lstlisting}
+	This makes use of the built-in \pkg{TikZ} positioning library for a concise,
+	readable style.
+\end{variable}
+
+\begin{variable}{Relative (last) Placement}
+	\begin{syntax}
+		\cs{nskBlock}\oarg{last-pos=\meta{<anchor spec>}}
+	\end{syntax}
+	For quick chaining, if your figure \emph{implicitly} wants to place each new
+	block near its predecessor, you may write:
+	\begin{nskusage}
+		\nskBlock[x=0, y=0, text-center={Block 1}]
+		\nskBlock[
+			last-pos={right=1.2cm},
+			text-center={Block 2}
+		]
+		\nskBlock[
+			last-pos={above=0.8cm},
+			text-center={Block 3}
+		]
+	\end{nskusage}
+	The second block gets placed \verb|right=1.2cm| of \emph{the most recently drawn}
+	block (i.e., \verb|Block 1|). The third block is then placed \verb|above=0.8cm|
+	of \emph{Block 2}. This approach eliminates repeated references to older block
+	IDs and allows for automatic placements.
+
+	\begin{texnote}
+		Internally, the system checks the final item recorded by \cs{nskBlockIDLast}
+		to see which block was drawn most recently. If no previous blocks exist, a
+		warning is issued (but compilation continues).
+	\end{texnote}
+\end{variable}
+
+
+Blocks within a \cs{nskContainer} or \cs{nskGroup} can still use the same
+positioning mechanism. For \cs{nskContainer}, you may shift or rotate the
+entire \emph{container} \emph{and} let each block do local \verb|pos=| or
+\verb|x=,y=| for its own anchor. Similarly, \cs{nskGroup} transforms everything
+in its scope as a unit, but each block’s local positioning keys remain valid,
+yielding consistent results. Minimal example:
+\begin{nskusage}
+	\nskContainer[
+		fill=nskLightGray,
+		shift-x=2,
+		shift-y=1
+	]
+	{
+		\nskBlock[x=0, y=0, text-center={Inside Container}]
+		\nskBlock[pos={right=1cm of rectangle1}]
+	}
+\end{nskusage}
+
+The container is collectively shifted by \(\left(2,1\right)\). Meanwhile,
+two blocks inside it use standard positioning keys to place themselves
+\emph{relative} to each other (here via \verb|pos={right=1cm of rectangle1}|).
+
+\paragraph{Container \& Group Implications}
+When using containers (\cs{nskContainer}) or groups (\cs{nskGroup}) with relative positioning keys, \pkg{neural-sketch} implements an internal \emph{phantom reference node} mechanism. In short, these structures do not natively support standard \emph{TikZ positioning} on themselves, so the package's position parser automatically inserts hidden anchor nodes to infer alignment. For instance, if you write \verb|pos={below=1cm of mycontainer}|, the parser interprets the desired anchor (like \verb|.north| or \verb|.center|) to place the new block. This logic ensures that the block’s anchoring edge or corner correctly corresponds to the container’s bounding rectangle or group reference. Essentially, \pkg{neural-sketch} sets up ephemeral nodes (\texttt{\_\_nsk\_phantom\_refnode}, etc.) to store the bounding box coordinates. The parser sees something like \texttt{below=1cm of mycontainer} and guesses the best anchor (e.g., \verb|mycontainer.north|), then places the block accordingly. In practice, the user can rely on \verb|pos=| or \verb|last-pos=| even for \emph{groups} or \emph{containers}, and the package disambiguates the anchoring behind the scenes.
+
+\begin{nskexample}[sidebyside, righthand width=4cm]
+	\begin{nskFigure}[center]
+		\nskContainer[
+			id=ag,
+			padding=3mm,
+			fill=nskStrongRed!20,
+			border-radius=0mm,
+			border-color=nskStrongRed!50,
+		]{
+			\nskBlock[
+				id=A,
+				text-center={A},
+				fill=nskRed,
+				width=1cm, height=1cm,
+			]
+		}
+		\nskBlock[
+			text-center={B},
+			fill=nskGreen,
+			width=1cm, height=1cm,
+			border-radius=0mm,
+			pos={right=0cm of ag},
+		]
+		\nskBlock[
+			text-center={C},
+			fill=nskPink,
+			width=1cm, height=1cm,
+			border-radius=0mm,
+			pos={below=0cm of ag},
+		]
+	\end{nskFigure}
+\end{nskexample}
+
+
+\subsection{\texorpdfstring{\cs{nskGroup}}{}: Logical Grouping \& Transforms}
+When designing multi-block diagrams, you may wish to rotate or shift a collection of shapes as if they were a single entity. The \cs{nskGroup} command provides a straightforward way to do that. Everything inside its braced content is logically gathered into a group, and transformations (like scaling or rotation) apply uniformly. For instance:
+
+\begin{function}{\nskGroup}
+	\begin{syntax}
+		\cs{nskGroup} \oarg{key=value list} \{ diagram content \}
+	\end{syntax}
+	Creates a \emph{logical scope} around the enclosed content, applying
+	transformations such as \verb|shift-x|, \verb|rotate|, \verb|scale| to
+	everything inside. A bounding box is tracked (for optional referencing).
+\end{function}
+
+\begin{nskexample}[sidebyside, righthand width=4.5cm]
+	\begin{nskFigure}[center]
+		\nskGroup[rotate=45]
+		{
+			\nskBlock[
+				fill=nskMainAccent,
+				text-center={Block A}
+			]
+			\nskBlock[
+				x=2, y=0,
+				fill=nskSecondaryAccent,
+				text-center={Block B}
+			]
+		}
+	\end{nskFigure}
+\end{nskexample}
+
+\subsection{\texorpdfstring{\cs{nskContainer}}{}: Wrapped Regions}
+
+\begin{function}{\nskContainer}
+	\begin{syntax}
+		\cs{nskContainer} \oarg{key=value list} \Arg{\textit{content}}
+	\end{syntax}
+	This command creates a container or bounding region that encloses the
+	specified \meta{content} (for instance, one or more \cs{nskBlock} commands).
+	Internally, \cs{nskContainer} leverages \cs{nskGroup} to group its content
+	under uniform transformations (\verb|shift-x|, \verb|rotate|, \verb|scale|),
+	while also computing and drawing a bounding rectangle that fits the grouped
+	shapes.
+
+	\begin{texnote}
+		Because \cs{nskContainer} reuses \cs{nskGroup} internally, its optional keys
+		can move, rotate, or scale the enclosed items as a cohesive unit,
+		automatically building an invisible bounding box, then rendering
+		a rectangular overlay around that area.
+	\end{texnote}
+\end{function}
+
+Because the container knows about the bounding box of the grouped elements, it can draw an enclosing rectangle with a specified amount of padding regardless of the enclosed shapes size, type of irregularity. Adjusting \verb|padding=5mm|, for example, leaves extra space between the container border and the shapes inside.
+
+\begin{nskexample}[sidebyside, righthand width=4.5cm]
+	\begin{nskFigure}[center]
+		\nskContainer[
+			text-north={Block Embedding},
+			text-north-loc={west},
+		]{
+			\foreach \i/\c in {1/nskLightGray, 2/nskMainAccent, 3/nskSecondaryAccent}{
+					\nskBlock[
+						x=\i,
+						fill=\c,
+						width=8mm,
+						text-north={$B_\i$},
+						text-south={$x_\i$},
+					]
+				}
+		}
+	\end{nskFigure}
+\end{nskexample}
+
+\subsection{Patterns}\label{sec:patterns-section}
+
+Neural-Sketch supports simple or more elaborate fill \emph{patterns}
+through two principal keys:
+
+\begin{function}{pattern}
+	\begin{syntax}
+		pattern = \meta{TikZ pattern name}
+	\end{syntax}
+	Assigns a standard or custom \pkg{TikZ} pattern to the shape’s fill
+	area. Common built-in names include |horizontal lines|, |vertical lines|,
+	|north east lines|, |north west lines|, |dots|, and so forth.
+\end{function}
+
+\begin{function}{pattern-color}
+	\begin{syntax}
+		pattern-color = \meta{color expression}
+	\end{syntax}
+	Sets the color of the specified pattern. For instance,
+	|pattern-color=nskDarkGray| or |pattern-color=black!50|.
+\end{function}
+
+Because \pkg{TikZ} implements these patterns via a \verb|postaction|
+mechanism, \pkg{neural-sketch} intercepts and appends them to the node
+style after drawing the shape’s fill. If no \texttt{pattern} is
+specified, no patterned fill is generated.
+
+\begin{nskexample}[sidebyside, righthand width=5.5cm]
+	\begin{nskFigure}[center]
+		\nskContainer[
+			text-north={},
+			border-type=dashed,
+			shadow=false, padding=1.5mm,
+			fill=nskLightGray,
+			shift-x=-1.2cm
+		]{
+			\foreach \i/\p in
+				{
+				  1/north west lines,
+				  2/north east lines,
+				  3/vertical lines,
+				  4/horizontal lines
+				}{
+					\nskBlock[
+						width=1cm, height=1cm,
+						id=a, fill=white,
+						pattern=\p,
+						x=1.2*\i
+					]
+				}
+		}
+	\end{nskFigure}
+\end{nskexample}
+
+
+
+% \subsection{\texorpdfstring{\cs{nskConnect}}{}: Connections \& Automatic Bridging}
+% An arrow or line from one block to another can be drawn using \cs{nskConnect}\Arg{settings}. This command allows specifying endpoints with \verb|from=| and \verb|to=|, plus optional bridging if multiple lines overlap. Bridging means that if lines cross, one can appear to jump over the other in an arc, thereby reducing clutter in dense diagrams. When bridging is activated, \cs{nskConnect} registers the path for a subsequent bridging pass:
+%
+% \begin{nskexample}
+% 	\begin{tikzpicture}
+% 		% A couple of blocks:
+% 		\nskBlock[x=0, y=0, text-center={Left}]
+% 		\nskBlock[x=4, y=0, text-center={Right}]
+%
+% 		% A bridging line from left to right
+% 		\nskConnect[
+% 			from=rectangle1.center,
+% 			to=rectangle2.center,
+% 			bridging=true
+% 		]
+% 	\end{tikzpicture}
+% \end{nskexample}
+%
+% If more than one bridging line is present, a final bridging pass can be invoked with \cs{nskDoBridging}. This approach uses the \pkg{spath3} library internally, checking intersections between lines and automatically producing small arcs or “bridges” to show that one arrow is effectively crossing above the other.
+%
+% \subsection{\texorpdfstring{\cs{nskCoord}}{}: Phantom Nodes \& Anchors}
+% Using coordinate placeholders can be extremely helpful in a figure. The \cs{nskCoord} command creates an invisible node at a chosen \verb|x,y| or \verb|pos=someTikZposition|, and can optionally mark that spot for visual debugging. Its typical usage might read:
+%
+% \begin{nskexample}
+% 	\begin{tikzpicture}
+% 		\nskCoord[
+% 			x=2,
+% 			y=1,
+% 			marker=o,
+% 			marker-color=red
+% 		]
+% 		% Then one can reference the coordinate by ID
+% 		\nskBlock[
+% 			x=4,
+% 			y=1,
+% 			text-west={Ref to the previous coord}
+% 		]
+% 	\end{tikzpicture}
+% \end{nskexample}
+%
+% When \cs{nskCoord} sets \verb|marker=o| (circle) or \verb|marker=x|, the coordinate becomes visible during diagram creation so the user can see anchor positions. By default, no marker is drawn. The node can be referred to just like a named TikZ node in other commands, such as \verb|pos=right=5mm of <coordID>|.
+%
+% \section{Style \& Color Customization}
+%
+% \subsection{Out-of-the-box Colors (\texttt{neural-sketch-colors})}
+% The package includes a set of color definitions prefixed by \texttt{nsk}, for instance \texttt{nskBlue}, \texttt{nskGreen}, and \texttt{nskDarkGray}. Each is carefully chosen for clarity in typical diagrams, especially for contrasts in black-and-white printing scenarios. Users may override these colors or define new ones in the usual manner with \cs{colorlet} or \cs{definecolor}.
+%
+% \subsection{Default Styles (\texttt{neural-sketch-styles})}
+% Global style preferences, such as \verb|block-fill| or \verb|container-border-color|, are handled by a key–value system stored under \verb|nsk / style|. The macro \cs{nskSetStyle}\Arg{key-value-list} permits altering these defaults. For example,
+%
+% \begin{nskexample}
+% 	\nskSetStyle{
+% 		block-fill = nskLightGray,
+% 		block-border-color = nskDarkGray
+% 	}
+% \end{nskexample}
+%
+% This snippet changes the default fill and border colors used by subsequent blocks. Internally, the style system draws upon \LaTeX3 property lists to unify the consistent usage of color, dimension, and anchor settings.
+%
+% \section{Extended Examples}
+%
+% \subsection{Neural Network Diagram}
+% A typical neural network representation consists of multiple rectangular “layer blocks” lined up horizontally, each connected by bridging lines. Constructing it requires repeated calls to \cs{nskBlock} for each layer and repeated \cs{nskConnect} calls to illustrate the forward pass lines. If bridging is turned on, lines that cross can visually jump over each other. The details of each layer’s color or shape can be globally adjusted by \cs{nskSetStyle} or set individually.
+%
+% \subsection{Flowchart or Workflow}
+% Flowcharts with decision diamonds, process rectangles, or terminal ellipses can be sketched by specifying \verb|type=diamond| or other shapes in \cs{nskBlock}. Arrows drawn with \cs{nskConnect} can incorporate angled bridging arcs if lines must cross, leading to a tidy representation of an algorithm’s steps.
+%
+% \subsection{Positioning \& Relative Placement}
+% By specifying \verb|last-pos=below=1cm| or \verb|pos=right=2cm of someBlockID|, the user arranges blocks with minimal overhead. An entire chain of shapes can thus be placed in a logical reading order, saving time that would otherwise be spent computing coordinate offsets.
+%
+% \subsection{Algorithmic Diagram}
+% When showcasing a multi-step algorithm, \cs{nskGroup} allows applying a scale factor, so subgroups can be shrunk or enlarged easily. Containers can highlight sub-blocks or subroutines in a visual grouping, ensuring the explanation remains coherent to the reader’s eye.
+%
+% \subsection{Complex Overlapping Lines}
+% A diagram whose lines pass over one another in a tangle is often made clearer by bridging arcs rather than standard line intersections. With bridging set to \verb|true| in \cs{nskConnect}, each line is stored for intersection resolution. A single call to \cs{nskDoBridging} completes the effect, automatically inserting small arcs at crossing points, thereby preserving line clarity.
+
+\end{document}

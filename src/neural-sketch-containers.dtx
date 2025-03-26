@@ -1,0 +1,320 @@
+% ----------------------------------------------------------------
+%  neural-sketch-containers.dtx
+% ----------------------------------------------------------------
+% \iffalse
+%<*driver>
+\documentclass{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+
+\begin{document}
+\DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+
+\ProvidesFile{neural-sketch-containers.dtx}%
+[2025/01/22 v0.1 neural-sketch-containers]
+
+% \title{neural-sketch-containers.sty\\[1ex]
+%        Container logic for neural-sketch}
+% \author{Vincenzo Buono}
+% \date{\today}
+% \maketitle
+%
+% \StopEventually{}
+
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+%<*package>
+%    \begin{macrocode}
+\ExplSyntaxOn
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Custom pgf layers
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{interim}
+\pgfdeclarelayer{foreground}
+% layer registration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\pgfsetlayers{background,interim,main,foreground}
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Pass-through
+% store unkown keys to pass-through
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\prop_new:N \l_nsk_container_unknown_prop
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Position Parser
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\dim_new:N \l__nsk_tmp_dim
+\cs_new_protected_nopar:Npn \nsk__container_parse_pos_value:nn #1#2
+{
+% #1 = the user’s "right=1cm of X" or "above=2mm of Y" ...
+% #2 = the container’s padding dimension (e.g. 3mm)
+
+% Save the raw pos string to \l_nsk_container_pos_tl
+\tl_set:Nx \l_nsk_container_pos_tl {#1}
+
+% Split at '=' (only if the user wrote e.g. "right=1cm of X").
+\seq_set_split:Nnn \l_tmpa_seq {=}{#1}
+
+% If we have exactly 2 items, item 1 is "right" and item 2 is "1cm of X".
+\int_compare:nNnT { \seq_count:N \l_tmpa_seq } = {2}
+{
+% The direction (left/right/above/below)
+\tl_set:Nx \l_tmpa_tl { \seq_item:Nn \l_tmpa_seq {1} }
+\tl_trim_spaces:N \l_tmpa_tl
+
+% The distance+node portion
+\tl_set:Nx \l_tmpb_tl { \seq_item:Nn \l_tmpa_seq {2} }
+\tl_trim_spaces:N \l_tmpb_tl
+
+\tl_show:N \l_tmpa_tl
+\tl_show:N \l_tmpb_tl
+
+% split at " of "
+\seq_set_split:Nnx \l_tmpb_seq {of}{\l_tmpb_tl}
+
+
+\int_compare:nNnT { \seq_count:N \l_tmpb_seq } = {2}
+{
+% item 1 = "1cm", item 2 = "X"
+\tl_set:Nx \l_tmpc_tl { \seq_item:Nn \l_tmpb_seq {1} }
+\tl_trim_spaces:N \l_tmpc_tl
+
+\tl_if_empty:NTF \l_tmpc_tl
+  {
+    % No distance was provided; use default distance.
+    \tl_set:Nn \l_tmpc_tl {2cm}
+  }
+  {}
+
+\tl_set:Nx \l_tmpd_tl { \seq_item:Nn \l_tmpb_seq {2} }
+\tl_trim_spaces:N \l_tmpd_tl
+\tl_show:N \l_tmpc_tl
+\tl_show:N \l_tmpd_tl
+
+
+% Convert "1cm" to a dimension variable
+\dim_set:Nn \l__nsk_tmp_dim {\tl_use:N \l_tmpc_tl}
+\dim_show:N \l__nsk_tmp_dim
+% Now add the container's padding
+\dim_add:Nn \l__nsk_tmp_dim  { #2 }
+\dim_add:Nn \l__nsk_tmp_dim  { #2 }
+\dim_add:Nn \l__nsk_tmp_dim  { #2 }
+\dim_show:N \l__nsk_tmp_dim
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% String buld
+% Rebuild "right=(dist+pad) of X"
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_set:Nx \l_nsk_container_pos_tl
+{
+	\tl_use:N \l_tmpa_tl
+	= \dim_use:N \l__nsk_tmp_dim
+	\c_space_tl of \c_space_tl
+	\tl_use:N \l_tmpd_tl
+}
+}
+}
+}
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main nsk / container Primitive
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\keys_define:nn {nsk / container}
+{
+	% ref-id ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	% todo: passed through
+	id .tl_set:N = \l_nsk_block_id_tl,
+	id .initial:n = { },
+
+	% styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	border-type .code:n =
+		{
+			\tl_if_eq:nnTF {#1}{none}
+			{
+				\tl_set:Nn \l_nsk_container_border_type_tl {draw=none}
+			}
+			{
+				\tl_set:Nn \l_nsk_container_border_type_tl {#1}
+			}
+
+		},
+	border-type .initial:n = {solid},
+	border-type .default:n = {solid},
+
+	border-color .tl_set:N = \l_nsk_container_border_color_tl,
+	border-color .initial:V = \g__nsk_style_container_border_color_tl,
+	border-color .default:V = \g__nsk_style_container_border_color_tl,
+
+	fill .tl_set:N = \l_nsk_container_fill_tl,
+	fill .initial:V = \g__nsk_style_container_fill_tl,
+	fill .default:V = \g__nsk_style_container_fill_tl,
+
+	padding .dim_set:N = \l_nsk_container_padding_tl,
+	padding .initial:V = \g__nsk_style_container_padding_dim,
+	padding .default:V = \g__nsk_style_container_padding_dim,
+
+	shift-x .fp_set:N = \l_nsk_container_x_fp,
+	shift-x .initial:V = \g__nsk_style_container_x_fp,
+	shift-x .default:V = \g__nsk_style_container_x_fp,
+
+	shift-y .fp_set:N = \l_nsk_container_y_fp,
+	shift-y .initial:V = \g__nsk_style_container_y_fp,
+	shift-y .default:V = \g__nsk_style_container_y_fp,
+
+	% natural positioning using positioning library
+	pos .code:n =
+		{
+			\nsk__container_parse_pos_value:nn {#1} {\l_nsk_container_padding_tl}
+		},
+	pos .initial:n = { },
+	pos .default:n = { },
+
+	rotate .fp_set:N = \l_nsk_container_rotate_fp,
+	rotate .initial:V = \g__nsk_style_container_rotate_fp,
+	rotate .default:V = \g__nsk_style_container_rotate_fp,
+
+	scale .fp_set:N = \l_nsk_container_scale_fp,
+	scale .initial:V = \g__nsk_style_container_scale_fp,
+	scale .default:V = \g__nsk_style_container_scale_fp,
+
+	group-opts .code:n =
+		{
+			% #1 is exactly what is inside { ... }, including any commas.
+			% store it literally into \l_nsk_block_extra_style_tl
+			\tl_set:Nn \l_nsk_group_extra_style_tl {#1}
+		},
+	group-opts .initial:n = {},
+	group-opts .default:n = {},
+
+	% -- The special pass-through key for arbitrary options.
+	% forward unknown props to nsblocks
+	unknown .code:n =
+		{
+			% Store unknown key in the property list, using the content of \l_keys_key_tl as a string
+			\prop_put:Nxx \l_nsk_container_unknown_prop
+			{ \tl_use:N \l_keys_key_tl }
+			{ #1 }
+		},
+
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface
+% - (user-facing)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\NewDocumentCommand \nskContainer { O{} +m }
+{
+  \group_begin:
+
+	% (a) Clear the property list so it doesn't retain any old unknown keys
+	\prop_clear_new:N \l_nsk_container_unknown_prop
+
+	% (b) Parse recognized container keys + store unknown keys
+	\keys_set:nn {nsk / container}{#1}
+
+	% (c) Now call \nskGroup, passing the same #1 so that shift-x, rotate, etc.
+	%     get recognized by nsk / group (or remain unknown for that domain).
+
+  \tl_show:N \l_nsk_container_pos_tl
+	\tl_set:Nx \l_tmpx_tl
+	{
+		shift-x=\l_nsk_container_x_fp,
+		shift-y=\l_nsk_container_y_fp,
+		rotate=\l_nsk_container_rotate_fp,
+		scale=\l_nsk_container_scale_fp,
+    pos={\l_nsk_container_pos_tl},
+	}
+
+  \tl_show:N \l_tmpx_tl
+
+	% % pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+	{ }
+	{
+		\tl_put_right:Nx \l_tmpx_tl {\l_nsk_block_extra_style_tl,}
+	}
+
+
+	\nsk__expand_group_aux:Vn \l_tmpx_tl {#2}
+
+	% (d) Build an \nskBlock that fits the bounding box, plus any unknown keys
+	%     stored in \l_nsk_container_unknown_prop. We'll do a small helper:
+	\nsk__container_draw_block:
+
+  \group_end:
+
+}
+
+\cs_new_protected:Npn \nsk__expand_group_aux:nn #1 #2
+{
+	\nskGroup[#1]
+	{
+		#2
+	}
+}
+
+
+% block expander ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__expand_block_aux:n #1
+{
+
+	\begin{pgfonlayer}{background}
+		\nskBlock [
+			% this are computed by bounding box
+			width=0pt, height=0pt,
+			shadow=false,
+			% text-north=\nskBlockID,
+			#1,
+		]
+	\end{pgfonlayer}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Variant Generation :V
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_generate_variant:Nn \nsk__expand_block_aux:n { V }
+\cs_generate_variant:Nn \nsk__expand_group_aux:nn { Vn }
+\cs_generate_variant:Nn \nskBlockFromList:V { V }
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main draw
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__container_draw_block:
+{
+% We'll build a token list of block options
+\tl_clear_new:N \l_tmpa_tl
+
+% put recognized container keys:
+\tl_put_right:No \l_tmpa_tl { type=rectangle, }
+\tl_put_right:No \l_tmpa_tl { fill=\l_nsk_container_fill_tl, }
+\tl_put_right:No \l_tmpa_tl { border-color=\l_nsk_container_border_color_tl, }
+% use tikz-ops keys
+\tl_put_right:Nx \l_tmpa_tl
+{ tikz-opts={fit=(\l_nsk_group_bounds_name_tl), inner\space sep=\l_nsk_container_padding_tl,
+			\l_nsk_container_border_type_tl}, }
+
+
+% forward unknown keys as-is
+\prop_map_inline:Nn \l_nsk_container_unknown_prop
+{
+	\tl_put_right:Nn \l_tmpa_tl
+	{
+		{##1} = {##2},
+			}
+	}
+
+	\nsk__expand_block_aux:V \l_tmpa_tl
+}
+
+\ExplSyntaxOff
+%    \end{macrocode}
+%</package>
+\endinput

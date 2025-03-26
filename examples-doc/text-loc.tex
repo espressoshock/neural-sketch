@@ -1,0 +1,60 @@
+\documentclass[multi=false]{standalone}
+% \standaloneconfig{border=10mm}
+
+\usepackage[]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+\nskContainer[
+	id=ab,
+	text-north=Default,
+	border-type=dashed,
+	fill=nskMainAccent!20,
+	border-color=nskMainAccent,
+]{
+  \nskBlock[
+    width=2cm, height=2cm,
+    text-north=-north,
+    text-south=-south,
+    text-center=-center,
+    text-east=-east,
+    text-west=-west,
+  ]
+}
+
+\nskContainer[
+	id=ab,
+	text-north=Horizontal,
+	border-type=dashed,
+	fill=nskSecondaryAccent!20,
+	border-color=nskSecondaryAccent,
+  pos={right=.5cm of ab}
+]{
+  \nskBlock[
+    width=2cm, height=2cm,
+    text-north=-north,
+    text-north-loc=west,
+    text-south=-south,
+    text-south-loc=west,
+  ]
+}
+
+\nskContainer[
+	id=ab,
+	text-north=Vertical,
+	border-type=dashed,
+	fill=nskSecondaryAccent!20,
+	border-color=nskSecondaryAccent,
+  pos={right=.5cm of ab},
+]{
+  \nskBlock[
+    width=2cm, height=2cm,
+    text-east=-east,
+    text-east-loc=south,
+    text-west=-west,
+    text-west-loc=south,
+  ]
+}
+\end{nskFigure}
+\end{document}

@@ -1,0 +1,17 @@
+\documentclass{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}
+	\foreach \s [count=\i] in {20, 40,...,100} {
+			\nskBlock[
+				last-pos-s={right=0.5cm},
+				fill={nskMainAccent!\s},
+				text-north={\s},
+			]
+		}
+\end{nskFigure}
+\end{document}

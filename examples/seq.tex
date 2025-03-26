@@ -1,0 +1,69 @@
+\documentclass{standalone}
+\standaloneconfig{border=1mm}
+
+\usepackage[]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+
+	\nskContainer[
+		border-type=dashed,
+		fill=nskMainAccent!40,
+    border-color=nskMainAccent,
+	]{
+		\foreach \t [count=\i] in {One cell, can be used over, and over, and over, again.} {
+				\nskBlock[
+					id=a\i,
+					text-center=A,
+					width=1.7cm, height=1.7cm,
+					fill=white,
+          % text-center-style={nskBg},
+					text-north=\t,
+					text-north-style={yshift=2mm},
+					last-pos-s={right=1cm},
+				]
+			}
+	}
+
+	\foreach \i in {1,...,5} {
+			\tikzmath{int \n; \n = \i+1;}
+
+			\nskCoord[id=aof, at=a\i.south, shift-x=5mm]
+			\nskCoord[id=aif, at=a\i.south, shift-x=-5mm]
+			\nskCoord[id=aot, at=a\i.south, shift-x=5mm, shift-y=-12mm]
+			\nskCoord[id=ait, at=a\i.south, shift-x=-5mm, shift-y=-12mm]
+
+			\begin{nskSwitch}[type=int]{\i}
+				\nskCase[5]{}
+				\nskDefault{
+					\nskConnect[
+						to=a\i.east,
+						from=a\n.west,
+						arrow-style={ultra thick, stealth-},
+						shorten-from=1mm,
+					]
+				}
+			\end{nskSwitch}
+
+			\nskConnect[
+				from=aif,
+				to=ait,
+				arrow-style={ultra thick, stealth-},
+				shorten-from=1mm,
+			]
+			\nskConnect[
+				from=aof,
+				to=aot,
+				arrow-style={ultra thick, -stealth},
+				shorten-from=-1.3mm,
+			]
+
+			\node[below] at (ait) {$x_\i$};
+			\node[below] at (aot) {$y_\i$};
+		}
+
+
+
+\end{nskFigure}
+\end{document}

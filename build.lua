@@ -1,28 +1,28 @@
 #!/usr/bin/env texlua
 
--- Build script for neural-sketch
-
-bundle = "neural-sketch"
 module = "neural-sketch"
+-- bundle = "neural-sketch"
 
 uploadconfig = {
 	author = "Vincenzo Buono",
 	uploader = "Vincenzo Buono",
-	email = "",
+	email = "vincenzo.buono@hh.se",
 	pkg = "neural-sketch",
-	version = "0.1",
+	version = "0.8",
 	license = "lppl1.3c",
-	summary = "A TikZ-based library for beautiful neural network and AI diagrams.",
-	ctanPath = "/graphics/...",
+	summary = "An elegant LaTeX package leveraging TikZ to produce publication-ready diagrams, optimized for AI and machine learning visualizations",
+  ctanPath = "/graphics/pgf/contrib/neural-sketch",
 	repository = "https://github.com/espressoshock/neural-sketch",
 	bugtracker = "https://github.com/espressoshock/neural-sketch/issues",
-	description = [[A LaTeX package that leverages TikZ to create publication-quality figures for machine learning diagrams, system overviews, neural networks, algorithms, and more.]],
+	description = [[
+    Neural-Sketch is a modern, opinionated yet highly customizable LaTeX package specifically designed for creating publication-quality diagrams commonly found in AI, machine learning, and technical documents. Leveraging TikZ alongside contemporary LaTeX3 paradigms (expl3, l3keys), it simplifies the creation of complex figures such as neural network architectures, flowcharts, system overviews, and algorithmic visualizations.
+  ]],
+	summary = "A TikZ-based library ",
+  topics = { "diagrams", "graphics", "pgf", "tikz", "latex3", "machine learning", "publication" },
 	update = true,
 }
 
-typesetfiles = { "doc/latex/neural-sketch/neural-sketch-doc.tex" }
-sourcefiles = { "src/neural-sketch.dtx", "src/neural-sketch.ins" }
-installfiles = { "neural-sketch.sty", "neural-sketch-colors.sty" }
-docfiles = { "doc/latex/neural-sketch/neural-sketch-doc.tex" }
-
-checkengines = { "pdftex", "luatex", "xetex" }
+docfiledir = "doc"
+sourcefiledir = "src"
+typesetfiles = { "*.dtx", "*.tex" }
+packtdszip = true -- recommended for "tree" layouts

@@ -1,0 +1,215 @@
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%  neural-sketch-decorations.dtx
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% \iffalse
+%<*driver>
+\documentclass{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+
+\begin{document}
+\DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+
+\ProvidesFile{neural-sketch-decorations.dtx}%
+[2025/01/22 v0.1 neural-sketch-decorations]
+
+% \title{neural-sketch-decorations.sty\\[1ex]
+%        Simple decoration system for neural-sketch}
+% \author{Vincenzo Buono}
+% \date{\today}
+% \maketitle
+%
+% \StopEventually{}
+%
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+%<*package>
+%    \begin{macrocode}
+\ExplSyntaxOn
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main nsk / Decoration Primitive
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\keys_define:nn { nsk / decoratepath }
+{
+	start .fp_set:N = \l_nsk_decoratepath_start_fp,
+	start .initial:n = { 0 },
+	start .default:n = { 0 },
+
+	at .tl_set:N = \l_nsk_decoratepath_at_tl,
+	at .initial:n = { },
+	at .default:n = { },
+
+	end .fp_set:N = \l_nsk_decoratepath_end_fp,
+	end .initial:n = { 1 },
+	end .default:n = { 1 },
+
+	step .dim_set:N = \l_nsk_decoratepath_step_dim,
+	step .initial:n = {10mm},
+	step .default:n = {10mm},
+
+	% Users might want to pick a color or line width, etc.
+	% You can define more keys if you wish, for example:
+	color .tl_set:N = \l_nsk_decoratepath_color_tl,
+	color .initial:n = {c__nsk_principal},
+	color .default:n = {c__nsk_principal},
+
+	% skips ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	path-width .dim_set:N = \l_nsk_decoratepath_path_width_dim,
+	path-width .initial:n = {0pt},
+
+	skip-first .bool_set:N = \l_nsk_decoratepath_skip_first_bool,
+	skip-first .initial:n = {false},
+	skip-last .bool_set:N = \l_nsk_decoratepath_skip_last_bool,
+	skip-last .initial:n = {false},
+
+	% unknown keys => throw error or ignore
+	unknown .code:n =
+		{
+			\msg_warning:nn {nsk-decoratepath}
+			{ Unrecognized~key~`\l_keys_key_tl'~will~be~ignored. }
+		},
+}
+
+\cs_new_protected_nopar:Npn \nsk__decorate_path_skips:
+{
+
+	\dim_compare:nNnT { \l_nsk_decoratepath_path_width_dim } > { 0pt }
+		{
+			\bool_if:NT \l_nsk_decoratepath_skip_first_bool
+			{
+				\fp_set:Nn \l_tmpa_fp
+				{
+					{ \dim_to_fp:n
+							{ \l_nsk_decoratepath_step_dim } / \dim_to_fp:n
+							{ \l_nsk_decoratepath_path_width_dim } }
+				}
+				\fp_add:Nn \l_nsk_decoratepath_start_fp {\l_tmpa_fp}
+			}
+
+			\bool_if:NT \l_nsk_decoratepath_skip_last_bool
+			{
+				\fp_set:Nn \l_tmpa_fp
+				{ \dim_to_fp:n { \l_nsk_decoratepath_step_dim } / \dim_to_fp:n
+					{ \l_nsk_decoratepath_path_width_dim } }
+				\fp_add:Nn \l_nsk_decoratepath_end_fp { -\l_tmpa_fp }
+			}
+		}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface
+% - (user-facing)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\NewDocumentCommand \nskMarkPath { O{} m m }
+{
+\group_begin:
+% 1) Parse the optional key=value list
+\keys_set:nn { nsk / decoratepath } {#1}
+
+% path skips
+\nsk__decorate_path_skips:
+
+% 2) Draw the “phantom” path
+%    using the user-supplied #2 (the path),
+%    and injecting #3 inside ‘mark=... with { ... }’
+\tl_if_head_eq_charcode:nNTF {#2} (
+{
+		% TODO: refactor this spaghetti stuff
+		\tl_if_empty:VTF \l_nsk_decoratepath_at_tl
+		{
+			% -True
+			\draw[
+				draw=none,
+				postaction=decorate,
+				decoration={
+						markings,
+						mark=
+						between~positions
+						\fp_use:N \l_nsk_decoratepath_start_fp
+						and
+						\fp_use:N \l_nsk_decoratepath_end_fp
+						step
+						\dim_use:N \l_nsk_decoratepath_step_dim
+						with
+							{
+								#3
+							}
+					}
+			]  #2;
+
+		}
+		{
+			% -False
+			\draw[
+				draw=none,
+				postaction=decorate,
+				decoration={
+						markings,
+						mark=
+						at~position
+						\tl_use:N \l_nsk_decoratepath_at_tl
+						with
+							{
+								#3
+							}
+					}
+			]  #2;
+
+		}
+
+	}{
+
+		% TODO: refactor this spaghetti stuff
+		\tl_if_empty:VTF \l_nsk_decoratepath_at_tl
+		{
+			% true
+			\draw[
+				draw=none,
+				spath/use=#2,
+				postaction=decorate,
+				decoration={
+						markings,
+						mark=between~positions
+						\fp_use:N \l_nsk_decoratepath_start_fp
+						and
+						\fp_use:N \l_nsk_decoratepath_end_fp
+						step
+						\dim_use:N \l_nsk_decoratepath_step_dim
+						with
+							{
+								#3
+							}
+					}
+			] ;
+		}
+		{
+			% false
+			\draw[
+				draw=none,
+				spath/use=#2,
+				postaction=decorate,
+				decoration={
+						markings,
+						mark=at~position
+						\tl_use:N \l_nsk_decoratepath_at_tl
+						with
+							{
+								#3
+							}
+					}
+			] ;
+		}
+
+	}
+
+\group_end:
+}
+\ExplSyntaxOff
+%    \end{macrocode}
+%</package>
+\endinput

@@ -1,0 +1,188 @@
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%  neural-sketch-styles.dtx
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% \iffalse
+%<*driver>
+\documentclass{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+
+\begin{document}
+\DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+
+\ProvidesFile{neural-sketch-styles.dtx}%
+[2025/01/22 v0.1 neural-sketch-styles]
+
+% \title{neural-sketch-styles.sty\\[1ex]
+%        Global style keys for neural-sketch}
+% \author{Vincenzo Buono}
+% \date{\today}
+% \maketitle
+%
+%
+% \StopEventually{}
+
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+%<*package>
+%    \begin{macrocode}
+\ExplSyntaxOn
+
+% globals ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\dim_new:N \g__nsk_style_container_padding_dim
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Global package styles
+% The user can write:  block-fill=orange
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\keys_define:nn { nsk / style }
+{
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% nsk / Block
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	block-fill .tl_gset:N = \g__nsk_style_block_fill_tl,
+	block-fill .initial:n = { nskLightGray },
+	block-fill .default:n = { nskLightGray },
+
+	block-border-color .tl_gset:N = \g__nsk_style_block_border_color_tl,
+	block-border-color .initial:n = { nskDarkGray },
+	block-border-color .default:n = { nskDarkGray },
+
+	block-border-radius .dim_gset:N = \g__nsk_style_block_border_radius_dim,
+  block-border-radius .initial:n = {2.5mm},
+  block-border-radius .default:n = {2.5mm},
+
+	block-embed-border-radius .dim_gset:N = \g__nsk_style_block_embed_border_radius_dim,
+  block-embed-border-radius.initial:n = {1.3mm},
+  block-embed-border-radius.default:n = {1.3mm},
+
+	block-embed-padding .dim_gset:N = \g__nsk_style_block_embed_padding_dim,
+  block-embed-padding .initial:n = {1mm},
+  block-embed-padding .default:n = {1mm},
+
+	block-border-size .dim_gset:N = \g__nsk_style_block_border_size_dim,
+  block-border-size .initial:n = {.4mm},
+  block-border-size .default:n = {.4mm},
+
+	block-width  .dim_gset:N = \g__nsk_style_block_width_dim,
+	block-width  .initial:n = {1cm},
+	block-width  .default:n = {1cm},
+
+	block-height .dim_gset:N = \g__nsk_style_block_height_dim,
+	block-height .initial:n = {1cm},
+	block-height .default:n = {1cm},
+
+	shadow .bool_gset:N = \g__nsk_style_block_shadow_bool,
+
+	% text-anchoring ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	text-north-loc .tl_gset:N = \g__nsk_style_text_north_loc_tl,
+	text-north-loc .initial:n = {},
+	text-north-loc .default:n = {},
+
+	text-south-loc .tl_gset:N = \g__nsk_style_text_south_loc_tl,
+	text-south-loc .initial:n = {},
+	text-south-loc .default:n = {},
+
+	text-east-loc .tl_gset:N = \g__nsk_style_text_east_loc_tl,
+	text-east-loc .initial:n = {},
+	text-east-loc .default:n = {},
+
+	text-west-loc .tl_gset:N = \g__nsk_style_text_west_loc_tl,
+	text-west-loc .initial:n = {},
+	text-west-loc .default:n = {},
+
+	text-center-loc .tl_gset:N = \g__nsk_style_text_center_loc_tl,
+	text-center-loc .initial:n = {},
+	text-center-loc .default:n = {},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% nsk / Container
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	container-border-color .tl_gset:N = \g__nsk_style_container_border_color_tl,
+	container-border-color .initial:n = { nskLighterGray },
+
+	container-fill .tl_gset:N = \g__nsk_style_container_fill_tl,
+	container-fill .initial:n = { nskLightestGray },
+	container-fill .default:n = { nskLightestGray },
+
+	container-padding .dim_gset:N = \g__nsk_style_container_padding_dim,
+	container-padding .initial:n = { .5cm },
+	container-padding .default:n = { .5cm },
+
+	container-shift-x .fp_gset:N = \g__nsk_style_container_x_fp,
+	container-shift-x .initial:n = { 0 },
+	container-shift-x .default:n = { 0 },
+
+	container-shift-y .fp_gset:N = \g__nsk_style_container_y_fp,
+	container-shift-y .initial:n = { 0 },
+	container-shift-y .default:n = { 0 },
+
+	container-rotate .fp_gset:N = \g__nsk_style_container_rotate_fp,
+	container-rotate .initial:n = { 0 },
+	container-rotate .default:n = { 0 },
+
+	container-scale .fp_gset:N = \g__nsk_style_container_scale_fp,
+	container-scale .initial:n = { 1 },
+	container-scale .default:n = { 1 },
+
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Aliases
+% A property to hold short aliases that map to
+% standard TikZ pattern names.
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\prop_new:N \g_nsk_pattern_aliases_prop
+
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { hlines } { horizontal\space lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { vlines } { vertical\space lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { hatch } { north\space east\space lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { rhatch } { north\space west\space lines }
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Tikz styles
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\ExplSyntaxOff
+\tikzset{
+	nskShadow/.style={
+			drop shadow={
+					shadow xshift=-.1ex,
+					shadow yshift=-.6ex,
+					fill=nskLighterGray
+				},
+		},
+	bridging path/.initial=arc,
+	bridging span/.initial=8pt,
+	bridging gap/.initial=4pt,
+	bridge/.style 2 args={
+			spath/split at intersections with={#1}{#2},
+			spath/insert gaps after components={#1}{\pgfkeysvalueof{/tikz/bridging span}},
+			spath/join components upright with={#1}{\pgfkeysvalueof{/tikz/bridging path}},
+
+			spath/split at intersections with={#2}{#1},
+			spath/insert gaps after components={#2}{\pgfkeysvalueof{/tikz/bridging gap}},
+		}
+}
+\ExplSyntaxOn
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface
+% - (user-facing)
+% () Provide a simple public macro to set these style keys in one line:
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% WARNING: only for internal-use, deprecated in favor of pkgopts
+\NewDocumentCommand \nskSetStyle { O{} }
+{
+	% #1 is the keyval list, e.g.  block-fill=yellow, block-border=blue
+	\keys_set:nn { nsk / style }{ #1 }
+}
+
+\ExplSyntaxOff
+%\end{macrocode}
+%</package>
+
+\endinput

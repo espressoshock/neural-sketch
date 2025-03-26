@@ -1,0 +1,61 @@
+\documentclass{standalone}
+% \standaloneconfig{border=10mm}
+
+\usepackage{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskBlock[
+		id=A,
+		text-north = {solid},
+		border-type=solid,
+	]
+	\nskBlock[
+		id=B,
+		text-north = {dashed},
+		border-type=dashed,
+		pos={right=.5cm of A},
+	]
+	\nskBlock[
+		id=C,
+		text-north = {shadow},
+		shadow=true,
+		pos={right=.5cm of B},
+	]
+	\nskBlock[
+		id=D,
+		text-north = {plain},
+		shadow=false,
+		pos={right=.5cm of C},
+	]
+	\nskBlock[
+		id=E,
+		text-north = {important},
+		shadow=false,
+		importance=2,
+		pos={right=.5cm of D},
+	]
+	\nskContainer[
+		border-type=dashed,
+		text-north=Attention,
+	]
+	{
+		\nskBlock[
+			id=F,
+			pos={right=1.5cm of E},
+			outer-border-type=solid,
+			outer-border-size=4mm,
+			outer-border-color=nskSecondaryAccent!70,
+		]
+		\nskBlock[
+			id=G,
+			pos={right=.5cm of F},
+			outer-border-type=solid,
+			outer-border-size=4mm,
+			outer-border-color=nskMainAccent!70,
+		]
+
+	}
+\end{nskFigure}
+\end{document}

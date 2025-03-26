@@ -1,0 +1,38 @@
+\documentclass[]{standalone}
+% \standaloneconfig{border=10mm}
+
+\usepackage[]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskBlock[id=a, fill=nskBlue, text-center=A, width=5cm]
+	\nskBlock[id=b, fill=nskOrange, text-center=B, width=2cm, pos={right=1mm of a}]
+	\nskMeasure[
+		axis=horizontal,
+		from={a.south west},
+		to={b.south east},
+	]
+	\nskBlock[
+		id=c,
+		pos={below=1mm of a.south west},
+		fill=nskPink,
+		anchor=north west,
+		width={\nskDistance},
+		text-center={$A+B$}
+	]
+	\nskConnect[
+		id=mn,
+		from=a.north west,
+		to=b.north east,
+		arrow-tip={|-|},
+    arrow-style={very thick},
+		shift-y=5mm,
+	]
+	\nskMarkPath[
+		at=.5,
+	]{mn}{
+		\node[above] {\nskDistance};
+	}
+\end{nskFigure}
+\end{document}
