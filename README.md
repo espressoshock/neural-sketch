@@ -79,7 +79,7 @@ Here's a quick example to create a simple diagram:
 
 Extensive documentation, examples, and best practices can be found at:
 
-- 📚 **[Neural Sketch Documentation](https://neural-sketch-doc.vercel.app/)**
+- 📚 **[Neural Sketch Documentation](https://neural-sketch.app/)**
 
 Key documentation sections:
 - [Getting Started Guide]((https://neural-sketch-doc.vercel.app/docs/core)
