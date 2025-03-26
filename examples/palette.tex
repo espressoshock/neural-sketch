@@ -1,0 +1,287 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage[]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+  \nskContainer[
+    id=acc,
+    fill=nskMainAccent!50,
+    border-color=nskMainAccent,
+    border-type=dashed,
+  ]
+  {
+    \tikzmath{\w = 2;}
+    \nskBlock[
+      id=a,
+      width=\w cm,
+    ]
+    \nskMarkPath[
+      path-width=\w cm,
+      skip-first=true,
+      skip-last=true,
+      step=10mm
+    ]{(a.south west) -- (a.south east)}{
+      \draw[] (0,0) -- (0,1cm);
+    }
+
+    \foreach \c [count=\i] in {Main, Secondary} {
+      \nskBlock[
+        id=acc\i,
+        fill=nsk\c Accent,
+        type=diamond,
+        width=.9cm, height=.9cm,
+        border-radius=2mm,
+        x=-1.5+\i,
+      ]
+    }
+  }
+
+  \nskContainer[
+    id=basics,
+    pos={right=-.5cm of acc},
+    shift-y=.2mm,
+    fill=nskSecondaryAccent!50,
+    border-color=nskSecondaryAccent,
+    border-type=dashed,
+  ]
+  {
+    \tikzmath{\w = 10;}
+    \nskBlock[
+      id=a,
+      width=\w cm,
+    ]
+    \nskMarkPath[
+      path-width=\w cm,
+      skip-first=true,
+      skip-last=true,
+      step=10mm
+    ]{(a.south west) -- (a.south east)}{
+      \draw[] (0,0) -- (0,1cm);
+    }
+
+    \foreach \c [count=\i] in {Red, Pink, Blue, Green, Lime, Yellow, Orange, Brown, Cyan, Magenta} {
+      \nskBlock[
+        id=bs\i,
+        fill=nsk\c,
+        % type=diamond,
+        width=.7cm, height=.7cm,
+        x=-.85+\i,
+      ]
+    }
+  }
+
+  \nskContainer[
+    id=strong,
+    pos={right=-.5cm of basics},
+    shift-y=.2mm,
+    fill=nskOrange!50,
+    border-color=nskOrange,
+    border-type=dashed,
+  ]
+  {
+    \tikzmath{\w = 3;}
+    \nskBlock[
+      id=a,
+      width=\w cm,
+    ]
+    \nskMarkPath[
+      path-width=\w cm,
+      skip-first=true,
+      skip-last=true,
+      step=10mm
+    ]{(a.south west) -- (a.south east)}{
+      \draw[] (0,0) -- (0,1cm);
+    }
+
+    \foreach \c [count=\i] in {Red, Blue, Purple} {
+      \nskBlock[
+        id=str\i,
+        fill=nskStrong\c,
+        type=circle,
+        width=.7cm, height=.7cm,
+        x=-.85+\i,
+      ]
+    }
+  }
+
+  % annoate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  \nskAnnotate[
+		pos={above=2cm of acc1},
+		anchor-from=south,
+		connect-to=acc1.north,
+		header={},
+    disable-tag=true,
+		title={Periwinkle},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+  \nskAnnotate[
+		pos={above left=1.5cm and -1.6cm of acc2},
+		anchor-from=south,
+		connect-to=acc2.north,
+		header={},
+    disable-tag=true,
+		title={Columbia blue},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+
+  \nskAnnotate[
+		pos={above=2cm of bs1},
+		anchor-from=south,
+		connect-to=bs1.north,
+		header={},
+    disable-tag=true,
+		title={Salmon Pink},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+  
+  \nskAnnotate[
+		pos={above=1.1cm of bs2},
+		anchor-from=south,
+		connect-to=bs2.north,
+		header={},
+    disable-tag=true,
+		title={Fairy Tale},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+
+  \nskAnnotate[
+		pos={below=1.1cm of bs3},
+		anchor-from=north,
+		connect-to=bs3.south,
+		header={},
+    disable-tag=true,
+		title={Non-Photo  Blue},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+
+  \nskAnnotate[
+		pos={above=1.5cm of bs4},
+		anchor-from=south,
+		connect-to=bs4.north,
+		header={},
+    disable-tag=true,
+		title={Light Green},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+
+  \nskAnnotate[
+		pos={below=2cm of bs5},
+		anchor-from=north,
+		connect-to=bs5.south,
+		header={},
+    disable-tag=true,
+		title={Lime Green},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+
+  \nskAnnotate[
+		pos={above=1.9cm of bs6},
+		anchor-from=south,
+		connect-to=bs6.north,
+		header={},
+    disable-tag=true,
+		title={Dark Moss},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+
+  \nskAnnotate[
+		pos={below=1.3cm of bs7},
+		anchor-from=north,
+		connect-to=bs7.south,
+		header={},
+    disable-tag=true,
+		title={Beaver},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+
+  \nskAnnotate[
+		pos={above=1.3cm of bs8},
+		anchor-from=south,
+		connect-to=bs8.north,
+		header={},
+    disable-tag=true,
+		title={Kobicha},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+
+  \nskAnnotate[
+		pos={below=1.9cm of bs9},
+		anchor-from=north,
+		connect-to=bs9.south,
+		header={},
+    disable-tag=true,
+		title={Ice Blue},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+
+  \nskAnnotate[
+		pos={above=1.6cm of bs10},
+		anchor-from=south,
+		connect-to=bs10.north,
+    disable-tag=true,
+		title={Brilliant Rose},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+
+  \nskAnnotate[
+		pos={above=1.9cm of str1},
+		anchor-from=south,
+		connect-to=str1.north,
+    disable-tag=true,
+		title={Sinopia},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+
+  \nskAnnotate[
+		pos={below=1.4cm of str2},
+		anchor-from=north,
+		connect-to=str2.south,
+    disable-tag=true,
+		title={RISD Blue},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+
+  \nskAnnotate[
+		pos={above=1.1cm of str3},
+		anchor-from=south,
+		connect-to=str3.north,
+    disable-tag=true,
+		title={Majorelle Blue},
+		text-align=center,
+		fill=none,
+		border-type=none,
+  ]
+
+\end{nskFigure}
+\end{document}

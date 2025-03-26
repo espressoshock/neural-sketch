@@ -1,0 +1,196 @@
+\documentclass{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage[]{neural-sketch}
+\nskUseModule{*}
+
+
+\usepackage{xstring}
+
+\begin{document}
+
+\begin{nskFigure}[]
+
+	\newcommand{\is}{A sequence}
+	\StrLen{\is}[\isLen]
+
+	% iterate each char
+	\foreach \i in {1,...,\isLen}{
+			\StrChar{\is}{\i}[\cChar]
+
+			\begin{nskSwitch}[type=string]{\cChar}
+				\nskCase[ ]{
+					\nskBlock[
+						id={is\i},
+						text-north={\textvisiblespace},
+						width=.5cm,
+						border-radius=1mm,
+						fill=nskOrange,
+						last-pos-s={right=.5cm},
+					]
+				}
+				\nskDefault{
+					\nskBlock[
+						id={is\i},
+						text-north={\cChar},
+						width=.5cm,
+						fill=nskOrange,
+						border-radius=1mm,
+						last-pos-s={right=.5cm},
+					]
+				}
+			\end{nskSwitch}
+		}
+
+	\nskMeasure[
+		axis=horizontal,
+		from={is1.south west},
+		to={is\isLen.south east},
+	]
+	\nskBlock[
+		id=ldec,
+		width=\nskDistance, height=1cm,
+		pos={below=.25cm of is1.south west},
+		anchor={north west},
+		text-center={Local Decoder},
+		fill=nskYellow,
+	]
+	\nskCoord[id=x, pos={below left=1cm and .25cm of ldec.south west}]
+	\foreach \i in {4, 3, 2, 1} {
+			\nskContainer[
+				id=acn\i,
+				padding=2mm,
+        border-color=nskMidGray,
+			]{
+				\foreach \i in {1,...,\i} {
+						\nskBlock[
+							width=.5cm,
+							border-radius=1mm,
+              fill=nskSecondaryAccent,
+							last-pos-s={right=.4cm}
+						]
+					}
+			}
+		}
+	\nskCoord[id=ad, pos={below left=1cm and -1.8cm of acn4.south west}]
+
+	\foreach \i in {4,...,1} {
+			\nskBlock[
+				id=a\i,
+				width=.6cm, height=1.5cm,
+				border-radius=1.5mm, fill=nskMainAccent,
+				last-pos={right=.8cm},
+			]
+
+		}
+
+	\foreach \i in {1,..., 4} {
+			\nskConnect[
+				from={acn\i.south},
+				to={a\i.north},
+				arrow-tip={-},
+        arrow-style={very thick},
+				color=nskMidGray,
+			]
+		}
+
+	\nskBlock[
+		id=lt,
+		text-center={\large \textbf{Latent Transformer}},
+		width=5cm, height=2cm,
+		pos={below right=.5cm and -.7cm of a4},
+		fill=nskMainAccent,
+		importance=2,
+	]
+
+	\nskCoord[id=ad, pos={below left=1.2cm and .8cm of lt}]
+
+	\foreach \i in {4,...,1} {
+			\nskBlock[
+				id=a\i,
+				width=.6cm, height=1.5cm,
+				border-radius=1.5mm, fill=nskMainAccent,
+				last-pos={right=.8cm},
+			]
+
+		}
+
+	\nskCoord[id=x, pos={below left=1cm and 2.9cm of a4.south west}]
+	\foreach \i in {4, 3, 2, 1} {
+			\nskContainer[
+				id=bcn\i,
+				padding=2mm,
+        border-color=nskMidGray,
+			]{
+				\foreach \i in {1,...,\i} {
+						\nskBlock[
+							width=.5cm,
+							border-radius=1mm,
+              fill=nskSecondaryAccent,
+							last-pos-s={right=.4cm}
+						]
+					}
+			}
+		}
+
+	\foreach \i in {1,..., 4} {
+			\nskConnect[
+				from={bcn\i.north},
+				to={a\i.south},
+				arrow-tip={-},
+				color=nskMidGray,
+        arrow-style={very thick},
+			]
+		}
+
+	\nskBlock[
+		id=ldec,
+		width=\nskDistance, height=1cm,
+		pos={below=.25cm of bcn4.south west},
+		anchor={north west},
+		text-center={Local Encoder},
+		fill=nskYellow,
+	]
+	\nskCoord[id=x, pos={below left=.8cm and .5cm of ldec.south west}]
+
+	\foreach \i in {1,...,\isLen}{
+			\StrChar{\is}{\i}[\cChar]
+
+			\begin{nskSwitch}[type=string]{\cChar}
+				\nskCase[ ]{
+					\nskBlock[
+						id={is\i},
+						text-south={\textvisiblespace},
+						width=.5cm,
+						border-radius=1mm,
+						fill=nskOrange,
+						last-pos-s={right=.5cm},
+						text-south-style={anchor=south, yshift=-6mm},
+					]
+				}
+				\nskDefault{
+					\nskBlock[
+						id={is\i},
+						text-south={\cChar},
+						text-south-style={anchor=south, yshift=-6mm},
+						width=.5cm,
+						fill=nskOrange,
+						border-radius=1mm,
+						last-pos-s={right=.5cm},
+					]
+				}
+			\end{nskSwitch}
+		}
+
+	\nskConnect[
+		from={bcn4.west},
+		to={acn4.west},
+		bend-type=double,
+		bend-direction=left,
+		% color=nskLighterGray,
+	]
+
+
+
+\end{nskFigure}
+\end{document}

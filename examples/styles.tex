@@ -1,0 +1,49 @@
+\documentclass[]{standalone}
+% \standaloneconfig{border=10mm}
+
+\usepackage[
+  block-width=1cm,
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+
+
+\begin{document}
+\begin{nskFigure}[]
+	% \nskBlock[
+	% 	id=a,
+	% 	text-center=A,
+	% 	fill=nskRed,
+	% ]
+	% \nskBlock[
+	% 	id=b,
+	% 	text-center=B,
+	% 	pos={right=2cm of a},
+	% 	outer-border-type=solid,
+	% 	% fill=nskOrange,
+	% ]
+	%  \foreach \t [count=\c] in {-Triangle, -stealth} {
+	%    \nskCoord[id=ms, x=.6, y=.7*\c, marker=x]
+	%    \nskCoord[id=me, x=2, y=.7*\c, marker=o]
+	%    \nskConnect[from=ms, to=me, arrow-tip={\t}, color=nskMidGray]
+	%  }
+	% \nskConnect[from=a, to=b, arrow-tip={->.>.>[sep=3mm] . Circle}]
+	%  \foreach \t [count=\c] in {-Bar, -Diamond} {
+	%    \nskCoord[id=ms, x=.6, y=-.7*\c, marker=x]
+	%    \nskCoord[id=me, x=2, y=-.7*\c, marker=o]
+	%    \nskConnect[from=ms, to=me, arrow-tip={\t}, color=nskMidGray]
+	%  }
+
+  % \foreach \t [count=\c from 1] in { Stealth, Latex, Arc Barb, Bar, Bracket, Hooks, Parenthesis, Straight Barb, Tee Barb, To, Circle, Diamond, Ellipse, Kite, Rectangle, Square, Stealth, Triangle, Turned Square, Rays, Rays[n=8]}{
+  %   \nskCoord[id=ms, y=0, x=.7*\c, marker=x]
+  %   \nskCoord[id=me, y=1.5, x=.7*\c, marker=o]
+  %   \nskConnect[from=ms, to=me, arrow-tip=-\t]
+  % }
+
+  \foreach \t [count=\c from 1] in {-Butt Cap[], -Round Cap[], -Round Cap[].Fast Round[].Fast Round[], -Triangle Cap, -Triangle Cap[].Fast Triangle[].Fast Triangle[]}{
+    \nskCoord[id=ms, y=0, x=.7*\c, marker=x]
+    \nskCoord[id=me, y=1.5, x=.7*\c, marker=o]
+    \nskConnect[from=ms, to=me, arrow-tip={\t}]
+  }
+\end{nskFigure}
+\end{document}

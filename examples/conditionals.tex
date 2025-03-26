@@ -1,0 +1,58 @@
+\documentclass{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+% type examples ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% \begin{nskSwitch}[type=int]{42}
+%   \nskCase[10]{This is case 10.}
+%   \nskCase[43]{This is the matching case for 42.}
+%   \nskDefault{No case matched.}
+% \end{nskSwitch}
+% \begin{nskSwitch}[type=string]{red}
+%   \nskCase[blue]{This is the matching case for red.}
+%   \nskCase[red]{This is case red.}
+%   \nskCase[yellow]{This is the matching case for yellow.}
+%   \nskDefault{No case matched.}
+% \end{nskSwitch}
+% \begin{nskSwitch}[type=float]{10.3}
+%   \nskCase[10.1]{This is case 10.1.}
+%   \nskCase[10.3]{This is the matching case for 10.3.}
+%   \nskDefault{No case matched.}
+% \end{nskSwitch}
+
+\begin{nskFigure}[]
+	\foreach \c in {Green, Yellow, dots, skip} {
+			\begin{nskSwitch}[type=string]{\c}
+				\nskCase[skip]{
+					\nskBlock[
+						last-pos-s={right=.0cm},
+						border-type=dashed,
+						shadow=false,
+					]
+				}
+				\nskCase[dots]{
+					\nskBlock[
+						last-pos-s={right=0cm},
+						text-center=$\cdots$,
+						border-type=none, fill=none,
+						shadow=false,
+					]
+				}
+				\nskDefault{
+					\nskBlock[
+						last-pos-s={right=.5cm},
+						text-north=\c,
+						fill=nsk\c,
+					]
+				}
+			\end{nskSwitch}
+		}
+
+\end{nskFigure}
+
+
+\end{document}

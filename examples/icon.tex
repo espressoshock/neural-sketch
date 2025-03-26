@@ -1,0 +1,41 @@
+\documentclass{standalone}
+\standaloneconfig{border=10mm}
+
+
+\usepackage{neural-sketch}
+\nskUseModule{*}
+
+\usepackage[pagecolor=none]{pagecolor}
+\pagecolor{nskCreamWhite}
+
+\begin{document}
+
+\begin{nskFigure}
+
+	\nskBlock[
+		id=ba,
+		width=1cm, height=1cm,
+    border-radius=9pt,
+    fill=nskCreamWhite,
+		% outer-border-type=solid,
+		% outer-border-size=.5cm,
+		% outer-border-color=nskSecondaryAccent!50,
+	]
+	\nskBlock[
+		id=ba,
+		width=.8cm, height=.8cm,
+    % border-type=none,
+    fill=none,
+    border-radius=6pt,
+    text-east={~~Neural Sketch},
+    tikz-opts={
+      top color=black,
+      middle color=nskLighterGray,
+      bottom color=nskCreamWhite,
+    }
+	]
+
+
+\end{nskFigure}
+
+\end{document}

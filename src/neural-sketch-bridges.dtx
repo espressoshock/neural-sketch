@@ -53,7 +53,7 @@
 % - (path name, arrow style, color, bridging style, bridging path,
 %  bridging span, bridging gap)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\cs_new_protected_nopar:Npn \__nsk_connect_store_item:nnnnnnn #1#2#3#4#5#6#7
+\cs_new_protected_nopar:Npn \__nsk_connect_store_item:nnnnnnnn #1#2#3#4#5#6#7#8
 {
 	% We'll build a single token list item, then push it into
 	% the bridging sequence.
@@ -61,7 +61,7 @@
 
 	% Insert #1..#7 by expansion (x), forming a comma list:
 	\exp_args:NNx \tl_put_right:Nn \l__nsk_storeitem_tl
-	{ #1, { #2 }, #3, #4, #5, #6, #7 }
+	{ #1, #2, { #3 }, #4, #5, #6, #7, #8 }
 
 	% Now append that item to the bridging sequence:
 	\seq_gput_right:No \g__nsk_bridging_info_seq \l__nsk_storeitem_tl
@@ -122,9 +122,21 @@
 	bridging-gap .initial:n         = { 4pt },
 	bridging-gap .default:n         = { 4pt },
 
-	arrow-style .tl_set:N           = \l_nsk_connect_arrow_style_tl,
-	arrow-style .initial:n          = {ultra\space thick, >=Triangle},
-	arrow-style .default:n          = {ultra\space thick, >=Triangle},
+	arrow-style .tl_set:N = \l_nsk_connect_arrow_style_tl,
+	arrow-style .initial:n = {ultra~thick, line~cap=round},
+	arrow-style .default:n = {ultra~thick, line~cap=round},
+
+	arrow-tip .tl_set:N = \l_nsk_connect_arrow_tip_tl,
+	arrow-tip .initial:n = {-},
+	arrow-tip .default:n = {-},
+
+	shift-x .dim_set:N = \l_nsk_connect_shift_x_dim,
+	shift-x .initial:n = {0mm},
+	shift-x .default:n = {0mm},
+
+	shift-y .dim_set:N = \l_nsk_connect_shift_y_dim,
+	shift-y .initial:n = {0mm},
+	shift-y .default:n = {0mm},
 
 	color .tl_set:N                 = \l_nsk_connect_color_tl,
 	color .initial:n                = { c__nsk_principal },
@@ -180,10 +192,10 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Connect Drawing --
 %  Immediate draw if bridging is false:
-%   \nsk__draw_connect:VVV
+%   \nsk__draw_connect:VVVV
 %  #1 => arrow-style, #2 => color, #3 => id
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\cs_new_protected_nopar:Npn \nsk__draw_connect:VVV #1#2#3
+\cs_new_protected_nopar:Npn \nsk__draw_connect:VVVV #1#2#3#4
 {
 	% if \l__nsk_connect_bend_bool is true, generate route accordingly:
 	\tl_if_eq:NnF \l__nsk_connect_bend_type_tl {none}
@@ -201,15 +213,15 @@
 	{[rounded~corners=\l__nsk_connect_corner_radius_dim]}
 
 	\expandafter\draw\expandafter[
-		#1,
-		draw=#2,
-		spath/save~global=#3,
+		#1, #2,
+		draw=#3,
+		spath/save~global=#4,
 		shorten~<=\l__nsk_connect_shorten_from_dim,
 		shorten~>=\l__nsk_connect_shorten_to_dim,
 	]
-	(\l_nsk_connect_from_tl)
+  ([xshift=\l_nsk_connect_shift_x_dim, yshift=\l_nsk_connect_shift_y_dim]\l_nsk_connect_from_tl)
 	\l_nsk_connect_route_tl
-	(\l_nsk_connect_to_tl);
+	([xshift=\l_nsk_connect_shift_x_dim, yshift=\l_nsk_connect_shift_y_dim]\l_nsk_connect_to_tl);
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -259,11 +271,12 @@
 		\nsk__spath_save:V \l_tmpa_tl
 
 		% then store bridging data for later
-		\__nsk_connect_store_item:nnnnnnn
+		\__nsk_connect_store_item:nnnnnnnn
 		{
 			\tl_use:N \l_tmpa_tl
 		}
 		{ \l_nsk_connect_arrow_style_tl      }
+		{ \l_nsk_connect_arrow_tip_tl      }
 		{ \l_nsk_connect_color_tl            }
 		{ \l_nsk_connect_bridging_style_tl   }
 		{ \l_nsk_connect_bridging_path_tl    }
@@ -272,8 +285,9 @@
 	}
 	{
 		% bridging == false => draw it now
-		\nsk__draw_connect:VVV
+		\nsk__draw_connect:VVVV
 		\l_nsk_connect_arrow_style_tl
+		\l_nsk_connect_arrow_tip_tl
 		\l_nsk_connect_color_tl
 		\l_nsk_connect_id_tl
 	}
@@ -703,7 +717,7 @@ arc[
 	% draw ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\begin{pgfonlayer}{interim}
 		\draw[
-			spath/save global=\tl_use:N \l_nsk_connect_id_tl,
+			spath/save~global=\tl_use:N \l_nsk_connect_id_tl,
 			fill=\l_nsk_fillbetween_fill_tl,
 			draw=\l_nsk_fillbetween_draw_tl,
 			opacity=\fp_use:N \l_nsk_fillbetween_opacity_fp

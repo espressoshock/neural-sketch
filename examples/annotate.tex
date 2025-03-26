@@ -1,0 +1,170 @@
+\documentclass{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage[dark_mode=true]{neural-sketch}
+\nskUseModule{*}
+
+\usetikzlibrary{backgrounds, fadings, decorations.markings}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskContainer[
+		id=acnt,
+		text-north={Accents},
+	]{
+		\foreach [count=\i] \c in {nskMainAccent, nskSecondaryAccent}
+			{
+				\nskBlock[
+					width=1cm, height=1cm,
+					fill=\c,
+					% text-north={\c},
+					x=1.5*\i,
+				]
+			}
+	}
+	\nskContainer[
+		id=basics,
+		text-north={Defaults},
+		pos={right=0cm of acnt},
+	]{
+		\foreach [count=\i] \c in
+			{red, orange, yellow, lime, green, cyan, blue, magenta, pink}
+			{
+				\nskBlock[
+					width=1cm, height=1cm,
+					fill=\c,
+					text-north={\c},
+					x=1.5*\i,
+				]
+			}
+	}
+
+	\nskContainer[
+		text-north={Basics},
+		pos={below=0cm of basics},
+	]{
+		\foreach [count=\i] \c in
+			{Red, Orange, Yellow, Lime, Green, Cyan, Blue, Magenta, Pink}
+			{
+				\nskBlock[
+					width=1cm, height=1cm,
+					fill=nsk\c,
+					text-north={\c},
+					x=1.5*\i,
+				]
+			}
+	}
+\end{nskFigure}
+
+% -------------------------------
+
+\begin{nskFigure}[]
+	\nskBlock[
+		id=a,
+		width=1cm, height=1cm,
+		outer-border-type=solid,
+		outer-border-color=nskSecondaryAccent!50,
+	]
+
+	\nskBlock[
+		id=ax,
+		x=-8, y=5,
+		width=5cm, height=1cm,
+	]
+
+	\nskMarkPath[
+		start=0.2,
+		end=0.8,
+		step=10mm
+	]{(ax.south west) -- (ax.south east)}{
+		\draw[black] (0,0) -- (0,1cm);
+	}
+
+	\nskAnnotate[
+		% x=-2, y=1.5,
+		pos={left=2cm of a},
+		anchor-from=east,
+		connect-to=a.west,
+		header={Explanation},
+		title={Key Observations},
+		text={This is an important portion.},
+		fill=none,
+		border-type=none,
+	]
+	\nskAnnotate[
+		pos={above right=1cm of a},
+		anchor-from=south,
+		connect-to=a.east,
+		header={Explanation},
+		border-type=dashed,
+		title={Key Observations},
+		text={This is an important portion.},
+		text-align=justify,
+		connect-opts = {
+				corner-radius=4mm,
+				bend-route={single down},
+			},
+		tikz-opts={},
+	]
+
+	\nskAnnotate[
+		ref-tag=a,
+		pos={above=4cm of a},
+		anchor-from=south,
+		connect-to=a.north,
+		header={\nskBlockIDLast[1]},
+		rounded-box,
+		fill=none,
+		border-type=solid,
+		connect-opts = {
+				arrow-style={dotted, thick},
+				bend-route={single down}
+			},
+		tikz-opts={},
+	]
+
+	\nskGroup[
+		shift-y=-2,
+	]{
+		\nskBlock[y=-5, id=a, text-center=A,
+			outer-border-color=nskMainAccent!70,
+			outer-border-type=solid,
+		]
+		\nskBlock[pos={above right=1cm and 1cm of a}, id=b, text-center=B]
+		\nskBlock[pos={below=of a}, id=c, text-center=C]
+		\nskBlock[pos={below=of b}, id=d, text-center=D]
+		\nskBlock[pos={left=4cm of b}, id=e, text-center=E,
+			border-type=dashed]
+		\nskConnect[
+			to=a.north,
+			from=b.west,
+			bend-type=single,
+			bend-direction=down,
+			corner-radius=5mm,
+		]
+		\nskConnect[
+			from=a.north,
+			to=e.east,
+			corner-radius=5mm,
+			bend-route=single up
+		]
+		\nskConnect[
+			from=a.west,
+			to=c.west,
+			bend-route={double left}
+		]
+		\nskConnect[
+			from=b.east,
+			to=d.east,
+			bend-route={double right},
+		]
+		\nskConnect[
+			from=c.east,
+			to=d.south,
+			bend-route={single down},
+		]
+	}
+
+\end{nskFigure}
+\end{document}

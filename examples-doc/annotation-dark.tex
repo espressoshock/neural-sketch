@@ -1,0 +1,103 @@
+\documentclass{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage[dark_mode]{neural-sketch}
+\nskUseModule{*}
+
+\usetikzlibrary{backgrounds, fadings, decorations.markings}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskBlock[
+		id=a,
+		width=1cm, height=1cm,
+		outer-border-type=solid,
+		outer-border-color=nskSecondaryAccent!100!nskBg,
+	]
+
+	\nskAnnotate[
+		pos={left=2cm of a},
+		anchor-from=east,
+		connect-to=a.west,
+		header={Explanation},
+		title={Key Observations},
+		text={This is an important portion.},
+		fill=none,
+		border-type=none,
+	]
+	\nskAnnotate[
+		pos={above right=1cm of a},
+		anchor-from=south,
+		connect-to=a.east,
+		header={Explanation},
+		border-type=dashed,
+		title={Key Observations},
+		text={This is an important portion.},
+		text-align=justify,
+		connect-opts = {
+				corner-radius=4mm,
+				bend-route={single down},
+			},
+		tikz-opts={},
+	]
+
+	\nskAnnotate[
+		ref-tag=a,
+		pos={above=4cm of a},
+		anchor-from=south,
+		connect-to=a.north,
+		header={\nskBlockIDLast[1]},
+		rounded-box,
+		fill=none,
+		border-type=solid,
+		connect-opts = {
+				arrow-style={dotted, thick},
+				bend-route={single down}
+			},
+		tikz-opts={},
+	]
+
+	\nskGroup[
+		shift-y=-2,
+	]{
+		\nskBlock[y=-5, id=a, text-center=A,
+			outer-border-color=nskMainAccent!30!nskBg,
+			outer-border-type=solid,
+		]
+		\nskBlock[pos={above right=1cm and 1cm of a}, id=b, text-center=B]
+		\nskBlock[pos={below=of a}, id=c, text-center=C]
+		\nskBlock[pos={below=of b}, id=d, text-center=D]
+		\nskBlock[pos={left=4cm of b}, id=e, text-center=E,
+			border-type=dashed]
+		\nskConnect[
+			to=a.north,
+			from=b.west,
+			bend-type=single,
+			bend-direction=down,
+			corner-radius=5mm,
+		]
+		\nskConnect[
+			from=a.north,
+			to=e.east,
+			corner-radius=5mm,
+			bend-route=single up
+		]
+		\nskConnect[
+			from=a.west,
+			to=c.west,
+			bend-route={double left}
+		]
+		\nskConnect[
+			from=b.east,
+			to=d.east,
+			bend-route={double right},
+		]
+		\nskConnect[
+			from=c.east,
+			to=d.south,
+			bend-route={single down},
+		]
+	}
+
+\end{nskFigure}
+\end{document}

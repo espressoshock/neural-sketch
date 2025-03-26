@@ -1,0 +1,32 @@
+\documentclass{standalone}
+% \standaloneconfig{border=10mm}
+
+\usepackage{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskContainer[
+		border-type=dashdotted,
+		text-north=Patterns,
+		text-north-style={nskMidGray},
+		text-north-loc=west,
+	]{
+		\foreach \i/\p in
+			{
+				1/north west lines,
+				2/north east lines,
+				3/vertical lines,
+				4/horizontal lines
+			}{
+				\nskBlock[
+					width=1cm, height=1cm,
+					id=a, fill=white,
+					pattern=\p,
+					x=1.5*\i
+				]
+			}
+	}
+\end{nskFigure}
+\end{document}

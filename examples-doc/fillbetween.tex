@@ -1,0 +1,119 @@
+\documentclass{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage[]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[
+		id=stcont,
+		text-north=Straight,
+		text-north-loc=west,
+		border-type=dashed,
+		fill=nskMainAccent!20,
+		border-color=nskMainAccent,
+	]{
+		\nskBlock[
+			text-center={hello},
+			id=ablock,
+			width=2cm, height=1cm,
+			border-radius=0mm,
+		]
+		\nskBlock[
+			id=bblock,
+			text-center={hello},
+			pos={below=.8cm of ablock},
+			border-radius=0mm,
+		]
+		\nskFillBetween[
+			from=ablock,
+			to=bblock,
+			fill=blue!20,
+			draw=blue!50,
+			opacity=0.4,
+			edge=straight,
+			orientation=vertical,
+			corner-offset=0mm,
+		]
+		\nskBlock[
+			id=ablock,
+			text-center={hello},
+			width=1cm, height=2cm,
+			border-radius=0mm,
+			last-pos={above right=-.5cm and 1.5cm},
+		]
+		\nskBlock[
+			id=bblock,
+			text-center={hello},
+			pos={right=.8cm of ablock},
+			border-radius=0mm,
+		]
+		\nskFillBetween[
+			from=ablock,
+			to=bblock,
+			fill=blue!20,
+			draw=blue!50,
+			opacity=0.4,
+			edge=straight,
+			orientation=horizontal,
+			corner-offset=0mm,
+		]
+	}
+	\nskContainer[
+		id=cucont,
+		text-north=Curved,
+		text-north-loc=west,
+		border-type=dashed,
+		fill=nskMainAccent!20,
+		border-color=nskMainAccent,
+		pos={right=0cm of stcont},
+	]{
+		\nskBlock[
+			type=rectangle,
+			text-center={hello},
+			id=cblock,
+			width=2cm, height=1cm,
+		]
+		\nskBlock[
+			type=rectangle,
+			text-center={hello},
+			id=dblock,
+			width=1cm, height=1cm,
+			pos={below left=.8cm and -3mm of cblock},
+		]
+		\nskFillBetween[
+			from=cblock,
+			to=dblock,
+			fill=blue!20,
+			draw=blue!50,
+			opacity=0.4,
+			edge=curved,
+			orientation=vertical,
+		]
+
+		\nskBlock[
+			id=eblock,
+			text-center={hello},
+			width=1cm, height=2cm,
+			last-pos={above right=-1.5cm and 2cm},
+		]
+		\nskBlock[
+			id=fblock,
+			text-center={hello},
+			width=1cm, height=1cm,
+			pos={right=.8cm of eblock},
+		]
+
+		\nskFillBetween[
+			from=eblock,
+			to=fblock,
+			fill=blue!20,
+			draw=blue!50,
+			opacity=0.4,
+			edge=curved,
+			orientation=horizontal,
+		]
+	}
+\end{nskFigure}
+\end{document}

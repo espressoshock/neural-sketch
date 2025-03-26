@@ -1,0 +1,199 @@
+\documentclass{standalone}
+% \standaloneconfig{border=10mm}
+
+\usepackage{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+% \begin{nskFigure}[]
+% 	\nskContainer[
+% 		id=ab,
+% 		text-north-loc=west,
+% 		border-type=dashed,
+% 		fill=nskSecondaryAccent!20,
+% 		border-color=nskSecondaryAccent,
+% 	]{
+% 		\nskBlock[
+% 			type=circle,
+% 			id=ablock,
+% 			text-center=A,
+% 			importance=1.2,
+% 			outer-border-type=solid,
+% 			outer-border-color=nskSecondaryAccent,
+% 			outer-border-size=3mm,
+% 		]
+% 		\nskBlock[
+% 			type=rectangle,
+% 			id=bblock,
+% 			last-pos={right=3cm},
+% 			text-center=B,
+% 		]
+% 		\nskConnect[
+% 			id=acn,
+% 			from=ablock.east,
+% 			to=bblock.west,
+% 		]
+%
+% 		\nskMarkPath[
+% 			at=.25,
+% 		]{acn}{
+%       \node[above=.5] {$w_0$};
+% 			\draw[black, thick] (0,0) -- (0,.5);
+% 		}
+% 	}
+%
+% 	\nskContainer[
+% 		id=bc,
+% 		text-north-loc=west,
+% 		border-type=dashed,
+% 		pos={right=.5cm of ab},
+% 		fill=nskMainAccent!20,
+% 		border-color=nskMainAccent,
+% 	]{
+% 		\nskBlock[
+% 			type=circle,
+% 			id=ablock,
+% 			text-center=A,
+% 			importance=1.2,
+% 			outer-border-type=solid,
+% 			outer-border-color=nskMainAccent,
+% 			outer-border-size=3mm,
+% 		]
+% 		\nskBlock[
+% 			type=rectangle,
+% 			id=bblock,
+% 			last-pos={right=3cm},
+% 			text-center=B,
+% 		]
+% 		\nskConnect[
+% 			id=acn,
+% 			from=ablock.east,
+% 			to=bblock.west,
+% 		]
+%
+% 		\nskMarkPath[
+% 			at=.5,
+% 		]{acn}{
+% 			\node[above=.5cm] {$w_1$};
+% 			\draw[black, thick] (0,0) -- (0,.5);
+% 		}
+% 	}
+%
+% 	\nskContainer[
+% 		text-north-loc=west,
+% 		border-type=dashed,
+% 		pos={right=.5cm of bc},
+% 		fill=nskRed!20,
+% 		border-color=nskRed,
+% 	]{
+% 		\nskBlock[
+% 			type=circle,
+% 			id=ablock,
+% 			text-center=A,
+% 			importance=1.2,
+% 			outer-border-type=solid,
+% 			outer-border-color=nskRed!50,
+% 			outer-border-size=3mm,
+% 		]
+% 		\nskBlock[
+% 			type=rectangle,
+% 			id=bblock,
+% 			last-pos={right=3cm},
+% 			text-center=B,
+% 		]
+% 		\nskConnect[
+% 			id=acn,
+% 			from=ablock.east,
+% 			to=bblock.west,
+% 		]
+%
+% 		\nskMarkPath[
+% 			at=.75,
+% 		]{acn}{
+% 			\node[above=.5cm] {$w_n$};
+% 			\draw[black, thick] (0,0) -- (0,.5);
+% 		}
+% 	}
+% \end{nskFigure}
+%
+% \begin{nskFigure}[]
+% 	\nskContainer[
+% 		id=ab,
+% 		text-north-loc=west,
+% 		border-type=dashed,
+% 		fill=nskSecondaryAccent!20,
+% 		border-color=nskSecondaryAccent,
+% 	]{
+%
+% 		\tikzmath{
+% 			\df = 65;
+% 			\a = -(180-\df);
+% 		}
+%
+% 		\nskBlock[
+% 			id=ab,
+% 			type=rectangle,
+% 			width=1cm, height=1cm,
+% 			text-center=A,
+% 		]
+% 		\nskBlock[
+% 			id=bb,
+% 			type=rectangle,
+% 			width=1cm, height=1cm,
+% 			text-center=B,
+% 			last-pos={right=3cm}
+% 		]
+% 		\nskBlock[
+% 			id=op,
+% 			type=rounded rectangle,
+% 			width=2cm,
+% 			border-radius=0mm,
+% 			text-center=node,
+% 			fill=nskSecondaryAccent,
+% 			pos={below right=1cm and .8cm of ab}
+% 		]
+% 		\nskConnect[
+% 			from=ab.south,
+% 			to=op.west,
+% 			bend-type=single, bend-direction=up,
+% 		]
+% 		\nskConnect[
+% 			id=cn2,
+% 			from=bb.south,
+% 			to=op.east,
+% 			route={to[in=0, out=\a]}
+% 		]
+% 	}
+%
+% 	\nskMarkPath[
+% 		at=.5,
+% 	]{cn2}{
+% 		\node[below right=.5cm] {Text};
+% 		\draw[black, thick] (0,0) -- (0,.5);
+% 	}
+%
+% \end{nskFigure}
+
+\begin{nskFigure}[]
+	\nskContainer[
+		id=ab,
+		text-north-loc=west,
+		border-type=dashed,
+    padding=3mm,
+	]{
+		\nskBlock[
+			id=ba,
+			width=8cm, height=1cm,
+		]
+		\nskMarkPath[
+			path-width=8cm,
+			skip-first=true,
+			skip-last=true,
+			step=10mm
+		]{(ba.south west) -- (ba.south east)}{
+			\draw[black] (0,0) -- (0,1cm);
+		}
+	}
+
+\end{nskFigure}
+\end{document}
