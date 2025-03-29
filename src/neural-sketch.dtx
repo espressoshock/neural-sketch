@@ -352,6 +352,10 @@ every~node/.append~style={text=c__nsk_principal},
 	embed-border-radius .initial:V = \g__nsk_style_block_embed_border_radius_dim,
 	embed-border-radius .default:V = \g__nsk_style_block_embed_border_radius_dim,
 
+  embed-border-size .dim_set:N = \l_nsk_block_embed_border_size_dim,
+	embed-border-size .initial:n = {1pt},
+	embed-border-size .default:n = {1pt},
+
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Patterns
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -642,8 +646,16 @@ every~node/.append~style={text=c__nsk_principal},
 			\pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
 			\pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
 			\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
-			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
-
+    \dim_compare:nNnTF {\l_nsk_block_embed_border_size_dim} = {0pt}
+    {
+      % Ember border size is 0, so do not draw a border.
+      \pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{clip}}
+    }
+    {
+      % Ember border size is nonzero; set the linewidth and draw border.
+      \pgfsetlinewidth{\l_nsk_block_embed_border_size_dim}
+      \pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
+    }
 			% raw embedding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 			\tl_use:N \l_nsk_embed_tl
 		\end{scope}
