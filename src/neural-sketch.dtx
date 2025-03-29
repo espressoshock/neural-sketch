@@ -928,6 +928,8 @@ every~node/.append~style={text=c__nsk_principal},
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Miscs Utils
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+% robust ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskBlockID {}
 {
 	\tl_use:N \l_nsk_block_id_tl
@@ -935,15 +937,26 @@ every~node/.append~style={text=c__nsk_principal},
 
 % reference counting ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 % \nskBlockIDLast[1] -> "the nth last block ID"
-\NewDocumentCommand \nskBlockIDLast { O{1} }
+\NewDocumentCommand \nskRBlockIDLast { O{1} }
 {
 	\nsk__internal_get_nth_block_id:n {#1}
 	\tl_use:N \g_nsk_block_last_requested_block_id
 }
 
-\NewDocumentCommand \nskLastBlockID {} {
+\NewDocumentCommand \nskRLastBlockID {} {
 	% "Alias" for the single last block (i.e., \nskBlockIDLast[])
 	% block is already registered, so get prev ->2
+	\nskRBlockIDLast[2]
+}
+
+% expandable ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\NewExpandableDocumentCommand {\nskBlockIDLast} { m }
+{
+  \seq_item:Nn \g_nsk_block_id_history_seq
+    { \int_eval:n { \seq_count:N \g_nsk_block_id_history_seq - #1 + 1 } }
+}
+\NewExpandableDocumentCommand {\nskLastBlockID} { m }
+{
 	\nskBlockIDLast[2]
 }
 
