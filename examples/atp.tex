@@ -1,0 +1,88 @@
+\documentclass{standalone}
+\standaloneconfig{border=2mm}
+
+\usepackage[
+  block-height=1.5cm,
+  block-width=8mm,
+  block-border-radius=3mm,
+  container-fill=nskSecondaryAccent!60,
+  container-border-color=nskBlue,
+]{neural-sketch}
+\nskUseModule{*}
+
+\NewDocumentCommand{\batch}{t!t*m}{
+	\nskCoord[id=cx, #3] % dummy coord
+  \IfBooleanTF{#2}{\def\fc{nskLightGray}}{\def\fc{nskBlue}}
+  \IfBooleanTF{#2}{\nskContainer[padding=1mm, border-radius=4mm, fill=nskLightGray]}
+  {\nskContainer[padding=1mm, border-radius=4mm]}{
+		\foreach \c in {31,...,29} {
+        \IfBooleanTF{#1}{
+          \nskBlock[id=a, text-center=\c, last-pos-s={below=1mm}, width=2cm, fill=\fc]
+        }{\nskBlock[id=a, last-pos-s={below=1mm}, fill=\fc]}
+			}
+		    \IfBooleanTF{#1}{
+		      \nskBlock[text-center=1, last-pos={below=}, width=2cm, fill=\fc]
+		      \nskBlock[text-center=0, last-pos={below=1mm}, width=2cm, fill=nskMainAccent]
+		    }
+		    {
+		      \nskBlock[last-pos={below=}, fill=\fc]
+		      \nskBlock[last-pos={below=1mm}, fill=nskMainAccent]
+		    }
+		\nskConnect[
+			from=\nskBlockIDLast{2}, to=\nskBlockIDLast{3},
+			arrow-style={dashed, very thick},
+		]
+	}
+  % print out auto-ids ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  % \nskBlock[
+  %   type=circle, fill=red, width=5mm, height=5mm,
+  %   text-north={\tiny \nskBlockIDLast{2}},
+  %   last-pos={above=}
+  % ]
+}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	% r ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\batch!{x=0, y=0}
+	\batch*{pos={right=2cm of cx}}
+	\nskBlock[
+		last-pos={right=},
+		border-type=none, fill=none, shadow=false,
+		text-center={\small$\bullet\bullet\bullet$}
+	]
+
+	% r ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\batch*{pos={right=4cm of cx}}
+	\batch{pos={right=1.5cm of cx}}
+	\batch*{pos={right=1.5cm of cx}}
+	\nskBlock[
+		last-pos={right=},
+		border-type=none, fill=none, shadow=false,
+		text-center={\small$\bullet\bullet\bullet$}
+	]
+	\batch*{pos={right=4cm of cx}}
+	\foreach \i in {1,...,2} {
+			\batch*{pos={right=1.5cm of cx}}
+	}
+	\batch{pos={right=1.5cm of cx}}
+	\batch*{pos={right=1.5cm of cx}}
+
+	\nskMeasure[from=rectangle3.north west, to=rectangle32.north east]
+
+	\batch{y=12, shift-x={\nskDistance/2 - 2cm}}
+	\batch{pos={right=of cx}}
+	\batch{pos={right=of cx}}
+
+	\foreach \f/\t in {35/3, 38/13, 41/29} {
+			\nskConnect[
+				from=rectangle\f.south, to=rectangle\t,
+				bend-type=double, bend-direction=down,
+				arrow-tip={Straight Barb-}
+			]
+		}
+
+
+\end{nskFigure}
+\end{document}
