@@ -362,6 +362,18 @@ every~node/.append~style={text=c__nsk_principal},
 	pattern-color .tl_set:N = \l_nsk_block_pattern_color_tl,
 	pattern-color .initial:n = { },
 	pattern-color .default:n = { },
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Fade
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	fade .choice:,
+	fade / none .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { none } },
+	fade / left .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { left } },
+	fade / right .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { right } },
+	fade / up .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { up } },
+	fade / down .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { down } },
+	fade .initial:n = { none },
+	fade .default:n = { none },
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -693,6 +705,14 @@ every~node/.append~style={text=c__nsk_principal},
 	% extras ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\nsk__resolve_pattern_alias:
 
+	% If fade is not "none", then override some keys and add a fade style.
+	\tl_if_eq:NnF \l_nsk_block_fade_tl { none }
+	{
+		% Disable shadow
+		\bool_set_false:N \l_nsk_block_shadow_bool
+		\tl_put_right:Nx \l_tmps_tl {fade~\l_nsk_block_fade_tl ,}
+	}
+
 	% Possibly scale border-size according to importance:
 	\nsk__maybe_scale_border_by_importance:
 
@@ -723,7 +743,8 @@ every~node/.append~style={text=c__nsk_principal},
 	\tl_put_right:No \l_tmps_tl {minimum\space width=\l_nsk_block_width_dim,}
 	\tl_put_right:No \l_tmps_tl {minimum\space height=\l_nsk_block_height_dim,}
 	% borders ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}
+	\tl_if_eq:NnT \l_nsk_block_fade_tl { none }
+  {\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}}
 	\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
 	\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}
 	\tl_put_right:No \l_tmps_tl {line\space width=\l_nsk_block_border_size_dim,}
@@ -734,7 +755,8 @@ every~node/.append~style={text=c__nsk_principal},
 	\tl_put_right:No \l_tmp_pre_acts {line\space width=\l_nsk_block_outer_border_size_dim,}
 
 	% fill ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}
+	\tl_if_eq:NnT \l_nsk_block_fade_tl { none }
+  {\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}}
 
 	% shadow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\bool_if:NT \l_nsk_block_shadow_bool
@@ -952,8 +974,8 @@ every~node/.append~style={text=c__nsk_principal},
 % expandable ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewExpandableDocumentCommand {\nskBlockIDLast} { m }
 {
-  \seq_item:Nn \g_nsk_block_id_history_seq
-    { \int_eval:n { \seq_count:N \g_nsk_block_id_history_seq - #1 + 1 } }
+	\seq_item:Nn \g_nsk_block_id_history_seq
+	{ \int_eval:n { \seq_count:N \g_nsk_block_id_history_seq - #1 + 1 } }
 }
 \NewExpandableDocumentCommand {\nskLastBlockID} { m }
 {

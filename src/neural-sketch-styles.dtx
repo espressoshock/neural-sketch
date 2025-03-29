@@ -52,20 +52,20 @@
 	block-border-color .default:n = { nskDarkGray },
 
 	block-border-radius .dim_gset:N = \g__nsk_style_block_border_radius_dim,
-  block-border-radius .initial:n = {2.5mm},
-  block-border-radius .default:n = {2.5mm},
+	block-border-radius .initial:n = {2.5mm},
+	block-border-radius .default:n = {2.5mm},
 
 	block-embed-border-radius .dim_gset:N = \g__nsk_style_block_embed_border_radius_dim,
-  block-embed-border-radius.initial:n = {1.3mm},
-  block-embed-border-radius.default:n = {1.3mm},
+	block-embed-border-radius.initial:n = {1.3mm},
+	block-embed-border-radius.default:n = {1.3mm},
 
 	block-embed-padding .dim_gset:N = \g__nsk_style_block_embed_padding_dim,
-  block-embed-padding .initial:n = {1mm},
-  block-embed-padding .default:n = {1mm},
+	block-embed-padding .initial:n = {1mm},
+	block-embed-padding .default:n = {1mm},
 
 	block-border-size .dim_gset:N = \g__nsk_style_block_border_size_dim,
-  block-border-size .initial:n = {.4mm},
-  block-border-size .default:n = {.4mm},
+	block-border-size .initial:n = {.4mm},
+	block-border-size .default:n = {.4mm},
 
 	block-width  .dim_gset:N = \g__nsk_style_block_width_dim,
 	block-width  .initial:n = {1cm},
@@ -167,6 +167,39 @@
 			spath/insert gaps after components={#2}{\pgfkeysvalueof{/tikz/bridging gap}},
 		}
 }
+
+\tikzfading[name=fade-left,
+	left color=nskBg,
+	right color=transparent!100]
+\tikzfading[name=fade-right,
+	left color=transparent!100,
+	right color=nskBg]
+\tikzfading[name=fade-up,
+	bottom color=transparent!100,
+	top color=nskBg]
+\tikzfading[name=fade-down,
+	bottom color=nskBg,
+	top color=transparent!100]
+
+\tikzset{
+	fade left/.style={
+			fill=nskBg,
+			path fading=fade-left
+		},
+	fade right/.style={
+			fill=nskBg,
+			path fading=fade-right
+		},
+	fade up/.style={
+			fill=nskBg,
+			path fading=fade-up
+		},
+	fade down/.style={
+			fill=nskBg,
+			path fading=fade-down
+		}
+}
+
 \ExplSyntaxOn
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
