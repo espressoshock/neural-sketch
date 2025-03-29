@@ -44,7 +44,8 @@
 {
 	% ref-id ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	id .tl_set:N = \l_nsk_coord_id_tl,
-	id .initial:n = { },
+	id .initial:n = {},
+	id .default:n = {},
 
 	% coords ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	x .fp_set:N = \l_nsk_coord_x_fp,
@@ -59,6 +60,13 @@
 	% Let the user specify the "pos" usage from TikZ [right=1cm of something]:
 	pos .tl_set:N = \l_nsk_coord_pos_tl,
 	pos .initial:n = { },
+
+	last-pos   .tl_set:N = \l_nsk_coord_last_pos_tl,
+	last-pos   .initial:n = {},
+	last-pos   .default:n = {},
+	last-pos-s .tl_set:N = \l_nsk_coord_last_pos_s_tl,
+	last-pos-s .initial:n = {},
+	last-pos-s .default:n = {},
 
 	shift-x .dim_set:N = \l_nsk_coord_shift_x_dim,
 	shift-x .initial:n = {0pt},
@@ -134,13 +142,10 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__coord_maybe_set_id:
 {
-	% If the user didn’t supply an ID, automatically generate one
 	\tl_if_blank:VTF \l_nsk_coord_id_tl
 	{
 		\int_gincr:N \g__nsk_coord_count_int
-		\tl_set:cn {l__nsk_autocoord_\int_use:N \g__nsk_coord_count_int _tl}
-		{ coord\int_use:N \g__nsk_coord_count_int }
-		\tl_set_eq:NN \l_nsk_coord_id_tl { l__nsk_autocoord_\int_use:N \g__nsk_coord_count_int _tl }
+		\tl_set:Nx \l_nsk_coord_id_tl { coord\int_to_arabic:n { \g__nsk_coord_count_int } }
 	}
 	{ }
 }
@@ -204,6 +209,60 @@
 
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% last-pos / last-pos-s
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__process_coord_last_pos:
+{
+	\tl_if_blank:VF \l_nsk_coord_last_pos_tl
+	{
+		\seq_if_empty:NTF \g_nsk_block_id_history_seq
+		{
+			\msg_warning:nn {nsk}{No-previous-coordinate-for-last-pos}
+		}
+		{
+			\nsk__internal_get_nth_block_id:n {1}
+			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
+			\str_if_in:NnTF { \l_nsk_coord_last_pos_tl } { = }
+			{
+				\tl_set:Nx \l_nsk_coord_pos_tl
+				{ \exp_not:V \l_nsk_coord_last_pos_tl\space of~\exp_not:V \l_tmpa_tl }
+			}
+			{
+				\tl_set:Nx \l_nsk_coord_pos_tl
+				{ \exp_not:V \l_nsk_coord_last_pos_tl =of~\exp_not:V \l_tmpa_tl }
+			}
+		}
+	}
+}
+
+\cs_new_protected_nopar:Npn \nsk__process_coord_last_pos_s:
+{
+	\tl_if_blank:VF \l_nsk_coord_last_pos_s_tl
+	{
+		\int_compare:nNnTF { \seq_count:N \g_nsk_block_id_history_seq } > { 1 }
+			{
+				\int_set:Nn \l_tmpa_int { \seq_count:N \g_nsk_block_id_history_seq }
+				\tl_set:No \l_tmpa_tl
+				{
+					\seq_item:Nn \g_nsk_block_id_history_seq
+					{ \int_eval:n { \l_tmpa_int - 0 } }
+				}
+				\str_if_in:NnTF { \l_nsk_coord_last_pos_s_tl } { = }
+				{
+					\tl_set:Nx \l_nsk_coord_pos_tl
+					{ \exp_not:V \l_nsk_coord_last_pos_s_tl\space of~\exp_not:V \l_tmpa_tl }
+				}
+				{
+					\tl_set:Nx \l_nsk_coord_pos_tl
+					{ \exp_not:V \l_nsk_coord_last_pos_s_tl =of~\exp_not:V \l_tmpa_tl }
+				}
+			}
+			{ }
+	}
+}
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -216,10 +275,13 @@
 	% 2) Possibly auto-generate an ID
 	\nsk__coord_maybe_set_id:
 
-	% 3) Build the node style & place the coordinate
+	% (3) Process relative positioning:
+	\tl_if_blank:VTF \l_nsk_coord_last_pos_s_tl
+	{ \nsk__process_coord_last_pos: }
+	{ \nsk__process_coord_last_pos_s: }
+	% (4) Build the node style (this will now use \l_nsk_coord_pos_tl if set)
 	\nsk__build_coord_style:
-
-	% Push the current block's ID into the global sequence
+	% (5) Store the coordinate’s ID in the global history (shared with blocks)
 	\seq_gput_right:NV \g_nsk_block_id_history_seq \l_nsk_coord_id_tl
 
 	\group_end:
