@@ -61,7 +61,7 @@
 
 	% Insert #1..#7 by expansion (x), forming a comma list:
 	\exp_args:NNx \tl_put_right:Nn \l__nsk_storeitem_tl
-	{ #1, #2, { #3 }, #4, #5, #6, #7, #8 }
+	{ #1, { #2 }, { #3 }, { #4 }, #5, #6, #7, #8 }
 
 	% Now append that item to the bridging sequence:
 	\seq_gput_right:No \g__nsk_bridging_info_seq \l__nsk_storeitem_tl
@@ -219,7 +219,7 @@
 		shorten~<=\l__nsk_connect_shorten_from_dim,
 		shorten~>=\l__nsk_connect_shorten_to_dim,
 	]
-  ([xshift=\l_nsk_connect_shift_x_dim, yshift=\l_nsk_connect_shift_y_dim]\l_nsk_connect_from_tl)
+	([xshift=\l_nsk_connect_shift_x_dim, yshift=\l_nsk_connect_shift_y_dim]\l_nsk_connect_from_tl)
 	\l_nsk_connect_route_tl
 	([xshift=\l_nsk_connect_shift_x_dim, yshift=\l_nsk_connect_shift_y_dim]\l_nsk_connect_to_tl);
 }
@@ -267,6 +267,17 @@
 	% (d) bridging check
 	\bool_if:NTF \l__nsk_connect_bridging_bool
 	{
+		% If a bend is specified, generate the bent route before saving the path.
+		\tl_if_eq:NnF \l__nsk_connect_bend_type_tl {none}
+		{
+			\__nsk_connect_generate_bend_route:
+		}
+
+		% corner-radius ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+		\tl_put_left:No \l_nsk_connect_route_tl
+		{[rounded~corners=\l__nsk_connect_corner_radius_dim]}
+
+
 		% bridging == true => store path with spath
 		\nsk__spath_save:V \l_tmpa_tl
 
@@ -417,20 +428,25 @@ arc[
 
 		\tl_set:Nx \l__nsk_pathname_tl
 		{ \clist_item:Nn \l_tmpa_clist {1} }
+
 		\tl_set:Nx \l__nsk_arrowstyle_tl
 		{ \clist_item:Nn \l_tmpa_clist {2} }
-		\tl_set:Nx \l__nsk_color_tl
+
+		\tl_set:Nx \l__nsk_arrowtip_tl
 		{ \clist_item:Nn \l_tmpa_clist {3} }
 
-		\tl_set:Nx \l_nsk_connect_bridging_style_tl
+		\tl_set:Nx \l__nsk_color_tl
 		{ \clist_item:Nn \l_tmpa_clist {4} }
 
-		\tl_set:Nx \l__nsk_bridgingpath_tl
+		\tl_set:Nx \l_nsk_connect_bridging_style_tl
 		{ \clist_item:Nn \l_tmpa_clist {5} }
-		\tl_set:Nx \l__nsk_bridgingspan_tl
+
+		\tl_set:Nx \l__nsk_bridgingpath_tl
 		{ \clist_item:Nn \l_tmpa_clist {6} }
-		\tl_set:Nx \l__nsk_bridginggap_tl
+		\tl_set:Nx \l__nsk_bridgingspan_tl
 		{ \clist_item:Nn \l_tmpa_clist {7} }
+		\tl_set:Nx \l__nsk_bridginggap_tl
+		{ \clist_item:Nn \l_tmpa_clist {8} }
 
 		% Set bridging path, span, gap
 		\tikzset{
@@ -561,7 +577,15 @@ arc[
 							\tl_set:Nx \l_nsk_connect_route_tl
 							{ -- \midpoint -- }
 						}
-					% left and right don't make sense for single
+						{right}
+						{
+							% (ax, ay)
+							\tl_set:Nx \midpoint {
+								(\dim_use:N \l_cx_from_dim,\dim_use:N \l_cy_from_dim)
+							}
+							\tl_set:Nx \l_nsk_connect_route_tl { -- ++(\l__nsk_connect_bend_amount_dim, 0)
+								-- (\l_cx_from_dim + \l__nsk_connect_bend_amount_dim, \l_cy_to_dim) -- }
+						}
 				}
 			}
 			{double}
