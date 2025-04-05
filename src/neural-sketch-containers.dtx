@@ -87,11 +87,11 @@
 \tl_trim_spaces:N \l_tmpc_tl
 
 \tl_if_empty:NTF \l_tmpc_tl
-  {
-    % No distance was provided; use default distance.
-    \tl_set:Nn \l_tmpc_tl {2cm}
-  }
-  {}
+{
+	% No distance was provided; use default distance.
+	\tl_set:Nn \l_tmpc_tl {2cm}
+}
+{}
 
 \tl_set:Nx \l_tmpd_tl { \seq_item:Nn \l_tmpb_seq {2} }
 \tl_trim_spaces:N \l_tmpd_tl
@@ -121,6 +121,64 @@
 }
 }
 }
+}
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% last-pos
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__process_container_last_pos:
+{
+	\tl_if_blank:VF \l_nsk_container_last_pos_tl
+	{
+		\seq_if_empty:NTF \g_nsk_block_id_history_seq
+		{
+			\msg_warning:nn {nsk}{No-previous-container-for-last-pos}
+		}
+		{
+			% Retrieve the previous block ID
+			\nsk__internal_get_nth_block_id:n {2}
+			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
+			\str_if_in:NnTF \l_nsk_container_last_pos_tl {=}
+			{
+				\tl_set:Nx \l_nsk_container_pos_tl
+				{ \exp_not:V \l_nsk_container_last_pos_tl\space of~\exp_not:V \l_tmpa_tl }
+			}
+			{
+				\tl_set:Nx \l_nsk_container_pos_tl
+				{ \exp_not:V \l_nsk_container_last_pos_tl =of~\exp_not:V \l_tmpa_tl }
+			}
+		}
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% last-pos-s
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__process_container_last_pos_s:
+{
+	\tl_if_blank:VF \l_nsk_container_last_pos_s_tl
+	{
+		\int_compare:nNnTF { \seq_count:N \g_nsk_block_id_history_seq } > {1}
+			{
+				\int_set:Nn \l_tmpa_int { \seq_count:N \g_nsk_block_id_history_seq }
+				\tl_set:No \l_tmpa_tl
+				{
+					\seq_item:Nn \g_nsk_block_id_history_seq
+					{ \int_eval:n { \l_tmpa_int - 1 } }
+				}
+				\str_if_in:NnTF \l_nsk_container_last_pos_s_tl {=}
+				{
+					\tl_set:Nx \l_nsk_container_pos_tl
+					{ \exp_not:V \l_nsk_container_last_pos_s_tl\space of~\exp_not:V \l_tmpa_tl }
+				}
+				{
+					\tl_set:Nx \l_nsk_container_pos_tl
+					{ \exp_not:V \l_nsk_container_last_pos_s_tl =of~\exp_not:V \l_tmpa_tl }
+				}
+			}
+			{ }
+	}
 }
 
 
@@ -177,6 +235,14 @@
 	pos .initial:n = { },
 	pos .default:n = { },
 
+	last-pos .tl_set:N = \l_nsk_container_last_pos_tl,
+	last-pos .initial:n = {},
+	last-pos .default:n = {},
+
+	last-pos-s .tl_set:N = \l_nsk_container_last_pos_s_tl,
+	last-pos-s .initial:n = {},
+	last-pos-s .default:n = {},
+
 	rotate .fp_set:N = \l_nsk_container_rotate_fp,
 	rotate .initial:V = \g__nsk_style_container_rotate_fp,
 	rotate .default:V = \g__nsk_style_container_rotate_fp,
@@ -212,7 +278,7 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskContainer { O{} +m }
 {
-  \group_begin:
+	\group_begin:
 
 	% (a) Clear the property list so it doesn't retain any old unknown keys
 	\prop_clear_new:N \l_nsk_container_unknown_prop
@@ -220,20 +286,25 @@
 	% (b) Parse recognized container keys + store unknown keys
 	\keys_set:nn {nsk / container}{#1}
 
+	% --- Process relative positioning:
+	\tl_if_blank:VTF \l_nsk_container_last_pos_s_tl
+	{ \nsk__process_container_last_pos: }
+	{ \nsk__process_container_last_pos_s: }
+
 	% (c) Now call \nskGroup, passing the same #1 so that shift-x, rotate, etc.
 	%     get recognized by nsk / group (or remain unknown for that domain).
 
-  \tl_show:N \l_nsk_container_pos_tl
+	\tl_show:N \l_nsk_container_pos_tl
 	\tl_set:Nx \l_tmpx_tl
 	{
 		shift-x=\l_nsk_container_x_fp,
 		shift-y=\l_nsk_container_y_fp,
 		rotate=\l_nsk_container_rotate_fp,
 		scale=\l_nsk_container_scale_fp,
-    pos={\l_nsk_container_pos_tl},
+		pos={\l_nsk_container_pos_tl},
 	}
 
-  \tl_show:N \l_tmpx_tl
+	\tl_show:N \l_tmpx_tl
 
 	% % pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_if_empty:VTF \l_nsk_block_extra_style_tl
@@ -249,7 +320,7 @@
 	%     stored in \l_nsk_container_unknown_prop. We'll do a small helper:
 	\nsk__container_draw_block:
 
-  \group_end:
+	\group_end:
 
 }
 
@@ -266,7 +337,7 @@
 \cs_new_protected_nopar:Npn \nsk__expand_block_aux:n #1
 {
 
-	\begin{pgfonlayer}{background}
+	\begin{pgfonlayer}{interim}
 		\nskBlock [
 			% this are computed by bounding box
 			width=0pt, height=0pt,
