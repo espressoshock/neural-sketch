@@ -104,15 +104,15 @@
 	bridging / false .code:n = { \bool_set_false:N \l__nsk_connect_bridging_bool },
 	bridging .initial:n      = { false },
 
-	bridging-style .choice:,
-	bridging-style / over  .code:n  = { \tl_set:Nn \l_nsk_connect_bridging_style_tl { over } },
-	bridging-style / under .code:n  = { \tl_set:Nn \l_nsk_connect_bridging_style_tl { under } },
-	bridging-style .initial:n       = { under },
-	bridging-style .default:n       = { under },
+	bridging-type .choice:,
+	bridging-type / over  .code:n  = { \tl_set:Nn \l_nsk_connect_bridging_type_tl { over } },
+	bridging-type / under .code:n  = { \tl_set:Nn \l_nsk_connect_bridging_type_tl { under } },
+	bridging-type .initial:n       = { under },
+	bridging-type .default:n       = { under },
 
-	bridging-path .tl_set:N         = \l_nsk_connect_bridging_path_tl,
-	bridging-path .initial:n        = { arc },
-	bridging-path .default:n        = { arc },
+	bridging-style .tl_set:N         = \l_nsk_connect_bridging_style_tl,
+	bridging-style .initial:n        = { arc },
+	bridging-style .default:n        = { arc },
 
 	bridging-span .tl_set:N         = \l_nsk_connect_bridging_span_tl,
 	bridging-span .initial:n        = { 8pt },
@@ -263,7 +263,7 @@
 
 	% (c) build a default path name e.g. "path1"
 
-  \cs_if_exist:NF \l_tmpp_tl { \tl_new:N \l_tmpp_tl }
+	\cs_if_exist:NF \l_tmpp_tl { \tl_new:N \l_tmpp_tl }
 	\tl_set:Nx \l_tmpp_tl { path\int_use:N \g__nsk_connect_counter_int }
 
 	% (d) bridging check
@@ -279,7 +279,7 @@
 		\tl_put_left:No \l_nsk_connect_route_tl
 		{[rounded~corners=\l__nsk_connect_corner_radius_dim]}
 
-    \tl_show:N \l_tmpp_tl
+		\tl_show:N \l_tmpp_tl
 
 		% bridging == true => store path with spath
 		\nsk__spath_save:V \l_tmpp_tl
@@ -292,8 +292,8 @@
 		{ \l_nsk_connect_arrow_style_tl      }
 		{ \l_nsk_connect_arrow_tip_tl      }
 		{ \l_nsk_connect_color_tl            }
-		{ \l_nsk_connect_bridging_style_tl   }
-		{ \l_nsk_connect_bridging_path_tl    }
+		{ \l_nsk_connect_bridging_type_tl   }
+		{ \l_nsk_connect_bridging_style_tl    }
 		{ \l_nsk_connect_bridging_span_tl    }
 		{ \l_nsk_connect_bridging_gap_tl     }
 	}
@@ -325,7 +325,7 @@
 	{
 		\iow_term:x {
 			=inner => (#1, ##1)
-			=style => \l_nsk_connect_bridging_style_tl
+			=style => \l_nsk_connect_bridging_type_tl
 		}
 
 		% local to each iteration
@@ -344,10 +344,10 @@
 			}
 
 			% bridging style => over or under
-			\tl_if_eq:NNF \l_nsk_connect_bridging_style_tl \b_bridging_style_tl
+			\tl_if_eq:NNF \l_nsk_connect_bridging_type_tl \b_bridging_style_tl
 			{
 
-				\tl_if_eq:NnTF \l_nsk_connect_bridging_style_tl {over}
+				\tl_if_eq:NnTF \l_nsk_connect_bridging_type_tl {over}
 				{
 					\exp_args:NNx \tl_set:Nn \brd_tl
 					{ bridge={\tl_use:N \a_tl}{\tl_use:N \b_tl} }
@@ -393,8 +393,12 @@ arc[
 		start\space angle=180,
 		delta\space angle=-180
 	];
-}
 
+\path[
+	spath/save\space global=bare
+]
+(0,0) -- (1, 0);
+}
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Public Interface
@@ -422,7 +426,6 @@ arc[
 	% Copy bridging info into a local seq, for iteration
 	\seq_set_eq:NN \l__nsk_tmp_seq \g__nsk_bridging_info_seq
 
-
 	% For each bridging path, set bridging keys, do bridging with others,
 	% then finally draw its path.
 	\seq_map_inline:Nn \l__nsk_tmp_seq
@@ -441,7 +444,7 @@ arc[
 		\tl_set:Nx \l__nsk_color_tl
 		{ \clist_item:Nn \l_tmpa_clist {4} }
 
-		\tl_set:Nx \l_nsk_connect_bridging_style_tl
+		\tl_set:Nx \l_nsk_connect_bridging_type_tl
 		{ \clist_item:Nn \l_tmpa_clist {5} }
 
 		\tl_set:Nx \l__nsk_bridgingpath_tl
