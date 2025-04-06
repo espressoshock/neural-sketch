@@ -100,40 +100,42 @@
 	\tl_if_eq:VnF \l_nsk_coord_marker_tl { none }
 	{
 		% rely on the node's name \l_nsk_coord_id_tl
-		\begin{scope}[shift=(\tl_use:N \l_nsk_coord_id_tl)]
-			% color = <marker-color>
-			% We'll define a local style
-			\tikzset{nskcoordmarker/.style={
-						draw=\l_nsk_coord_marker_color_tl,
-						fill=\l_nsk_coord_marker_color_tl,
-					}}
+		\begin{pgfonlayer}{foreground}
+			\begin{scope}[shift=(\tl_use:N \l_nsk_coord_id_tl)]
+				% color = <marker-color>
+				% We'll define a local style
+				\tikzset{nskcoordmarker/.style={
+							draw=\l_nsk_coord_marker_color_tl,
+							fill=\l_nsk_coord_marker_color_tl,
+						}}
 
-			\begin{scope}[nskcoordmarker]
+				\begin{scope}[nskcoordmarker]
 
-				\str_case:VnF { \l_nsk_coord_marker_tl }
-				{
-					{o}{
-							% Draw a circle with radius= marker-size/2 or marker-size?
-							\draw circle[radius=\l_nsk_coord_marker_size_dim/2];
-						}
-						{x}{
-							% interpret marker-size as the half-diagonal
-							% so we draw lines from -(size)/2 to +(size)/2
-							\fp_set:Nn \l_tmpa_fp { \dim_to_fp:n {\l_nsk_coord_marker_size_dim}/2 }
-							\dim_set:Nn \l_tmpa_dim { \fp_to_dim:n {\l_tmpa_fp} }
-							\draw
-							(-\l_tmpa_dim, -\l_tmpa_dim) -- (\l_tmpa_dim, \l_tmpa_dim)
-							(\l_tmpa_dim, -\l_tmpa_dim) -- (-\l_tmpa_dim, \l_tmpa_dim);
-						}
-				}
-				{
-					% fallback: user gave some unknown marker?
-					% maybe draw a small diamond or do nothing
-					\draw (0,0) node {\l_nsk_coord_marker_tl};
-				}
+					\str_case:VnF { \l_nsk_coord_marker_tl }
+					{
+						{o}{
+								% Draw a circle with radius= marker-size/2 or marker-size?
+								\draw circle[radius=\l_nsk_coord_marker_size_dim/2];
+							}
+							{x}{
+								% interpret marker-size as the half-diagonal
+								% so we draw lines from -(size)/2 to +(size)/2
+								\fp_set:Nn \l_tmpa_fp { \dim_to_fp:n {\l_nsk_coord_marker_size_dim}/2 }
+								\dim_set:Nn \l_tmpa_dim { \fp_to_dim:n {\l_tmpa_fp} }
+								\draw
+								(-\l_tmpa_dim, -\l_tmpa_dim) -- (\l_tmpa_dim, \l_tmpa_dim)
+								(\l_tmpa_dim, -\l_tmpa_dim) -- (-\l_tmpa_dim, \l_tmpa_dim);
+							}
+					}
+					{
+						% fallback: user gave some unknown marker?
+						% maybe draw a small diamond or do nothing
+						\draw (0,0) node {\l_nsk_coord_marker_tl};
+					}
 
+				\end{scope}
 			\end{scope}
-		\end{scope}
+		\end{pgfonlayer}
 	}
 }
 
@@ -199,7 +201,7 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__build_coord_style_aux:n #1
 {
-	\node[#1] {};
+	\node[#1, inner~sep=0cm] {};
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
