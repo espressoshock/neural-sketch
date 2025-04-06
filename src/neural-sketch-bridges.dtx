@@ -262,7 +262,9 @@
 	\int_gincr:N \g__nsk_connect_counter_int
 
 	% (c) build a default path name e.g. "path1"
-	\tl_set:Nx \l_tmpa_tl { path\int_use:N \g__nsk_connect_counter_int }
+
+  \cs_if_exist:NF \l_tmpp_tl { \tl_new:N \l_tmpp_tl }
+	\tl_set:Nx \l_tmpp_tl { path\int_use:N \g__nsk_connect_counter_int }
 
 	% (d) bridging check
 	\bool_if:NTF \l__nsk_connect_bridging_bool
@@ -277,14 +279,15 @@
 		\tl_put_left:No \l_nsk_connect_route_tl
 		{[rounded~corners=\l__nsk_connect_corner_radius_dim]}
 
+    \tl_show:N \l_tmpp_tl
 
 		% bridging == true => store path with spath
-		\nsk__spath_save:V \l_tmpa_tl
+		\nsk__spath_save:V \l_tmpp_tl
 
 		% then store bridging data for later
 		\__nsk_connect_store_item:nnnnnnnn
 		{
-			\tl_use:N \l_tmpa_tl
+			\tl_use:N \l_tmpp_tl
 		}
 		{ \l_nsk_connect_arrow_style_tl      }
 		{ \l_nsk_connect_arrow_tip_tl      }
@@ -337,7 +340,7 @@
 		\tl_if_eq:NNF \a_tl \b_tl
 		{
 			\iow_term:x {
-				difpaths: (\tl_use:N \a_tl, \tl_use:N \b_tl)
+				=difpaths: (\tl_use:N \a_tl, \tl_use:N \b_tl)
 			}
 
 			% bridging style => over or under
@@ -581,11 +584,16 @@ arc[
 						{right}
 						{
 							% (ax, ay)
+							% \tl_set:Nx \l_nsk_connect_route_tl { 
+							%          -- ++(\l__nsk_connect_bend_amount_dim, 0)
+							% 	-- (\l_cx_from_dim + \l__nsk_connect_bend_amount_dim, \l_cy_to_dim) -- }
+
+							% (bx, ay)
 							\tl_set:Nx \midpoint {
-								(\dim_use:N \l_cx_from_dim,\dim_use:N \l_cy_from_dim)
+								(\dim_use:N \l_cx_to_dim,\dim_use:N \l_cy_from_dim)
 							}
-							\tl_set:Nx \l_nsk_connect_route_tl { -- ++(\l__nsk_connect_bend_amount_dim, 0)
-								-- (\l_cx_from_dim + \l__nsk_connect_bend_amount_dim, \l_cy_to_dim) -- }
+							\tl_set:Nx \l_nsk_connect_route_tl
+							{ -- \midpoint -- }
 						}
 				}
 			}
