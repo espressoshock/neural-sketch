@@ -280,6 +280,9 @@ every~node/.append~style={text=c__nsk_principal},
 	tikz-opts  .initial:n = {},
 	tikz-opts  .default:n = {},
 
+	text-size .tl_set:N = \l_nsk_block_text_size_tl,
+  text-size .initial:n = {\normalsize},
+
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Text Anchoring
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -478,7 +481,7 @@ every~node/.append~style={text=c__nsk_principal},
 	\tl_if_blank:nTF {#3}
 	{
 		\draw[shift=(\l_nsk_block_id_tl.#1)]
-		node[align=center, anchor=\l_tmpa_tl, #4] {#2};
+		node[font=\l_nsk_block_text_size_tl, align=center, anchor=\l_tmpa_tl, #4] {#2};
 	}{
 		% If extra alignment (#3) is "north" or "south", swap the order.
 		\str_if_eq:nnTF {#3}{north}
@@ -914,12 +917,25 @@ every~node/.append~style={text=c__nsk_principal},
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand \nskBlock { O{} }
+\NewDocumentCommand \nskBlock { sO{} }
+{
+  \IfBooleanTF{#1}
+    {
+      % Starred form: auto-expand keys
+      \edef\l_tmpa_tl{#2}
+      \expandafter\nskBlockR\expandafter[\l_tmpa_tl]
+    }
+    {
+      \nskBlockR[#2]
+    }
+}
+
+\NewDocumentCommand \nskBlockR { O{} }
 {
 	\group_begin:
 
 	% # 1 -> k=v list
-	\keys_set:nn {nsk / block } {#1}
+  \keys_set:nn {nsk / block } {#1}
 
 	% possibly autogenerate the id
 	\nsk__maybe_set_id:
