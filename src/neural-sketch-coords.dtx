@@ -268,7 +268,34 @@
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand \nskCoord { O{} }
+\NewDocumentCommand \nskMark { sO{} }
+{
+  \IfBooleanTF{#1}
+    {
+      % Starred form: auto-expand keys
+      \edef\l_tmpa_tl{#2}
+      \expandafter\nskCoordR\expandafter[\l_tmpa_tl]
+    }
+    {
+      \nskCoordR[#2]
+    }
+}
+
+% ~~ legacy
+\NewDocumentCommand \nskCoord { sO{} }
+{
+  \IfBooleanTF{#1}
+    {
+      % Starred form: auto-expand keys
+      \edef\l_tmpa_tl{#2}
+      \expandafter\nskCoordR\expandafter[\l_tmpa_tl]
+    }
+    {
+      \nskCoordR[#2]
+    }
+}
+
+\NewDocumentCommand \nskCoordR { O{} }
 {
 	\group_begin:
 	% 1) Parse the keys

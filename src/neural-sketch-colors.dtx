@@ -103,6 +103,12 @@
 \definecolor{ c__nsk_strong_blue_clr }{HTML}{005afd}
 \definecolor{ c__nsk_strong_blue_inv_clr }{HTML}{eb9c29}
 
+\definecolor{ c__nsk_strong_cyan_clr }{HTML}{99E9FF}
+\definecolor{ c__nsk_strong_cyan_inv_clr }{HTML}{6BB2B0}
+
+\definecolor{ c__nsk_strong_grape_clr }{HTML}{9C6BB2}
+\definecolor{ c__nsk_strong_grape_inv_clr }{HTML}{7D598D}
+
 \definecolor{ c__nsk_strong_red_clr } {HTML}{d91900}
 \definecolor{ c__nsk_strong_red_inv_clr } {HTML}{45c9b2}
 
@@ -221,6 +227,16 @@
 	\bool_if:NTF \g__nsk_dark_mode_bool
 	{ c__nsk_strong_red_inv_clr }
 	{ c__nsk_strong_red_clr }
+}
+\colorlet{nskStrongCyan}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_strong_cyan_inv_clr }
+	{ c__nsk_strong_cyan_clr }
+}
+\colorlet{nskStrongGrape}{
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{ c__nsk_strong_grape_inv_clr }
+	{ c__nsk_strong_grape_clr }
 }
 
 % additional inv

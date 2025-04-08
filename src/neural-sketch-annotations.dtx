@@ -233,7 +233,20 @@
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand \nskAnnotate { O{} }
+\NewDocumentCommand \nskAnnotate { sO{} }
+{
+  \IfBooleanTF{#1}
+    {
+      % Starred form: auto-expand keys
+      \edef\l_tmpa_tl{#2}
+      \expandafter\nskAnnotateR\expandafter[\l_tmpa_tl]
+    }
+    {
+      \nskAnnotateR[#2]
+    }
+}
+
+\NewDocumentCommand \nskAnnotateR { O{} }
 {
 	\group_begin:
 

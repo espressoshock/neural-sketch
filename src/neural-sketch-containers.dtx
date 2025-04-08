@@ -123,6 +123,37 @@
 }
 }
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% offsets
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected:Npn \nsk__container_compute_anchor_offsets:
+{
+	% Default offsets (no offset)
+	\tl_set:Nn \l_tmpa_tl {0pt}
+	\tl_set:Nn \l_tmpb_tl {0pt}
+
+
+	\str_case:Vn \l_nsk_container_anchor_tl
+	{
+		{north}       { \tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl } }
+			{south}       { \tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } }
+			{east}        { \tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl } }
+			{west}        { \tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl } }
+			{north~east}  {
+				\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl }
+				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl }
+			}
+			{north~west}  {
+				\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl }
+				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl }
+			}
+			{south~east}  { \tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl }
+				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } }
+			{south~west}  { \tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl }
+				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } }
+	}
+}
+
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % last-pos
@@ -204,8 +235,8 @@
 			}
 
 		},
-	border-type .initial:n = {solid},
-	border-type .default:n = {solid},
+	border-type .initial:V = \g__nsk_style_container_border_type_tl,
+	border-type .default:V = \g__nsk_style_container_border_type_tl,
 
 	border-color .tl_set:N = \l_nsk_container_border_color_tl,
 	border-color .initial:V = \g__nsk_style_container_border_color_tl,
@@ -243,6 +274,10 @@
 	last-pos-s .initial:n = {},
 	last-pos-s .default:n = {},
 
+	anchor .tl_set:N = \l_nsk_container_anchor_tl,
+	anchor .initial:n = {center},
+	anchor .default:n = {center},
+
 	rotate .fp_set:N = \l_nsk_container_rotate_fp,
 	rotate .initial:V = \g__nsk_style_container_rotate_fp,
 	rotate .default:V = \g__nsk_style_container_rotate_fp,
@@ -254,7 +289,7 @@
 	group-opts .code:n =
 		{
 			% #1 is exactly what is inside { ... }, including any commas.
-			% store it literally into \l_nsk_block_extra_style_tl
+			% store it literally into \l_nsk_group_extra_style_tl
 			\tl_set:Nn \l_nsk_group_extra_style_tl {#1}
 		},
 	group-opts .initial:n = {},
@@ -276,7 +311,33 @@
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand \nskContainer { O{} +m }
+\NewDocumentCommand \nskContainer { sO{} }
+{
+  \IfBooleanTF{#1}
+    {
+      % Starred form: auto-expand keys
+      \edef\l_tmpa_tl{#2}
+      \expandafter\nskContainerR\expandafter[\l_tmpa_tl]
+    }
+    {
+      \nskContainerR[#2]
+    }
+}
+
+\NewDocumentCommand \nskContainerR { sO{} }
+{
+  \IfBooleanTF{#1}
+    {
+      % Starred form: auto-expand keys
+      \edef\l_tmpa_tl{#2}
+      \expandafter\nskContainerR\expandafter[\l_tmpa_tl]
+    }
+    {
+      \nskContainerR[#2]
+    }
+}
+
+\NewDocumentCommand \nskContainerR { O{} +m }
 {
 	\group_begin:
 
@@ -294,25 +355,26 @@
 	% (c) Now call \nskGroup, passing the same #1 so that shift-x, rotate, etc.
 	%     get recognized by nsk / group (or remain unknown for that domain).
 
-	\tl_show:N \l_nsk_container_pos_tl
+	% compute offsets
+	\nsk__container_compute_anchor_offsets:
+
 	\tl_set:Nx \l_tmpx_tl
 	{
-		shift-x=\l_nsk_container_x_fp,
-		shift-y=\l_nsk_container_y_fp,
+		shift-x=\fp_to_dim:n{\l_nsk_container_x_fp}+\l_tmpa_tl,
+		shift-y=\fp_to_dim:n{\l_nsk_container_y_fp}+\l_tmpb_tl,
 		rotate=\l_nsk_container_rotate_fp,
 		scale=\l_nsk_container_scale_fp,
 		pos={\l_nsk_container_pos_tl},
 	}
 
-	\tl_show:N \l_tmpx_tl
+
 
 	% % pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+	\tl_if_empty:VTF \l_nsk_group_extra_style_tl
 	{ }
 	{
-		\tl_put_right:Nx \l_tmpx_tl {\l_nsk_block_extra_style_tl,}
+		\tl_put_right:Nx \l_tmpx_tl {\l_nsk_group_extra_style_tl,}
 	}
-
 
 	\nsk__expand_group_aux:Vn \l_tmpx_tl {#2}
 
@@ -326,7 +388,7 @@
 
 \cs_new_protected:Npn \nsk__expand_group_aux:nn #1 #2
 {
-	\nskGroup[#1]
+	\nskGroup[anchor=\l_nsk_container_anchor_tl, #1]
 	{
 		#2
 	}

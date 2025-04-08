@@ -111,24 +111,24 @@
 	bridging-type .default:n       = { under },
 
 	bridging-style .tl_set:N         = \l_nsk_connect_bridging_style_tl,
-	bridging-style .initial:n        = { arc },
-	bridging-style .default:n        = { arc },
+	bridging-style .initial:V        = \g__nsk_style_bridging_style_tl,
+	bridging-style .default:V        = \g__nsk_style_bridging_style_tl,
 
 	bridging-span .tl_set:N         = \l_nsk_connect_bridging_span_tl,
-	bridging-span .initial:n        = { 8pt },
-	bridging-span .default:n        = { 8pt },
+	bridging-span .initial:V        = \g__nsk_style_bridging_span_dim,
+	bridging-span .default:V        = \g__nsk_style_bridging_span_dim,
 
 	bridging-gap .tl_set:N          = \l_nsk_connect_bridging_gap_tl,
-	bridging-gap .initial:n         = { 4pt },
-	bridging-gap .default:n         = { 4pt },
+	bridging-gap .initial:V         = \g__nsk_style_bridging_gap_dim,
+	bridging-gap .default:V         = \g__nsk_style_bridging_gap_dim,
 
 	arrow-style .tl_set:N = \l_nsk_connect_arrow_style_tl,
-	arrow-style .initial:n = {ultra~thick, line~cap=round},
-	arrow-style .default:n = {ultra~thick, line~cap=round},
+	arrow-style .initial:V = \g__nsk_style_arrow_style_tl,
+	arrow-style .default:V = \g__nsk_style_arrow_style_tl,
 
 	arrow-tip .tl_set:N = \l_nsk_connect_arrow_tip_tl,
-	arrow-tip .initial:n = {-},
-	arrow-tip .default:n = {-},
+	arrow-tip .initial:V = \g__nsk_style_arrow_tip_tl,
+	arrow-tip .default:V = \g__nsk_style_arrow_tip_tl,
 
 	shift-x .dim_set:N = \l_nsk_connect_shift_x_dim,
 	shift-x .initial:n = {0mm},
@@ -247,11 +247,27 @@
 	(\tl_use:N \l_nsk_connect_to_tl);
 }
 
+
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand \nskConnect { O{} }
+\pgfmathsetlengthmacro{\nskBendDistance}{\l__nsk_connect_bend_amount_dim}
+
+\NewDocumentCommand \nskConnect { sO{} }
+{
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskConnectR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskConnectR[#2]
+	}
+}
+
+\NewDocumentCommand \nskConnectR { O{} }
 {
 	\group_begin:
 
@@ -395,7 +411,7 @@ arc[
 	];
 
 \path[
-	spath/save\space global=bare
+	spath/save\space global=gap
 ]
 (0,0) -- (1, 0);
 }
@@ -587,16 +603,10 @@ arc[
 						{right}
 						{
 							% (ax, ay)
-							% \tl_set:Nx \l_nsk_connect_route_tl { 
-							%          -- ++(\l__nsk_connect_bend_amount_dim, 0)
-							% 	-- (\l_cx_from_dim + \l__nsk_connect_bend_amount_dim, \l_cy_to_dim) -- }
+							\tl_set:Nx \l_nsk_connect_route_tl {
+								-- ++(\l__nsk_connect_bend_amount_dim, 0)
+								-- (\l_cx_from_dim + \l__nsk_connect_bend_amount_dim, \l_cy_to_dim) -- }
 
-							% (bx, ay)
-							\tl_set:Nx \midpoint {
-								(\dim_use:N \l_cx_to_dim,\dim_use:N \l_cy_from_dim)
-							}
-							\tl_set:Nx \l_nsk_connect_route_tl
-							{ -- \midpoint -- }
 						}
 				}
 			}
@@ -836,7 +846,20 @@ arc[
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand \nskFillBetween { O{} }
+\NewDocumentCommand \nskFillBetween { sO{} }
+{
+  \IfBooleanTF{#1}
+    {
+      % Starred form: auto-expand keys
+      \edef\l_tmpa_tl{#2}
+      \expandafter\nskFillBetweenR\expandafter[\l_tmpa_tl]
+    }
+    {
+      \nskFillBetweenR[#2]
+    }
+}
+
+\NewDocumentCommand \nskFillBetweenR { O{} }
 {
 	\group_begin:
 	% 1. Parse the keys

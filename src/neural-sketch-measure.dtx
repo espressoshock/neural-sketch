@@ -68,7 +68,20 @@
 %     - When called without any argument, it simply inserts (typesets) the last measured distance stored in \nskDistance.
 %
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\NewDocumentCommand{\nskMeasure}{ o }
+\NewDocumentCommand \nskMeasure { sO{} }
+{
+  \IfBooleanTF{#1}
+    {
+      % Starred form: auto-expand keys
+      \edef\l_tmpa_tl{#2}
+      \expandafter\nskMeasureR\expandafter[\l_tmpa_tl]
+    }
+    {
+      \nskMeasureR[#2]
+    }
+}
+
+\NewDocumentCommand{\nskMeasureR}{ o }
 {
 	\IfNoValueTF{#1}
 	{

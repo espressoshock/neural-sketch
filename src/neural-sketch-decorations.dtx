@@ -105,7 +105,20 @@
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand \nskMarkPath { O{} m m }
+\NewDocumentCommand \nskMarkPathR { sO{} }
+{
+  \IfBooleanTF{#1}
+    {
+      % Starred form: auto-expand keys
+      \edef\l_tmpa_tl{#2}
+      \expandafter\nskMarkPathR\expandafter[\l_tmpa_tl]
+    }
+    {
+      \nskMarkPathR[#2]
+    }
+}
+
+\NewDocumentCommand \nskMarkPathR { O{} m m }
 {
 \group_begin:
 % 1) Parse the optional key=value list

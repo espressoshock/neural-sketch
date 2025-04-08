@@ -191,9 +191,9 @@
 	last-pos .initial:n = { },
 
 	% pos-alignment (edge flush) ~~~~~~~~~~~~~~~~~ <<<
-	pos-align .tl_set:N = \l_nsk_pos_align_tl,
-	pos-align .default:n = { },
-	pos-align .initial:n = { },
+	anchor .tl_set:N = \l_nsk_pos_align_tl,
+	anchor .default:n = { },
+	anchor .initial:n = { },
 
 	shift-x .fp_set:N = \l_nsk_group_x_fp,
 	shift-x .initial:n = {0},
@@ -309,7 +309,20 @@
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand \nskGroup { O{} +m }
+\NewDocumentCommand \nskGroup { sO{} }
+{
+  \IfBooleanTF{#1}
+    {
+      % Starred form: auto-expand keys
+      \edef\l_tmpa_tl{#2}
+      \expandafter\nskGroupR\expandafter[\l_tmpa_tl]
+    }
+    {
+      \nskGroupR[#2]
+    }
+}
+
+\NewDocumentCommand \nskGroupR { O{} +m }
 {
 
 	\keys_set:nn { nsk / group } {#1}

@@ -51,6 +51,7 @@
 	block-border-color .initial:n = { nskDarkGray },
 	block-border-color .default:n = { nskDarkGray },
 
+
 	block-border-radius .dim_gset:N = \g__nsk_style_block_border_radius_dim,
 	block-border-radius .initial:n = {2.5mm},
 	block-border-radius .default:n = {2.5mm},
@@ -104,6 +105,9 @@
 	container-border-color .tl_gset:N = \g__nsk_style_container_border_color_tl,
 	container-border-color .initial:n = { nskLighterGray },
 
+	container-border-type .tl_gset:N = \g__nsk_style_container_border_type_tl,
+	container-border-type .initial:n = { solid },
+
 	container-fill .tl_gset:N = \g__nsk_style_container_fill_tl,
 	container-fill .initial:n = { nskLightestGray },
 	container-fill .default:n = { nskLightestGray },
@@ -127,6 +131,29 @@
 	container-scale .fp_gset:N = \g__nsk_style_container_scale_fp,
 	container-scale .initial:n = { 1 },
 	container-scale .default:n = { 1 },
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% bridging
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	bridging-style .tl_gset:N = \g__nsk_style_bridging_style_tl,
+	bridging-style .initial:n = {arc},
+	bridging-style .default:n = {arc},
+
+	bridging-span .dim_gset:N = \g__nsk_style_bridging_span_dim,
+	bridging-span .initial:n = {8pt},
+	bridging-span .default:n = {8pt},
+
+	bridging-gap .dim_gset:N = \g__nsk_style_bridging_gap_dim,
+	bridging-gap .initial:n = {4pt},
+	bridging-gap .default:n = {4pt},
+
+	arrow-tip .tl_gset:N = \g__nsk_style_arrow_tip_tl,
+	arrow-tip .initial:n = {-},
+	arrow-tip .default:n = {-},
+
+	arrow-style .tl_gset:N = \g__nsk_style_arrow_style_tl,
+	arrow-style .initial:n = {ultra~thick, line~cap=round},
+	arrow-style .default:n = {ultra~thick, line~cap=round},
 
 }
 
@@ -155,9 +182,9 @@
 					fill=nskLighterGray
 				},
 		},
-	bridging path/.initial=arc,
-	bridging span/.initial=8pt,
-	bridging gap/.initial=4pt,
+	bridging path/.initial=\g__nsk_style_bridging_style_tl,
+	bridging span/.initial=\dim_use:N \g__nsk_style_bridging_span_dim,
+	bridging gap/.initial=\dim_use:N \g__nsk_style_bridging_gap_dim,
 	bridge/.style 2 args={
 			spath/split at intersections with={#1}{#2},
 			spath/insert gaps after components={#1}{\pgfkeysvalueof{/tikz/bridging span}},
