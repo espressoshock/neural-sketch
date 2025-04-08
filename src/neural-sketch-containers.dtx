@@ -385,8 +385,6 @@
 	% % compute offsets
 	\nsk__container_compute_anchor_offsets:
 
-
-
 	\tl_set:Nx \l_tmpx_tl
 	{
 		shift-x=\fp_to_dim:n{\l_nsk_container_x_fp}+\l_tmpa_tl,
@@ -396,10 +394,6 @@
 		pos={\l_nsk_container_pos_tl},
 	}
 
-	\tl_show:N \l_nsk_container_pos_tl
-	\tl_show:N \l_nsk_container_anchor_tl
-
-
 	% pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_if_empty:VTF \l_nsk_group_extra_style_tl
 	{ }
@@ -407,7 +401,13 @@
 		\tl_put_right:Nx \l_tmpx_tl {\l_nsk_group_extra_style_tl,}
 	}
 
+	\tl_if_empty:VTF \l_nsk_container_anchor_tl
+  {\tl_set:Nn \l_nsk_container_anchor_tl {center}}
+  {}
+
+
 	\tl_show:N \l_nsk_container_anchor_tl
+	\tl_show:N \l_tmpx_tl
 
 	\nsk__expand_group_aux:Vn \l_tmpx_tl {#2}
 
