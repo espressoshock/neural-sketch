@@ -324,19 +324,6 @@
     }
 }
 
-\NewDocumentCommand \nskContainerR { sO{} }
-{
-  \IfBooleanTF{#1}
-    {
-      % Starred form: auto-expand keys
-      \edef\l_tmpa_tl{#2}
-      \expandafter\nskContainerR\expandafter[\l_tmpa_tl]
-    }
-    {
-      \nskContainerR[#2]
-    }
-}
-
 \NewDocumentCommand \nskContainerR { O{} +m }
 {
 	\group_begin:
