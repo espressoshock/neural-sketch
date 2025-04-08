@@ -46,6 +46,7 @@
 	backgrounds,
 	tikzmark,
 	math,
+	spy,
 }
 
 
@@ -768,6 +769,14 @@ every~node/.append~style={text=c__nsk_principal},
 	% Disable shadow
 	\bool_set_false:N \l_nsk_block_shadow_bool
 	\tl_put_right:Nx \l_tmps_tl {fade~\l_nsk_block_fade_tl ,}
+
+	\str_case:Vn \l_nsk_block_fade_tl
+	{
+		{down} {\tl_put_right:Nn \l_tmps_tl {top~color=transparent!0, bottom~color=nskBg,}}
+			{up} {\tl_put_right:Nn \l_tmps_tl {bottom~color=transparent!0, top~color=nskBg,}}
+			{left} {\tl_put_right:Nn \l_tmps_tl {right~color=transparent!0, left~color=nskBg,}}
+			{right} {\tl_put_right:Nn \l_tmps_tl {left~color=transparent!0, right~color=nskBg,}}
+	}
 }
 
 % Possibly scale border-size according to importance:
@@ -813,8 +822,9 @@ every~node/.append~style={text=c__nsk_principal},
 \tl_put_right:No \l_tmp_pre_acts {line\space width=\l_nsk_block_outer_border_size_dim,}
 
 % fill ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\tl_if_eq:NnT \l_nsk_block_fade_tl { none }
+\tl_if_eq:NnTF \l_nsk_block_fade_tl { none }
 {\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}}
+{\tl_put_right:No \l_tmps_tl {fill=nskBg,}}
 
 % stacks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \bool_if:NT \l_nsk_block_stack_bool
@@ -960,7 +970,10 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	% pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	unknown .code:n =
 		{
-			\prop_put:NVn \l_nsk_figure_unknown_prop { \l_keys_key_tl } { #1 }
+			% Store unknown key in the property list, using the content of \l_keys_key_tl as a string
+			\prop_put:Nxx \l_nsk_figure_unknown_prop
+			{ \tl_use:N \l_keys_key_tl }
+			{ #1 }
 		},
 }
 
@@ -1011,6 +1024,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
 \NewDocumentEnvironment{nskFigure}{O{}}
 {
+
 \prop_gclear:N \g_nsk_block_counters_prop
 % (b) Clear the unknown-props container
 \prop_clear:N \l_nsk_figure_unknown_prop
@@ -1018,11 +1032,21 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 % (c) Parse the user-provided options
 \keys_set:nn { nsk / figure } { #1 }
 
+\prop_show:N \l_nsk_figure_unknown_prop
+
 % (d) Convert the unknown key=value pairs into a comma list
 \tl_clear_new:N \l_nsk_figure_opts_tl
+% \prop_map_inline:Nn \l_nsk_figure_unknown_prop
+% {
+% 	\tl_put_right:Nx \l_nsk_figure_opts_tl { ##1 = { ##2 }, }
+% }
+
 \prop_map_inline:Nn \l_nsk_figure_unknown_prop
 {
-	\tl_put_right:Nx \l_nsk_figure_opts_tl { ##1 = { ##2 }, }
+	\tl_put_right:Nn \l_nsk_figure_opts_tl
+	{
+		##1 = ##2,
+	}
 }
 
 % (e) If center=true, wrap the tikzpicture in a center environment
@@ -1030,11 +1054,14 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 {
 	\begin{center}
 	\begin{tikzpicture}[\tl_use:N \l_nsk_figure_opts_tl]
+	\begin{scope}[spy~using~outlines]
 }
 {
 	\begin{tikzpicture}[\tl_use:N \l_nsk_figure_opts_tl]
-		}
-		}{
+		\begin{scope}[spy~using~outlines]
+			}
+			}{
+		\end{scope}
 	\end{tikzpicture}
 	\bool_if:NT \l_nsk_figure_center_bool
 	{
@@ -1097,6 +1124,102 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 {
 	\nskBlockIDLast{2}
 }
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Diagram Fadings / Shadings
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+\keys_define:nn { nsk / efadings }
+{
+	edge .tl_set:N = \l_nsk_efadings_type_tl,
+	edge .initial:n   = {down},
+	edge .default:n   = {down},
+
+	size .dim_set:N = \l_nsk_efadings_size_dim,
+	size .initial:n   = {10mm},
+	size .default:n   = {10mm},
+
+	offset .dim_set:N = \l_nsk_efadings_offset_dim,
+	offset .initial:n   = {1mm},
+	offset .default:n   = {1mm},
+
+}
+
+\NewDocumentCommand {\nskEdgeFade} { O{} }{
+
+	% parse
+	\keys_set:nn { nsk / efadings } { #1 }
+
+	% match pos
+	\tl_clear_new:N \l_tmpefpos_tl
+	\str_case:Vn \l_nsk_efadings_type_tl
+	{
+		{down}{\tl_set:Nx \l_tmpefpos_tl {above~right=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.south~west}}
+			{up}{\tl_set:Nx \l_tmpefpos_tl {below~right=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.north~west}}
+			{left}{\tl_set:Nx \l_tmpefpos_tl {above~right=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.south~west}}
+			{right}{\tl_set:Nx \l_tmpefpos_tl {above~left=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.south~east}}
+	}
+	\tl_show:N \l_tmpefpos_tl
+
+
+	% sizings
+	\tl_clear_new:N \l_tmpw_tl
+	\tl_clear_new:N \l_tmph_tl
+	\str_case:Vn \l_nsk_efadings_type_tl
+	{
+		{down}{
+				% measure
+				\nskMeasure[from=current~bounding~box.south~west, to=current~bounding~box.south~east]
+				\tl_set:Nx \l_tmpw_tl {\nskDistance + \l_nsk_efadings_offset_dim}
+				\tl_set:Nx \l_tmph_tl {\l_nsk_efadings_size_dim}
+			}
+			{up}{
+				% measure
+				\nskMeasure[from=current~bounding~box.south~west, to=current~bounding~box.south~east]
+				\tl_set:Nx \l_tmpw_tl {\nskDistance + \l_nsk_efadings_offset_dim}
+				\tl_set:Nx \l_tmph_tl {\l_nsk_efadings_size_dim}
+			}
+			{left}{
+				% measure
+				\nskMeasure[
+				  from=current~bounding~box.south~west, to=current~bounding~box.north~west,
+				  axis=vertical
+				]
+				\tl_set:Nx \l_tmph_tl {\nskDistance + \l_nsk_efadings_offset_dim}
+				\tl_set:Nx \l_tmpw_tl {\l_nsk_efadings_size_dim}
+			}
+			{right}{
+				% measure
+				\nskMeasure[
+				  from=current~bounding~box.south~east, to=current~bounding~box.north~east,
+				  axis=vertical
+				]
+				\tl_set:Nx \l_tmph_tl {\nskDistance + \l_nsk_efadings_offset_dim}
+				\tl_set:Nx \l_tmpw_tl {\l_nsk_efadings_size_dim}
+			}
+
+	}
+
+	\nsk__render_edge_fading:VVVV
+	\l_tmpefpos_tl
+	\l_tmpw_tl
+	\l_tmph_tl
+	\l_nsk_efadings_type_tl
+
+}
+\cs_new_protected_nopar:Npn \nsk__render_edge_fading:nnnn #1 #2 #3 #4
+{
+	\nskBlock[
+		pos={#1},
+		width=#2, height=#3,
+		fade=#4
+	]
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Variant Generation :V
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_generate_variant:Nn \nsk__render_edge_fading:nnnn { VVVV }
 
 
 \ExplSyntaxOff
