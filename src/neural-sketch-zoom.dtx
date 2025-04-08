@@ -1,0 +1,179 @@
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%  neural-sketch-zoom.dtx
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% \iffalse
+%<*driver>
+\documentclass{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+\begin{document}
+\DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+
+\ProvidesFile{neural-sketch-zoom.dtx}%
+[2025/04/08 v0.1 neural-sketch-zoom module]
+
+% \title{neural-sketch-zoom.sty (Zoom module)}
+% \author{Your Name}
+% \date{\today}
+% \maketitle
+
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+%<*package>
+%    \begin{macrocode}
+
+% Require necessary packages
+\RequirePackage{tikz}
+\RequirePackage{expl3}
+
+\ExplSyntaxOn
+% Global counter for auto-generated zoom IDs
+\int_new:N \g_nsk_zoom_counter_int
+\int_zero:N \g_nsk_zoom_counter_int
+%
+% -----------------------------------------------------------------------------
+% Define keys for the nsk / zoom module
+% -----------------------------------------------------------------------------
+\keys_define:nn { nsk / zoom }
+{
+	% type: token
+	type .tl_set:N = \l_nsk_zoom_type_tl,
+	type .initial:n = {circle},
+	type .default:n = {circle},
+
+	at .tl_set:N = \l_nsk_zoom_at_tl,
+	at .initial:n = {},
+	at .default:n = {},
+
+	to .tl_set:N = \l_nsk_zoom_to_tl,
+	to .initial:n = {},
+	to .default:n = {},
+
+	% id: token; if blank, will be auto-generated
+	id .tl_set:N = \l_nsk_zoom_id_tl,
+	id .initial:n = { },
+
+	% magnification: floating point value
+	magnification .tl_set:N = \l_nsk_zoom_magnification_tl,
+	magnification .initial:n = {4},
+	magnification .default:n = {4},
+
+	% size: dimension value
+	size .dim_set:N = \l_nsk_zoom_size_dim,
+	size .initial:n = {2cm},
+	size .default:n = {2cm},
+
+	% callout-style: token list for the callout node
+	callout-style .tl_set:N = \l_nsk_zoom_callout_style_tl,
+	callout-style .initial:n = {thick, densely~dashed},
+	callout-style .default:n = {thick, densely~dashed},
+
+	connecting-style .tl_set:N = \l_nsk_zoom_connecting_style_tl,
+	connecting-style .initial:n = {\g__nsk_style_block_border_color_tl},
+	connecting-style .default:n = {\g__nsk_style_block_border_color_tl},
+
+	callout-border-color .tl_set:N = \l_nsk_zoom_callout_border_color_tl,
+	callout-border-color .initial:n = {\g__nsk_style_block_border_color_tl},
+	callout-border-color .default:n = {\g__nsk_style_block_border_color_tl},
+
+	% zoomed-style: token list for the zoomed node
+	zoomed-style .tl_set:N = \l_nsk_zoom_zoomed_style_tl,
+	zoomed-style .initial:n = {draw=\g__nsk_style_block_border_color_tl, ultra~thick},
+	zoomed-style .default:n = {draw=\g__nsk_style_block_border_color_tl, ultra~thick},
+
+	zoomed-fill .tl_set:N = \l_nsk_zoom_zoomed_fill_tl,
+	zoomed-fill .initial:n = {none},
+	zoomed-fill .default:n = {none},
+
+	% connecting-path: token list (e.g., TikZ options)
+	connecting-path .tl_set:N = \l_nsk_zoom_connecting_path_tl,
+	connecting-path .initial:n = {\draw[\l_nsk_zoom_connecting_style_tl] (tikzspyonnode) -- (tikzspyinnode);},
+	connecting-path .default:n = {\draw[\l_nsk_zoom_connecting_style_tl] (tikzspyonnode) -- (tikzspyinnode);},
+}
+
+% -----------------------------------------------------------------------------
+% Function: \nsk__maybe_set_zoom_id:
+%  If the user did not provide an "id", then auto-generate one in the form
+%  "zoom-<int>", using the global counter.
+% -----------------------------------------------------------------------------
+\cs_new_protected_nopar:Npn \nsk__maybe_set_zoom_id:
+{
+	\tl_if_blank:VTF \l_nsk_zoom_id_tl
+	{
+		\int_incr:N \g_nsk_zoom_counter_int
+		\tl_set:Nx \l_nsk_zoom_id_tl
+		{ zoom-\int_use:N \g_nsk_zoom_counter_int }
+	}
+	{ }
+}
+
+\cs_new_protected_nopar:Npn \nsk__draw_spy_aux:nnnnnnnnn #1#2#3#4#5#6#7#8#9
+{
+
+\spy[
+\l_nsk_zoom_type_tl,
+every~spy~on~node/.style={#3, draw=#7},
+size=#5,
+magnification=#6,
+spy~connection~path={#8}
+]~on~#1
+in~node~[#4, fill=#9]~at~#2;
+
+}
+
+
+\cs_generate_variant:Nn \nsk__draw_spy_aux:nnnnnnnnn { VVVVVVVVV }
+
+% -----------------------------------------------------------------------------
+% Main user command: \nskZoom
+%
+% Usage: \nskZoom[<key=value list>]{<callout content>}{<zoomed content>}
+%
+% This command sets the zoom module keys, auto-generates an id if needed, and
+% draws a TikZ picture with two nodes (one for the callout and one for the zoomed content)
+% connected by a line drawn using the "connecting-path" options.
+% -----------------------------------------------------------------------------
+\NewDocumentCommand \nskZoom { sO{} }
+{
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskZoomR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskZoomR[#2]
+	}
+}
+\NewDocumentCommand \nskZoomR { O{}}
+{
+	\group_begin:
+	% Process the optional key=value options for the zoom module.
+	\keys_set:nn { nsk / zoom } { #1 }
+	% Auto-generate the zoom id if not supplied.
+	\nsk__maybe_set_zoom_id:
+
+	% Draw the zoom element using a TikZ picture
+	\nsk__draw_spy_aux:VVVVVVVVV
+	\l_nsk_zoom_at_tl
+	\l_nsk_zoom_to_tl
+	\l_nsk_zoom_callout_style_tl
+	\l_nsk_zoom_zoomed_style_tl
+	\l_nsk_zoom_size_dim
+	\l_nsk_zoom_magnification_tl
+	\l_nsk_zoom_callout_border_color_tl
+	\l_nsk_zoom_connecting_path_tl
+	\l_nsk_zoom_zoomed_fill_tl
+
+
+	\group_end:
+}
+
+\ExplSyntaxOff
+
+%    \end{macrocode}
+%</package>
+\endinput
