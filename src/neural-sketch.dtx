@@ -84,7 +84,7 @@
 {
 	\tl_put_right:Nx \l__nsk_pkgopts_opts_tl
 	{
-    #1 = {#2},
+		#1 = {#2},
 	}
 }
 
@@ -281,7 +281,7 @@ every~node/.append~style={text=c__nsk_principal},
 	tikz-opts  .default:n = {},
 
 	text-size .tl_set:N = \l_nsk_block_text_size_tl,
-  text-size .initial:n = {\normalsize},
+	text-size .initial:n = {\normalsize},
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Text Anchoring
@@ -380,9 +380,9 @@ every~node/.append~style={text=c__nsk_principal},
 	pattern-color .initial:n = { },
 	pattern-color .default:n = { },
 
-	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Fade
-	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	fade .choice:,
 	fade / none .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { none } },
 	fade / left .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { left } },
@@ -391,6 +391,32 @@ every~node/.append~style={text=c__nsk_principal},
 	fade / down .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { down } },
 	fade .initial:n = { none },
 	fade .default:n = { none },
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Stacks
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	stack .bool_set:N            = \l_nsk_block_stack_bool,
+	stack .initial:n             = {false},
+	stack .default:n             = {false},
+
+	stack-opts .tl_set:N         = \l_nsk_block_stack_opts_tl,
+	stack-opts .initial:n        = {opacity=.6},
+	stack-opts .default:n        = {opacity=.6},
+
+	stack-xoffset .dim_set:N     = \l_nsk_block_stack_xoffset_dim,
+	stack-xoffset .initial:n     = {1mm},
+	stack-xoffset .default:n     = {1mm},
+
+	stack-yoffset .dim_set:N     = \l_nsk_block_stack_yoffset_dim,
+	stack-yoffset .initial:n     = {-.8mm},
+	stack-yoffset .default:n     = {-.8mm},
+
+	stack-count .choice:,
+	stack-count / single .code:n = { \tl_set:Nn \l_nsk_block_stack_count_tl {single} },
+	stack-count / double .code:n = { \tl_set:Nn \l_nsk_block_stack_count_tl {double} },
+	stack-count .initial:n       = {single},
+	stack-count .default:n       = {single},
+
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -644,6 +670,7 @@ every~node/.append~style={text=c__nsk_principal},
 			}
 	}
 }
+
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Block drawing [Aux]
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -789,11 +816,35 @@ every~node/.append~style={text=c__nsk_principal},
 	\tl_if_eq:NnT \l_nsk_block_fade_tl { none }
 	{\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}}
 
+	% stacks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\bool_if:NT \l_nsk_block_stack_bool
+	{
+		\str_case:Vn \l_nsk_block_stack_count_tl
+		{
+			{single}{\tl_put_right:Nx \l_tmps_tl {
+			  copy~shadow={
+			    shadow~xshift=\l_nsk_block_stack_xoffset_dim,
+			    shadow~yshift=\l_nsk_block_stack_yoffset_dim,
+          \l_nsk_block_stack_opts_tl
+			  },
+			}}
+			{double}{\tl_put_right:Nx \l_tmps_tl {
+			  double~copy~shadow={
+			    shadow~xshift=\l_nsk_block_stack_xoffset_dim,
+			    shadow~yshift=\l_nsk_block_stack_yoffset_dim,
+          \l_nsk_block_stack_opts_tl,
+			  },
+			}},
+		}
+    \bool_set_false:N \l_nsk_block_shadow_bool
+	}
+
 	% shadow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\bool_if:NT \l_nsk_block_shadow_bool
 	{
 		\tl_put_right:No \l_tmps_tl {nskShadow, }
 	}
+
 	% patterns ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_if_blank:VTF \l_nsk_block_pattern_tl
 	{ }
@@ -919,15 +970,15 @@ every~node/.append~style={text=c__nsk_principal},
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskBlock { sO{} }
 {
-  \IfBooleanTF{#1}
-    {
-      % Starred form: auto-expand keys
-      \edef\l_tmpa_tl{#2}
-      \expandafter\nskBlockR\expandafter[\l_tmpa_tl]
-    }
-    {
-      \nskBlockR[#2]
-    }
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskBlockR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskBlockR[#2]
+	}
 }
 
 \NewDocumentCommand \nskBlockR { O{} }
@@ -935,7 +986,7 @@ every~node/.append~style={text=c__nsk_principal},
 	\group_begin:
 
 	% # 1 -> k=v list
-  \keys_set:nn {nsk / block } {#1}
+	\keys_set:nn {nsk / block } {#1}
 
 	% possibly autogenerate the id
 	\nsk__maybe_set_id:
