@@ -179,7 +179,7 @@
 			drop shadow={
 					shadow xshift=-.1ex,
 					shadow yshift=-.6ex,
-					fill=nskLighterGray
+					fill=nskLighterGray!80,
 				},
 		},
 	bridging path/.initial=\g__nsk_style_bridging_style_tl,
@@ -196,33 +196,33 @@
 }
 
 \tikzfading[name=fade-left,
-	left color=nskBg,
+	left color=white,
 	right color=transparent!100]
 \tikzfading[name=fade-right,
 	left color=transparent!100,
-	right color=nskBg]
+	right color=white]
 \tikzfading[name=fade-up,
 	bottom color=transparent!100,
-	top color=nskBg]
+	top color=white]
 \tikzfading[name=fade-down,
-	bottom color=nskBg,
+	bottom color=white,
 	top color=transparent!100]
 
 \tikzset{
 	fade left/.style={
-			fill=nskBg,
+			fill=white,
 			path fading=fade-left
 		},
 	fade right/.style={
-			fill=nskBg,
+			fill=white,
 			path fading=fade-right
 		},
 	fade up/.style={
-			fill=nskBg,
+			fill=white,
 			path fading=fade-up
 		},
 	fade down/.style={
-			fill=nskBg,
+			% fill=white,
 			path fading=fade-down
 		}
 }

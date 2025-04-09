@@ -32,7 +32,7 @@
 \RequirePackage{tikz}
 \RequirePackage{expl3}
 \usetikzlibrary{
-	calc, fit, intersections, spath3,
+	calc, fit,
 	shapes.geometric,
 	shapes.symbols,
 	shapes.misc,
@@ -42,11 +42,9 @@
 	shadows,
 	shadings,
 	patterns,
-	decorations.markings,
 	backgrounds,
 	tikzmark,
 	math,
-	spy,
 }
 
 
@@ -770,13 +768,17 @@ every~node/.append~style={text=c__nsk_principal},
 	\bool_set_false:N \l_nsk_block_shadow_bool
 	\tl_put_right:Nx \l_tmps_tl {fade~\l_nsk_block_fade_tl ,}
 
-	\str_case:Vn \l_nsk_block_fade_tl
+	\bool_if:NTF \g__nsk_dark_mode_bool
+  {}
 	{
-		{down} {\tl_put_right:Nn \l_tmps_tl {top~color=transparent!0, bottom~color=nskBg,}}
-			{up} {\tl_put_right:Nn \l_tmps_tl {bottom~color=transparent!0, top~color=nskBg,}}
-			{left} {\tl_put_right:Nn \l_tmps_tl {right~color=transparent!0, left~color=nskBg,}}
-			{right} {\tl_put_right:Nn \l_tmps_tl {left~color=transparent!0, right~color=nskBg,}}
-	}
+		\str_case:Vn \l_nsk_block_fade_tl
+		{
+			{down} {\tl_put_right:Nn \l_tmps_tl {top~color=transparent!0, bottom~color=nskBg,}}
+				{up} {\tl_put_right:Nn \l_tmps_tl {bottom~color=transparent!0, top~color=nskBg,}}
+				{left} {\tl_put_right:Nn \l_tmps_tl {right~color=transparent!0, left~color=nskBg,}}
+				{right} {\tl_put_right:Nn \l_tmps_tl {left~color=transparent!0, right~color=nskBg,}}
+		}
+  }
 }
 
 % Possibly scale border-size according to importance:
@@ -1182,8 +1184,8 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 			{left}{
 				% measure
 				\nskMeasure[
-				  from=current~bounding~box.south~west, to=current~bounding~box.north~west,
-				  axis=vertical
+					from=current~bounding~box.south~west, to=current~bounding~box.north~west,
+					axis=vertical
 				]
 				\tl_set:Nx \l_tmph_tl {\nskDistance + \l_nsk_efadings_offset_dim}
 				\tl_set:Nx \l_tmpw_tl {\l_nsk_efadings_size_dim}
@@ -1191,8 +1193,8 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 			{right}{
 				% measure
 				\nskMeasure[
-				  from=current~bounding~box.south~east, to=current~bounding~box.north~east,
-				  axis=vertical
+					from=current~bounding~box.south~east, to=current~bounding~box.north~east,
+					axis=vertical
 				]
 				\tl_set:Nx \l_tmph_tl {\nskDistance + \l_nsk_efadings_offset_dim}
 				\tl_set:Nx \l_tmpw_tl {\l_nsk_efadings_size_dim}
@@ -1212,7 +1214,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	\nskBlock[
 		pos={#1},
 		width=#2, height=#3,
-		fade=#4
+		fade=#4,
 	]
 }
 
