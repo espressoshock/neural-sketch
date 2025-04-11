@@ -48,37 +48,47 @@
 	% - If it's empty, we auto-increment a global annotation counter
 	%   and store that numeric string.
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	ref-tag .tl_set:N            = \l__nsk_annotate_ref_tag_tl,
-	ref-tag .initial:n           = { },
+	ref-tag .tl_set:N = \l__nsk_annotate_ref_tag_tl,
+	ref-tag .initial:V = \g__nsk_style_annotate_ref_tag_tl,
+	ref-tag .default:V = \g__nsk_style_annotate_ref_tag_tl,
 
 	disable-tag .bool_set:N      = \l__nsk_annotate_disable_tag_bool,
 	disable-tag .initial:n       = {false},
 	disable-tag .default:n       = {false},
 
 	% box-padding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	padding .dim_set:N           = \l__nsk_annotate_box_padding_dim,
-	padding .initial:n           = {3pt},
+	padding .dim_set:N = \l__nsk_annotate_box_padding_dim,
+	padding .initial:V = \g__nsk_style_annotate_box_padding_dim,
+	padding .default:V = \g__nsk_style_annotate_box_padding_dim,
 
-	% (B) Single pass-through for nskConnect:
-	connect-opts .tl_set:N       = \l__nsk_annotate_connect_opts_tl,
-	connect-opts .initial:n      = {arrow-style = {dotted, thick},color = nskMidGray},
+	% Single pass-through for nskConnect:
+	connect-opts .tl_set:N = \l__nsk_annotate_connect_opts_tl,
+	connect-opts .initial:V = \g__nsk_style_annotate_connect_opts_tl,
+	connect-opts .default:V = \g__nsk_style_annotate_connect_opts_tl,
 
-	text-color .tl_set:N         = \l__nsk_annotate_text_color_tl,
-	text-color .initial:n        = { c__nsk_principal },
+	text-color .tl_set:N = \l__nsk_annotate_text_color_tl,
+	text-color .initial:V = \g__nsk_style_annotate_text_color_tl,
+	text-color .default:V = \g__nsk_style_annotate_text_color_tl,
 
 	% anchor target ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	connect-to .tl_set:N         = \l__nsk_annotate_connect_to_tl,
+	connect-to .tl_set:N = \l__nsk_annotate_connect_to_tl,
 	connect-to .value_required:n = true,
-	connect-to .initial:n        = { },
+	connect-to .initial:V = \g__nsk_style_annotate_connect_to_tl,
+	connect-to .default:V = \g__nsk_style_annotate_connect_to_tl,
 
-	anchor-from .tl_set:N        = \l__nsk_annotate_from_anchor_tl,
-	anchor-from .initial:n       = { east },
+	anchor-from .tl_set:N = \l__nsk_annotate_from_anchor_tl,
+	anchor-from  .value_required:n = true,
+	anchor-from .initial:V = \g__nsk_style_annotate_from_anchor_tl,
+	anchor-from .default:V = \g__nsk_style_annotate_from_anchor_tl,
 
 	% coords ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	x .fp_set:N                  = \l__nsk_annotate_x_fp,
-	x .initial:n                 = { 0 },
-	y .fp_set:N                  = \l__nsk_annotate_y_fp,
-	y .initial:n                 = { 0 },
+	x .fp_set:N = \l__nsk_annotate_x_fp,
+	x .initial:V = \g__nsk_style_annotate_x_fp,
+	x .default:V = \g__nsk_style_annotate_x_fp,
+
+	y .fp_set:N = \l__nsk_annotate_y_fp,
+	y .initial:V = \g__nsk_style_annotate_y_fp,
+	y .default:V = \g__nsk_style_annotate_y_fp,
 
 	% nat-pos ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	pos .tl_set:N                = \l__nsk_annotate_pos_tl,
@@ -87,38 +97,49 @@
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Text
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	header .tl_set:N             = \l__nsk_annotate_header_tl,
-	header .initial:n            = { },
+	header .tl_set:N = \l__nsk_annotate_header_tl,
+	header .initial:V = \g__nsk_style_annotate_header_tl,
+	header .default:V = \g__nsk_style_annotate_header_tl,
 
-	title .tl_set:N              = \l__nsk_annotate_title_tl,
-	title .initial:n             = { },
+	title .tl_set:N = \l__nsk_annotate_title_tl,
+	title .initial:V = \g__nsk_style_annotate_title_tl,
+	title .default:V = \g__nsk_style_annotate_title_tl,
 
-	text .tl_set:N               = \l__nsk_annotate_text_tl,
-	text .initial:n              = { },
+	text .tl_set:N = \l__nsk_annotate_text_tl,
+	text .initial:V = \g__nsk_style_annotate_text_tl,
+	text .default:V = \g__nsk_style_annotate_text_tl,
 
 	text-align .choice:,
 	text-align / left    .code:n = { \tl_set:Nn \l__nsk_annotate_text_align_tl { left } },
 	text-align / center  .code:n = { \tl_set:Nn \l__nsk_annotate_text_align_tl { center } },
 	text-align / right   .code:n = { \tl_set:Nn \l__nsk_annotate_text_align_tl { right } },
 	text-align / justify .code:n = { \tl_set:Nn \l__nsk_annotate_text_align_tl { justify } },
-	text-align .initial:n        = { left },
-	text-align .default:n        = { left },
+	text-align .initial:V = \g__nsk_style_annotate_text_align_tl,
+	text-align .default:V = \g__nsk_style_annotate_text_align_tl,
 
-	header-style .tl_set:N  = \l__nsk_annotate_header_style_tl,
-	header-style .initial:n = { \bfseries },
+	header-style .tl_set:N = \l__nsk_annotate_header_style_tl,
+	header-style .initial:V = \g__nsk_style_annotate_header_style_tl,
+	header-style .default:V = \g__nsk_style_annotate_header_style_tl,
 
-	title-style .tl_set:N   = \l__nsk_annotate_title_style_tl,
-	title-style .initial:n  = { \itshape },
+	title-style .tl_set:N = \l__nsk_annotate_title_style_tl,
+	title-style .initial:V = \g__nsk_style_annotate_title_style_tl,
+	title-style .default:V = \g__nsk_style_annotate_title_style_tl,
 
-	text-style .tl_set:N         = \l__nsk_annotate_main_style_tl,
-	text-style .initial:n        = { },
+	text-style .tl_set:N = \l__nsk_annotate_main_style_tl,
+	text-style .initial:V = \g__nsk_style_annotate_main_style_tl,
+	text-style .default:V = \g__nsk_style_annotate_main_style_tl,
 
 	% bounding styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	fill .tl_set:N               = \l__nsk_annotate_fill_tl,
 	fill .initial:n              = { nskLightestGray },
 
-	border-color .tl_set:N       = \l__nsk_annotate_border_color_tl,
-	border-color .initial:n      = { nskMidGray },
+	fill .tl_set:N = \l__nsk_annotate_fill_tl,
+	fill .initial:V = \g__nsk_style_annotate_fill_tl,
+	fill .default:V = \g__nsk_style_annotate_fill_tl,
+
+	border-color .tl_set:N = \l__nsk_annotate_border_color_tl,
+	border-color .initial:V = \g__nsk_style_annotate_border_color_tl,
+	border-color .default:V = \g__nsk_style_annotate_border_color_tl,
 
 
 	border-type .code:n =
@@ -132,21 +153,23 @@
 			}
 
 		},
-	border-type .initial:n = {solid},
-	border-type .default:n = {solid},
+	border-type .initial:V = \g__nsk_style_annotate_border_type_tl,
+	border-type .default:V = \g__nsk_style_annotate_border_type_tl,
 
 	border-size .dim_set:N = \l_nsk_annotate_border_size_dim,
-	border-size .initial:n = .4mm,
-	border-size .default:n = .4mm,
+	border-size .initial:V = \g__nsk_style_annotate_border_size_dim,
+	border-size .default:V = \g__nsk_style_annotate_border_size_dim,
 
-	border-radius .dim_set:N     = \l__nsk_annotate_border_radius_dim,
-	border-radius .initial:n     = {1mm},
+	border-radius .dim_set:N = \l__nsk_annotate_border_radius_dim,
+	border-radius .initial:V = \g__nsk_style_annotate_border_radius_dim,
+	border-radius .default:V = \g__nsk_style_annotate_border_radius_dim,
 
 	rounded-box .bool_set:N      = \l__nsk_annotate_rounded_box_bool,
 	rounded-box .initial:n       = {false},
 
-	width .dim_set:N             = \l__nsk_annotate_width_dim,
-	width .initial:n             = {0cm},
+	width .dim_set:N = \l__nsk_annotate_width_dim,
+	width .initial:V = \g__nsk_style_annotate_width_dim,
+	width .default:V = \g__nsk_style_annotate_width_dim,
 
 	% pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	tikz-opts .tl_set:N          = \l__nsk_annotate_extra_tl,
@@ -235,15 +258,15 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskAnnotate { sO{} }
 {
-  \IfBooleanTF{#1}
-    {
-      % Starred form: auto-expand keys
-      \edef\l_tmpa_tl{#2}
-      \expandafter\nskAnnotateR\expandafter[\l_tmpa_tl]
-    }
-    {
-      \nskAnnotateR[#2]
-    }
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskAnnotateR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskAnnotateR[#2]
+	}
 }
 
 \NewDocumentCommand \nskAnnotateR { O{} }
