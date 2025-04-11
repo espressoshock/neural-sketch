@@ -159,15 +159,16 @@ every~node/.append~style={text=c__nsk_principal},
 
 	% coords ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	x .fp_set:N = \l_nsk_block_x_fp,
-	x .initial:n = {0},
-	x .default:n = {0},
+	x .initial:V = \g__nsk_style_block_x_fp,
+	x .default:V = \g__nsk_style_block_x_fp,
+
 	y .fp_set:N = \l_nsk_block_y_fp,
-	y .initial:n  = {0},
-	y .default:n = {0},
+	y .initial:V = \g__nsk_style_block_y_fp,
+	y .default:V = \g__nsk_style_block_y_fp,
 
 	anchor .tl_set:N = \l_nsk_block_anchor_tl,
-	anchor .default:n = {},
-	anchor .initial:n = {},
+	anchor .initial:V = \g__nsk_style_block_anchor_tl,
+	anchor .default:V = \g__nsk_style_block_anchor_tl,
 
 	% natural positioning using positioning library
 	pos .tl_set:N = \l_nsk_block_pos_tl,
@@ -239,20 +240,20 @@ every~node/.append~style={text=c__nsk_principal},
 
 		},
 
-	outer-border-type .initial:n = {none},
-	outer-border-type .default:n = {none},
+	outer-border-type .initial:V = \g__nsk_style_block_outer_border_type_tl,
+	outer-border-type .default:V = \g__nsk_style_block_outer_border_type_tl,
 
 	outer-border-color .tl_set:N = \l_nsk_block_outer_border_color_tl,
-	outer-border-color .initial:n = { nskMainAccent!50!nskBg },
-	outer-border-color .default:n = { nskMainAccent!50!nskBg },
+	outer-border-color .initial:V = \g__nsk_style_block_outer_border_color_tl,
+	outer-border-color .default:V = \g__nsk_style_block_outer_border_color_tl,
 
 	outer-border-radius .dim_set:N = \l_nsk_block_outer_border_radius_dim,
-	outer-border-radius .initial:V = \g__nsk_style_block_border_radius_dim,
-	outer-border-radius .default:V = \g__nsk_style_block_border_radius_dim,
+	outer-border-radius .initial:V = \g__nsk_style_block_outer_border_radius_dim,
+	outer-border-radius .default:V = \g__nsk_style_block_outer_border_radius_dim,
 
 	outer-border-size .dim_set:N = \l_nsk_block_outer_border_size_dim,
-	outer-border-size .initial:n = {5mm},
-	outer-border-size .default:n = {5mm},
+	outer-border-size .initial:V = \g__nsk_style_block_outer_border_size_dim,
+	outer-border-size .default:V = \g__nsk_style_block_outer_border_size_dim,
 
 	% styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	fill .tl_set:N = \l_nsk_block_fill_tl,
@@ -261,13 +262,13 @@ every~node/.append~style={text=c__nsk_principal},
 
 	% shadow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	shadow .bool_set:N = \l_nsk_block_shadow_bool,
-	shadow .initial:n = {true},
-	shadow .default:n = {true},
+  shadow .initial:n = {true},
+  shadow .default:n = {true},
 
 	% importance ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	importance .fp_set:N = \l_nsk_block_importance_fp,
-	importance .initial:n = {1.0},
-	importance .default:n = {1.0},
+	importance .initial:V = \g__nsk_style_block_importance_fp,
+	importance .default:V = \g__nsk_style_block_importance_fp,
 
 	% -- The special pass-through key for arbitrary TikZ options.
 	tikz-opts  .code:n =
@@ -365,8 +366,8 @@ every~node/.append~style={text=c__nsk_principal},
 	embed-border-radius .default:V = \g__nsk_style_block_embed_border_radius_dim,
 
 	embed-border-size .dim_set:N = \l_nsk_block_embed_border_size_dim,
-	embed-border-size .initial:n = {1pt},
-	embed-border-size .default:n = {1pt},
+	embed-border-size .initial:V = \g__nsk_style_block_embed_border_size_dim,
+	embed-border-size .default:V = \g__nsk_style_block_embed_border_size_dim,
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Patterns
@@ -395,26 +396,26 @@ every~node/.append~style={text=c__nsk_principal},
 	% Stacks
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	stack .bool_set:N            = \l_nsk_block_stack_bool,
-	stack .initial:n             = {false},
-	stack .default:n             = {false},
+  stack .initial:n             = {false},
+  stack .default:n             = {false},
 
 	stack-opts .tl_set:N         = \l_nsk_block_stack_opts_tl,
-	stack-opts .initial:n        = {opacity=.6},
-	stack-opts .default:n        = {opacity=.6},
+	stack-opts .initial:V        = \g__nsk_style_block_stack_opts_tl,
+	stack-opts .default:V        = \g__nsk_style_block_stack_opts_tl,
 
 	stack-xoffset .dim_set:N     = \l_nsk_block_stack_xoffset_dim,
-	stack-xoffset .initial:n     = {1mm},
-	stack-xoffset .default:n     = {1mm},
+	stack-xoffset .initial:V     = \g__nsk_style_block_stack_xoffset_dim,
+	stack-xoffset .default:V     = \g__nsk_style_block_stack_xoffset_dim,
 
 	stack-yoffset .dim_set:N     = \l_nsk_block_stack_yoffset_dim,
-	stack-yoffset .initial:n     = {-.8mm},
-	stack-yoffset .default:n     = {-.8mm},
+	stack-yoffset .initial:V     = \g__nsk_style_block_stack_yoffset_dim,
+	stack-yoffset .default:V     = \g__nsk_style_block_stack_yoffset_dim,
 
 	stack-count .choice:,
 	stack-count / single .code:n = { \tl_set:Nn \l_nsk_block_stack_count_tl {single} },
 	stack-count / double .code:n = { \tl_set:Nn \l_nsk_block_stack_count_tl {double} },
-	stack-count .initial:n       = {single},
-	stack-count .default:n       = {single},
+	stack-count .initial:V       = \g__nsk_style_block_stack_count_tl,
+	stack-count .default:V       = \g__nsk_style_block_stack_count_tl,
 
 }
 
@@ -769,7 +770,7 @@ every~node/.append~style={text=c__nsk_principal},
 	\tl_put_right:Nx \l_tmps_tl {fade~\l_nsk_block_fade_tl ,}
 
 	\bool_if:NTF \g__nsk_dark_mode_bool
-  {}
+	{}
 	{
 		\str_case:Vn \l_nsk_block_fade_tl
 		{
@@ -778,7 +779,7 @@ every~node/.append~style={text=c__nsk_principal},
 				{left} {\tl_put_right:Nn \l_tmps_tl {right~color=transparent!0, left~color=nskBg,}}
 				{right} {\tl_put_right:Nn \l_tmps_tl {left~color=transparent!0, right~color=nskBg,}}
 		}
-  }
+	}
 }
 
 % Possibly scale border-size according to importance:

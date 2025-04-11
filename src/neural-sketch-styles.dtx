@@ -51,6 +51,17 @@
 	block-border-color .initial:n = { nskDarkGray },
 	block-border-color .default:n = { nskDarkGray },
 
+	block-x .fp_gset:N = \g__nsk_style_block_x_fp,
+	block-x .initial:n = {0},
+	block-x .default:n = {0},
+
+	block-y .fp_gset:N = \g__nsk_style_block_y_fp,
+	block-y .initial:n = {0},
+	block-y .default:n = {0},
+
+	block-anchor .tl_gset:N = \g__nsk_style_block_anchor_tl,
+	block-anchor .initial:n = {},
+	block-anchor .default:n = {},
 
 	block-border-radius .dim_gset:N = \g__nsk_style_block_border_radius_dim,
 	block-border-radius .initial:n = {2.5mm},
@@ -59,6 +70,10 @@
 	block-embed-border-radius .dim_gset:N = \g__nsk_style_block_embed_border_radius_dim,
 	block-embed-border-radius.initial:n = {1.3mm},
 	block-embed-border-radius.default:n = {1.3mm},
+
+	block-embed-border-size .dim_gset:N = \g__nsk_style_block_embed_border_size_dim,
+	block-embed-border-size .initial:n = {1pt},
+	block-embed-border-size .default:n = {1pt},
 
 	block-embed-padding .dim_gset:N = \g__nsk_style_block_embed_padding_dim,
 	block-embed-padding .initial:n = {1mm},
@@ -76,7 +91,9 @@
 	block-height .initial:n = {1cm},
 	block-height .default:n = {1cm},
 
-	shadow .bool_gset:N = \g__nsk_style_block_shadow_bool,
+	block-importance .fp_gset:N = \g__nsk_style_block_importance_fp,
+	block-importance .initial:n = {1.0},
+	block-importance .default:n = {1.0},
 
 	% text-anchoring ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	text-north-loc .tl_gset:N = \g__nsk_style_text_north_loc_tl,
@@ -154,6 +171,44 @@
 	arrow-style .tl_gset:N = \g__nsk_style_arrow_style_tl,
 	arrow-style .initial:n = {ultra~thick, line~cap=round},
 	arrow-style .default:n = {ultra~thick, line~cap=round},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Outer-border
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	block-outer-border-type .tl_gset:N = \g__nsk_style_block_outer_border_type_tl,
+	block-outer-border-type .initial:n = {none},
+	block-outer-border-type .default:n = {none},
+
+	block-outer-border-color .tl_gset:N = \g__nsk_style_block_outer_border_color_tl,
+	block-outer-border-color .initial:n = {nskMainAccent!50!nskBg},
+	block-outer-border-color .default:n = {nskMainAccent!50!nskBg},
+
+	block-outer-border-radius .dim_gset:N = \g__nsk_style_block_outer_border_radius_dim,
+	block-outer-border-radius .initial:n = {2.5mm},
+	block-outer-border-radius .default:n = {2.5mm},
+
+	block-outer-border-size .dim_gset:N = \g__nsk_style_block_outer_border_size_dim,
+	block-outer-border-size .initial:n = {5mm},
+	block-outer-border-size .default:n = {5mm},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Stacks
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	block-stack-opts .tl_gset:N = \g__nsk_style_block_stack_opts_tl,
+	block-stack-opts .initial:n = {opacity=.6},
+	block-stack-opts .default:n = {opacity=.6},
+
+	block-stack-xoffset .dim_gset:N = \g__nsk_style_block_stack_xoffset_dim,
+	block-stack-xoffset .initial:n  = {1mm},
+	block-stack-xoffset .default:n  = {1mm},
+
+	block-stack-yoffset .dim_gset:N = \g__nsk_style_block_stack_yoffset_dim,
+	block-stack-yoffset .initial:n  = {-.8mm},
+	block-stack-yoffset .default:n  = {-.8mm},
+
+	block-stack-count .tl_gset:N = \g__nsk_style_block_stack_count_tl,
+	block-stack-count .initial:n = {single},
+	block-stack-count .default:n = {single},
 
 }
 
