@@ -31,6 +31,9 @@
 % implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 %<*package>
 %    \begin{macrocode}
+
+\usetikzlibrary{intersections, spath3,}
+
 \ExplSyntaxOn
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -164,17 +167,17 @@
 
 	% bend distance ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	bend-distance .dim_set:N = \l__nsk_connect_bend_amount_dim,
-	bend-distance .initial:n  = {1cm},
-	bend-distance .default:n  = {1cm},
+	bend-distance .initial:V = \g__nsk_style_connect_bend_distance_dim,
+	bend-distance .default:V = \g__nsk_style_connect_bend_distance_dim,
 
 	% shorten ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	shorten-from .dim_set:N = \l__nsk_connect_shorten_from_dim,
-	shorten-from .initial:n = {0pt},
-	shorten-from .default:n = {0pt},
+	shorten-from .initial:V = \g__nsk_style_connect_shorten_from_dim,
+	shorten-from .default:V = \g__nsk_style_connect_shorten_from_dim,
 
 	shorten-to .dim_set:N = \l__nsk_connect_shorten_to_dim,
-	shorten-to .initial:n = {0pt},
-	shorten-to .default:n = {0pt},
+	shorten-to .initial:V = \g__nsk_style_connect_shorten_to_dim,
+	shorten-to .default:V = \g__nsk_style_connect_shorten_to_dim,
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Bend route
@@ -848,15 +851,15 @@ arc[
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskFillBetween { sO{} }
 {
-  \IfBooleanTF{#1}
-    {
-      % Starred form: auto-expand keys
-      \edef\l_tmpa_tl{#2}
-      \expandafter\nskFillBetweenR\expandafter[\l_tmpa_tl]
-    }
-    {
-      \nskFillBetweenR[#2]
-    }
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskFillBetweenR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskFillBetweenR[#2]
+	}
 }
 
 \NewDocumentCommand \nskFillBetweenR { O{} }
