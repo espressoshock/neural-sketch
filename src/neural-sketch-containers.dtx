@@ -315,8 +315,8 @@
 	last-pos-s .default:n = {},
 
 	anchor .tl_set:N = \l_nsk_container_anchor_tl,
-	anchor .initial:n = {},
-	anchor .default:n = {},
+	anchor .initial:V = \g__nsk_style_container_anchor_tl,
+	anchor .default:V = \g__nsk_style_container_anchor_tl,
 
 	rotate .fp_set:N = \l_nsk_container_rotate_fp,
 	rotate .initial:V = \g__nsk_style_container_rotate_fp,
@@ -402,8 +402,8 @@
 	}
 
 	\tl_if_empty:VTF \l_nsk_container_anchor_tl
-  {\tl_set:Nn \l_nsk_container_anchor_tl {center}}
-  {}
+	{\tl_set:Nn \l_nsk_container_anchor_tl {center}}
+	{}
 
 
 	\tl_show:N \l_nsk_container_anchor_tl
