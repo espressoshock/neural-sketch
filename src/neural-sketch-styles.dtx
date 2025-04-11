@@ -210,6 +210,52 @@
 	block-stack-count .initial:n = {single},
 	block-stack-count .default:n = {single},
 
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% nsk / Zoom
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	zoom-type .tl_gset:N = \g__nsk_style_zoom_type_tl,
+	zoom-type .initial:n = {circle},
+	zoom-type .default:n = {circle},
+
+	zoom-at .tl_gset:N = \g__nsk_style_zoom_at_tl,
+	zoom-at .initial:n = {},
+	zoom-at .default:n = {},
+
+	zoom-to .tl_gset:N = \g__nsk_style_zoom_to_tl,
+	zoom-to .initial:n = {},
+	zoom-to .default:n = {},
+
+	zoom-magnification .tl_gset:N = \g__nsk_style_zoom_magnification_tl,
+	zoom-magnification .initial:n = {4},
+	zoom-magnification .default:n = {4},
+
+	zoom-size .dim_gset:N = \g__nsk_style_zoom_size_dim,
+	zoom-size .initial:n = {2cm},
+	zoom-size .default:n = {2cm},
+
+	zoom-callout-style .tl_gset:N = \g__nsk_style_zoom_callout_style_tl,
+	zoom-callout-style .initial:n = {thick, densely~dashed},
+	zoom-callout-style .default:n = {thick, densely~dashed},
+
+	zoom-connecting-style .tl_gset:N = \g__nsk_style_zoom_connecting_style_tl,
+	zoom-connecting-style .initial:n = {\g__nsk_style_block_border_color_tl},
+	zoom-connecting-style .default:n = {\g__nsk_style_block_border_color_tl},
+
+	zoom-callout-border-color .tl_gset:N = \g__nsk_style_zoom_callout_border_color_tl,
+	zoom-callout-border-color .initial:n = {\g__nsk_style_block_border_color_tl},
+	zoom-callout-border-color .default:n = {\g__nsk_style_block_border_color_tl},
+
+	zoom-zoomed-style .tl_gset:N = \g__nsk_style_zoom_zoomed_style_tl,
+	zoom-zoomed-style .initial:n = {draw=\g__nsk_style_block_border_color_tl, ultra~thick},
+	zoom-zoomed-style .default:n = {draw=\g__nsk_style_block_border_color_tl, ultra~thick},
+
+	zoom-zoomed-fill .tl_gset:N = \g__nsk_style_zoom_zoomed_fill_tl,
+	zoom-zoomed-fill .initial:n = {none},
+	zoom-zoomed-fill .default:n = {none},
+
+	zoom-connecting-path .tl_gset:N = \g__nsk_style_zoom_connecting_path_tl,
+	zoom-connecting-path .initial:n = {\draw[\g__nsk_style_zoom_connecting_style_tl] (tikzspyonnode) -- (tikzspyinnode);},
+	zoom-connecting-path .default:n = {\draw[\g__nsk_style_zoom_connecting_style_tl] (tikzspyonnode) -- (tikzspyinnode);},
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

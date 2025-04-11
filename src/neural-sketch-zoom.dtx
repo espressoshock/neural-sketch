@@ -29,6 +29,8 @@
 \RequirePackage{tikz}
 \RequirePackage{expl3}
 
+\usetikzlibrary{spy,}
+
 \ExplSyntaxOn
 % Global counter for auto-generated zoom IDs
 \int_new:N \g_nsk_zoom_counter_int
@@ -39,59 +41,52 @@
 % -----------------------------------------------------------------------------
 \keys_define:nn { nsk / zoom }
 {
-	% type: token
 	type .tl_set:N = \l_nsk_zoom_type_tl,
-	type .initial:n = {circle},
-	type .default:n = {circle},
+	type .initial:V = \g__nsk_style_zoom_type_tl,
+	type .default:V = \g__nsk_style_zoom_type_tl,
 
 	at .tl_set:N = \l_nsk_zoom_at_tl,
-	at .initial:n = {},
-	at .default:n = {},
+	at .initial:V = \g__nsk_style_zoom_at_tl,
+	at .default:V = \g__nsk_style_zoom_at_tl,
 
 	to .tl_set:N = \l_nsk_zoom_to_tl,
-	to .initial:n = {},
-	to .default:n = {},
+	to .initial:V = \g__nsk_style_zoom_to_tl,
+	to .default:V = \g__nsk_style_zoom_to_tl,
 
-	% id: token; if blank, will be auto-generated
 	id .tl_set:N = \l_nsk_zoom_id_tl,
 	id .initial:n = { },
 
-	% magnification: floating point value
 	magnification .tl_set:N = \l_nsk_zoom_magnification_tl,
-	magnification .initial:n = {4},
-	magnification .default:n = {4},
+	magnification .initial:V = \g__nsk_style_zoom_magnification_tl,
+	magnification .default:V = \g__nsk_style_zoom_magnification_tl,
 
-	% size: dimension value
 	size .dim_set:N = \l_nsk_zoom_size_dim,
-	size .initial:n = {2cm},
-	size .default:n = {2cm},
+	size .initial:V = \g__nsk_style_zoom_size_dim,
+	size .default:V = \g__nsk_style_zoom_size_dim,
 
-	% callout-style: token list for the callout node
 	callout-style .tl_set:N = \l_nsk_zoom_callout_style_tl,
-	callout-style .initial:n = {thick, densely~dashed},
-	callout-style .default:n = {thick, densely~dashed},
+	callout-style .initial:V = \g__nsk_style_zoom_callout_style_tl,
+	callout-style .default:V = \g__nsk_style_zoom_callout_style_tl,
 
 	connecting-style .tl_set:N = \l_nsk_zoom_connecting_style_tl,
-	connecting-style .initial:n = {\g__nsk_style_block_border_color_tl},
-	connecting-style .default:n = {\g__nsk_style_block_border_color_tl},
+	connecting-style .initial:V = \g__nsk_style_zoom_connecting_style_tl,
+	connecting-style .default:V = \g__nsk_style_zoom_connecting_style_tl,
 
 	callout-border-color .tl_set:N = \l_nsk_zoom_callout_border_color_tl,
-	callout-border-color .initial:n = {\g__nsk_style_block_border_color_tl},
-	callout-border-color .default:n = {\g__nsk_style_block_border_color_tl},
+	callout-border-color .initial:V = \g__nsk_style_zoom_callout_border_color_tl,
+	callout-border-color .default:V = \g__nsk_style_zoom_callout_border_color_tl,
 
-	% zoomed-style: token list for the zoomed node
 	zoomed-style .tl_set:N = \l_nsk_zoom_zoomed_style_tl,
-	zoomed-style .initial:n = {draw=\g__nsk_style_block_border_color_tl, ultra~thick},
-	zoomed-style .default:n = {draw=\g__nsk_style_block_border_color_tl, ultra~thick},
+	zoomed-style .initial:V = \g__nsk_style_zoom_zoomed_style_tl,
+	zoomed-style .default:V = \g__nsk_style_zoom_zoomed_style_tl,
 
 	zoomed-fill .tl_set:N = \l_nsk_zoom_zoomed_fill_tl,
-	zoomed-fill .initial:n = {none},
-	zoomed-fill .default:n = {none},
+	zoomed-fill .initial:V = \g__nsk_style_zoom_zoomed_fill_tl,
+	zoomed-fill .default:V = \g__nsk_style_zoom_zoomed_fill_tl,
 
-	% connecting-path: token list (e.g., TikZ options)
 	connecting-path .tl_set:N = \l_nsk_zoom_connecting_path_tl,
-	connecting-path .initial:n = {\draw[\l_nsk_zoom_connecting_style_tl] (tikzspyonnode) -- (tikzspyinnode);},
-	connecting-path .default:n = {\draw[\l_nsk_zoom_connecting_style_tl] (tikzspyonnode) -- (tikzspyinnode);},
+	connecting-path .initial:V = \g__nsk_style_zoom_connecting_path_tl,
+	connecting-path .default:V = \g__nsk_style_zoom_connecting_path_tl,
 }
 
 % -----------------------------------------------------------------------------
