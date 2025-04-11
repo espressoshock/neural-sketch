@@ -256,6 +256,22 @@
 	zoom-connecting-path .tl_gset:N = \g__nsk_style_zoom_connecting_path_tl,
 	zoom-connecting-path .initial:n = {\draw[\g__nsk_style_zoom_connecting_style_tl] (tikzspyonnode) -- (tikzspyinnode);},
 	zoom-connecting-path .default:n = {\draw[\g__nsk_style_zoom_connecting_style_tl] (tikzspyonnode) -- (tikzspyinnode);},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% nsk / Measure
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+	measure-axis .tl_gset:N = \g__nsk_style_measure_axis_tl,
+	measure-axis .initial:n = {horizontal},
+	measure-axis .default:n = {horizontal},
+
+	measure-from .tl_gset:N = \g__nsk_style_measure_from_tl,
+	measure-from .initial:n = {},
+	measure-from .default:n = {},
+
+	measure-to .tl_gset:N = \g__nsk_style_measure_to_tl,
+	measure-to .initial:n = {},
+	measure-to .default:n = {},
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
