@@ -53,28 +53,30 @@
 \dim_new:N \l__nsk_tmp_dim
 \cs_new_protected_nopar:Npn \nsk__container_parse_pos_value:nn #1#2
 {
-% #1 = the user’s "right=1cm of X" or "above=2mm of Y" ...
-% #2 = the container’s padding dimension (e.g. 3mm)
+% #1 = the user's "right=1cm of X" or "above=2mm of Y" or "below right=1cm of Z" or "below and right=2cm of Z" ...
+% #2 = the container's padding dimension (e.g. 3mm)
 
 % Save the raw pos string to \l_nsk_container_pos_tl
 \tl_set:Nx \l_nsk_container_pos_tl {#1}
 
-% Split at '=' (only if the user wrote e.g. "right=1cm of X").
-\seq_set_split:Nnn \l_tmpa_seq {=}{#1}
+% Replace any "and" with spaces in the position string
+\tl_set:Nx \l_tmpp_pos_tl {#1}
+\tl_replace_all:Nnn \l_tmpp_pos_tl {and} { }
+\tl_trim_spaces:N \l_tmpp_pos_tl
 
-% If we have exactly 2 items, item 1 is "right" and item 2 is "1cm of X".
+% Split at '=' (only if the user wrote e.g. "right=1cm of X").
+\seq_set_split:Nnn \l_tmpa_seq {=}{\l_tmpp_pos_tl}
+
+% If we have exactly 2 items, item 1 is "right" or "below right" and item 2 is "1cm of X".
 \int_compare:nNnT { \seq_count:N \l_tmpa_seq } = {2}
 {
-% The direction (left/right/above/below)
+% The direction (left/right/above/below/above right/etc.)
 \tl_set:Nx \l_tmpa_tl { \seq_item:Nn \l_tmpa_seq {1} }
 \tl_trim_spaces:N \l_tmpa_tl
 
 % The distance+node portion
 \tl_set:Nx \l_tmpb_tl { \seq_item:Nn \l_tmpa_seq {2} }
 \tl_trim_spaces:N \l_tmpb_tl
-
-\tl_show:N \l_tmpa_tl
-\tl_show:N \l_tmpb_tl
 
 % split at " of "
 \seq_set_split:Nnx \l_tmpb_seq {of}{\l_tmpb_tl}
@@ -95,22 +97,17 @@
 
 \tl_set:Nx \l_tmpd_tl { \seq_item:Nn \l_tmpb_seq {2} }
 \tl_trim_spaces:N \l_tmpd_tl
-\tl_show:N \l_tmpc_tl
-\tl_show:N \l_tmpd_tl
-
 
 % Convert "1cm" to a dimension variable
 \dim_set:Nn \l__nsk_tmp_dim {\tl_use:N \l_tmpc_tl}
-\dim_show:N \l__nsk_tmp_dim
 % Now add the container's padding
 \dim_add:Nn \l__nsk_tmp_dim  { #2 }
 \dim_add:Nn \l__nsk_tmp_dim  { #2 }
 \dim_add:Nn \l__nsk_tmp_dim  { #2 }
-\dim_show:N \l__nsk_tmp_dim
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % String buld
-% Rebuild "right=(dist+pad) of X"
+% Rebuild "right=(dist+pad) of X" or "below right=(dist+pad) of X"
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \tl_set:Nx \l_nsk_container_pos_tl
 {
@@ -137,18 +134,23 @@
 		{\seq_set_split:Nnx \l_tmpa_seq {=} { \l_nsk_container_last_pos_s_tl }}
 
 		\tl_set:Nx \l_tmpp_anc_tl {\seq_item:Nn \l_tmpa_seq {1}}
+		\tl_trim_spaces:N \l_tmpp_anc_tl
+		
+		% Replace "and" with space if present
+		\tl_replace_all:Nnn \l_tmpp_anc_tl {and} { }
+		\tl_trim_spaces:N \l_tmpp_anc_tl
 		\tl_show:N \l_tmpp_anc_tl
 
 		\str_case:Vn \l_tmpp_anc_tl
 		{
 			{right}{\tl_set:Nn \l_nsk_container_anchor_tl {west}}
-				{left}{\tl_set:Nn \l_nsk_container_anchor_tl {east}}
-				{below}{\tl_set:Nn \l_nsk_container_anchor_tl {north}}
-				{above}{\tl_set:Nn \l_nsk_container_anchor_tl {south}}
-				{above~right}{\tl_set:Nn \l_nsk_container_anchor_tl {south~west}}
-				{above~left}{\tl_set:Nn \l_nsk_container_anchor_tl {south~east}}
-				{below~left}{\tl_set:Nn \l_nsk_container_anchor_tl {north~east}}
-				{below~right}{\tl_set:Nn \l_nsk_container_anchor_tl {south~west}}
+			{left}{\tl_set:Nn \l_nsk_container_anchor_tl {east}}
+			{below}{\tl_set:Nn \l_nsk_container_anchor_tl {north}}
+			{above}{\tl_set:Nn \l_nsk_container_anchor_tl {south}}
+			{above~right}{\tl_set:Nn \l_nsk_container_anchor_tl {south~west}}
+			{above~left}{\tl_set:Nn \l_nsk_container_anchor_tl {south~east}}
+			{below~left}{\tl_set:Nn \l_nsk_container_anchor_tl {north~east}}
+			{below~right}{\tl_set:Nn \l_nsk_container_anchor_tl {north~west}}
 		}
 		{
 			% add default
@@ -171,21 +173,25 @@
 	\str_case:Vn \l_nsk_container_anchor_tl
 	{
 		{north}       { \tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl } }
-			{south}       { \tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } }
-			{east}        { \tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl } }
-			{west}        { \tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl } }
-			{north~east}  {
-				\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl }
-				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl }
-			}
-			{north~west}  {
-				\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl }
-				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl }
-			}
-			{south~east}  { \tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl }
-				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } }
-			{south~west}  { \tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl }
-				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } }
+		{south}       { \tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } }
+		{east}        { \tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl } }
+		{west}        { \tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl } }
+		{north east}  {
+			\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl }
+			\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl }
+		}
+		{north west}  {
+			\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl }
+			\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl }
+		}
+		{south east}  { 
+			\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl }
+			\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } 
+		}
+		{south west}  { 
+			\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl }
+			\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } 
+		}
 	}
 }
 
