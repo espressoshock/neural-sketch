@@ -155,6 +155,7 @@
 	bend-type / none   .code:n = { \tl_set:Nn \l__nsk_connect_bend_type_tl {none} },
 	bend-type / single .code:n = { \tl_set:Nn \l__nsk_connect_bend_type_tl {single} },
 	bend-type / double  .code:n = { \tl_set:Nn \l__nsk_connect_bend_type_tl {double} },
+	bend-type / straight  .code:n = { \tl_set:Nn \l__nsk_connect_bend_type_tl {straight} },
 	bend-type .initial:n = { none },
 
 	% bend direction ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -651,8 +652,36 @@ arc[
 					{ \dim_use:N \l__nsk_connect_bend_amount_dim ) -| }
 				}
 			}
-	}
+			{straight}
+			{
+				\str_case:Vn { \l_tmpa_tl }
+				{
+					{left}
+						{
+							\tl_set:Nx \l_nsk_connect_route_tl
+							{ -- ++(-\dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) -- (\dim_use:N \l_cx_to_dim + \dim_use:N \l__nsk_connect_bend_amount_dim, \dim_use:N \l_cy_to_dim) -- }
+						}
+						{right}
+						{
+							\tl_set:Nx \l_nsk_connect_route_tl
+							{ -- ++(\dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) -- (-\dim_use:N \l_cx_to_dim + \dim_use:N \l__nsk_connect_bend_amount_dim, \dim_use:N \l_cy_to_dim) -- }
+						}
 
+						{down}
+						{
+							\tl_set:Nx \l_nsk_connect_route_tl
+							{ -- ++(0, -\dim_use:N \l__nsk_connect_bend_amount_dim) -- (\dim_use:N \l_cx_to_dim,  \dim_use:N \l__nsk_connect_bend_amount_dim + \dim_use:N \l_cy_to_dim) -- }
+						}
+
+						{up}
+						{
+							\tl_set:Nx \l_nsk_connect_route_tl
+							{ -- ++(0, \dim_use:N \l__nsk_connect_bend_amount_dim) -- (\dim_use:N \l_cx_to_dim, \dim_use:N \l_cy_to_dim - \dim_use:N \l__nsk_connect_bend_amount_dim ) -- }
+						}
+				}
+
+			}
+	}
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
