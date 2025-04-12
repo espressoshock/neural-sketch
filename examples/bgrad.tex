@@ -1,0 +1,63 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-border-radius=1.5mm,
+  container-padding=2mm,
+  block-width=2.5cm,
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\foreach \v[count=\i] in {r, s, t} {
+			\nskBlock[
+				type=circle, width=1cm, id=d\v,
+				text-center={\large$\frac{\partial{z}}{\partial{\v}}$},
+				text-north=\i, last-pos-s={right=.5cm}, text-north-style={xshift=-3mm}
+			]
+		}
+	\nskBlock[id=gc, text-center={grad\_fn \textbf{C}}, pos={below=of \nskID!{2}}, fill=nskOrange]
+	\nskBlock[id=ga, text-center={grad\_fn \textbf{A}}, last-pos={above left=3cm and 0cm}, fill=nskMainAccent]
+	\nskBlock[id=gb, text-center={grad\_fn \textbf{B}}, last-pos={right=2.5cm}, fill=nskSecondaryAccent]
+
+	\nskBlock[
+		type=circle, width=1cm, id=dx,
+		text-center={\large$\frac{\partial{z}}{\partial{x}}$},
+		pos={above=of ga}, fill=nskMainAccent,
+	]
+	\nskBlock[
+		type=circle, width=1cm, id=dy,
+		text-center={\large$\frac{\partial{z}}{\partial{y}}$},
+		pos={above=of gb},  fill=nskSecondaryAccent,
+	]
+
+	\foreach \v in {r, s, t} {\nskConnect[from=gc, to=d\v, bend-type=double]}
+	\nskConnect[from=dr, to=ga, bend-type=double]
+	\foreach \v in {s, t} {\nskConnect[from=d\v, to=gb, bend-type=double]}
+	\foreach \f/\t in {a/x, b/y} {\nskConnect[from=g\f, to=d\t]}
+
+	% annotations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\nskAnnotate[
+		connect-to=dy, pos={right=2.7cm of dy}, anchor-from=west,
+		header={Leaf Nodes}, title={AccumulateGrad},
+		text=Leaf nodes,
+		fill=none, border-type=none,
+	]
+	\nskMeasure[from=gb.east, to=\nskID{1}.west]
+	\nskAnnotate[
+		connect-to=gb, pos={right=\nskDistance of gb}, anchor-from=west,
+		header={Dependencies}, title={Decrement \& Dispatch},
+		text={Dec. deps, queue if ready.},
+		fill=none, border-type=none,
+	]
+	\nskMeasure[from=gc.east, to=\nskID{1}.west]
+	\nskAnnotate[
+		connect-to=gc, pos={right=\nskDistance of gc}, anchor-from=west,
+		header=Outputs, title=Grad Mapping, text=One grad per input.,
+		fill=none, border-type=none,
+	]
+
+\end{nskFigure}
+\end{document}
