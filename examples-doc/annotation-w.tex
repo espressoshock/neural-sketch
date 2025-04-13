@@ -1,0 +1,56 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-distance=2cm and 4cm,
+  annotate-border-type=dashed,
+  block-outer-border-type=solid,
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+\begin{document}
+
+\def\a{outer-border-color=nskMainAccent!70!nskBg}
+\def\b{outer-border-color=nskSecondaryAccent!70!nskBg}
+\def\c{outer-border-color=nskPink!70!nskBg}
+\def\d{outer-border-color=nskOrange!70!nskBg}
+
+\begin{nskFigure}[]
+
+	\nskBlock*[id=a, text-center=A, \a]
+	\nskBlock*[id=b, text-center=B, last-pos=right, \b]
+	\nskBlock*[id=c, text-center=C, last-pos=right, \c]
+	\nskBlock*[id=d, text-center=C, last-pos=right, \d]
+
+	\nskAnnotate[
+		connect-to=a.north, anchor-from=south, pos={above=of a},
+		header=Explanation, title=Alignment: a,
+		text={Longer annotations text can benefit from automatic text wrapping.},
+		text-align=left
+	]
+
+	\nskAnnotate[
+		connect-to=b.north, anchor-from=south, pos={above=5cm of b},
+		header=Explanation, title=Alignment: a,
+		text={Longer annotations text can benefit from automatic text wrapping.},
+		text-align=left, width=0cm,
+	]
+
+	\nskAnnotate[
+		connect-to=c.north, anchor-from=south, pos={above=of c},
+		header=Explanation, title=Alignment: a,
+		text={Longer annotations text can benefit from automatic text wrapping.},
+		text-align=left, width=3cm
+	]
+
+	\nskAnnotate[
+		connect-to=d.north, anchor-from=south, pos={above=of d},
+		header=Explanation, title=Alignment: a,
+		text={Longer annotations \\ text can benefit \\ from automatic \\ text wrapping.},
+		text-align=left, width=3cm
+	]
+
+
+
+\end{nskFigure}
+\end{document}
