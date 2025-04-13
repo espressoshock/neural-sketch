@@ -280,7 +280,7 @@
 	\nsk__annotate_build_text:
 
 	\tl_set:Nx \l__nsk_annotate_this_id_tl
-	{nskAnnotation\int_use:N \g__nsk_annotation_counter_int}
+	{annotation\int_use:N \g__nsk_annotation_counter_int}
 
 	\nsk__annotate_get_position:
 
@@ -296,6 +296,7 @@
 			draw=\l__nsk_annotate_border_color_tl,
 			fill=\l__nsk_annotate_fill_tl,
 			minimum~width=\dim_use:N \l__nsk_annotate_width_dim,
+			text~width=\dim_use:N \l__nsk_annotate_width_dim,
 
 			align=\l__nsk_annotate_text_align_tl,
 			rounded~corners=\l__nsk_annotate_border_radius_dim,
