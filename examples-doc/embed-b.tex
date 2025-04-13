@@ -1,0 +1,27 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-width=2cm, block-height=2cm,
+  block-distance=1.5cm,
+  container-border-type=dashed,
+  container-fill=nskPink!30!nskBg,
+  container-border-color=nskPink,
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[text-north=Variable Embed B-Radii, text-north-loc=west]{
+		\foreach \r in {0,...,4} {
+				\tikzmath{int \oor, \r; \oor = \r+1;}
+				\nskBlock[
+					last-pos-s=right, text-north=\r mm, text-south=\oor mm,
+					embed-gfx={../assets/in.png}, embed-border-radius={\r mm},
+          border-radius={\oor mm},
+				]
+			}
+	}
+\end{nskFigure}
+\end{document}
