@@ -1,0 +1,33 @@
+
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-width=2cm, block-height=2cm,
+  block-distance=1.5cm,
+  container-border-type=dashed,
+  container-fill=nskMainAccent!30!nskBg,
+  container-border-color=nskMainAccent,
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskContainer[text-north={Raster Block Embedding}, text-north-loc=west]{
+		\foreach \shape in
+			{rectangle, circle, diamond, trapezium, semicircle}{
+				\nskBlock[
+					type=\shape,
+          text-south=\shape, text-south-style={yshift=-2mm},
+					last-pos-s=right,
+					embed={
+							\node[]
+							{\includegraphics[width=4cm, height=2cm]{../assets/in.png};};
+          },
+				]
+			}
+	}
+\end{nskFigure}
+\end{document}
