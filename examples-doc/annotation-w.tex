@@ -24,28 +24,28 @@
 
 	\nskAnnotate[
 		connect-to=a.north, anchor-from=south, pos={above=of a},
-		header=Explanation, title=Alignment: a,
+		header=Explanation, title=Default,
 		text={Longer annotations text can benefit from automatic text wrapping.},
 		text-align=left
 	]
 
 	\nskAnnotate[
 		connect-to=b.north, anchor-from=south, pos={above=5cm of b},
-		header=Explanation, title=Alignment: a,
+    header=Explanation, title={One-line ($width=0cm$)},
 		text={Longer annotations text can benefit from automatic text wrapping.},
 		text-align=left, width=0cm,
 	]
 
 	\nskAnnotate[
 		connect-to=c.north, anchor-from=south, pos={above=of c},
-		header=Explanation, title=Alignment: a,
+		header=Explanation, title=Fixed Width,
 		text={Longer annotations text can benefit from automatic text wrapping.},
 		text-align=left, width=3cm
 	]
 
 	\nskAnnotate[
 		connect-to=d.north, anchor-from=south, pos={above=of d},
-		header=Explanation, title=Alignment: a,
+		header=Explanation, title=Manual Line Break,
 		text={Longer annotations \\ text can benefit \\ from automatic \\ text wrapping.},
 		text-align=left, width=3cm
 	]
