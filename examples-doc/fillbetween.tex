@@ -1,118 +1,47 @@
 \documentclass{standalone}
-\standaloneconfig{border=10mm}
+\standaloneconfig{border=5mm}
 
-\usepackage[]{neural-sketch}
+\usepackage[
+  container-border-type=dashed,
+  container-fill=nskSecondaryAccent!30!nskBg,
+  container-border-color=nskSecondaryAccent,
+  dark-mode=false,
+]{neural-sketch}
 \nskUseModule{*}
+
 
 \begin{document}
 \begin{nskFigure}[]
-	\nskContainer[
-		id=stcont,
-		text-north=Straight,
-		text-north-loc=west,
-		border-type=dashed,
-		fill=nskMainAccent!20,
-		border-color=nskMainAccent,
-	]{
-		\nskBlock[
-			text-center={hello},
-			id=ablock,
-			width=2cm, height=1cm,
-			border-radius=0mm,
-		]
-		\nskBlock[
-			id=bblock,
-			text-center={hello},
-			pos={below=.8cm of ablock},
-			border-radius=0mm,
-		]
+	\nskContainer[text-north=Straight, text-north-loc=west,]{
+		\nskBlock[id=ablock, text-center=\Large A, width=2cm, height=1cm, border-radius=0mm,]
+		\nskBlock[id=bblock, text-center=B, last-pos={below=.8cm}, border-radius=0mm,]
 		\nskFillBetween[
-			from=ablock,
-			to=bblock,
-			fill=blue!20,
-			draw=blue!50,
-			opacity=0.4,
-			edge=straight,
-			orientation=vertical,
-			corner-offset=0mm,
+			from=ablock, to=bblock,
+			edge=straight,orientation=vertical,corner-offset=0mm,
 		]
-		\nskBlock[
-			id=ablock,
-			text-center={hello},
-			width=1cm, height=2cm,
-			border-radius=0mm,
-			last-pos={above right=-.5cm and 1.5cm},
-		]
-		\nskBlock[
-			id=bblock,
-			text-center={hello},
-			pos={right=.8cm of ablock},
-			border-radius=0mm,
-		]
+		\nskBlock[id=ablock, text-center=\Large A, width=1cm, height=2cm, border-radius=0mm, last-pos={above right=-.5cm and 1.5cm},]
+		\nskBlock[id=bblock, text-center=B, last-pos={right=.8cm}, border-radius=0mm,]
 		\nskFillBetween[
-			from=ablock,
-			to=bblock,
-			fill=blue!20,
-			draw=blue!50,
-			opacity=0.4,
-			edge=straight,
-			orientation=horizontal,
-			corner-offset=0mm,
+			from=ablock, to=bblock,
+			edge=straight,orientation=horizontal,corner-offset=0mm,
 		]
 	}
 	\nskContainer[
-		id=cucont,
-		text-north=Curved,
-		text-north-loc=west,
-		border-type=dashed,
-		fill=nskMainAccent!20,
-		border-color=nskMainAccent,
-		pos={right=0cm of stcont},
+	  text-north=Straight,text-north-loc=west,last-pos=right,
+		fill=nskMainAccent!20!nskBg, border-color=nskMainAccent,
 	]{
-		\nskBlock[
-			type=rectangle,
-			text-center={hello},
-			id=cblock,
-			width=2cm, height=1cm,
-		]
-		\nskBlock[
-			type=rectangle,
-			text-center={hello},
-			id=dblock,
-			width=1cm, height=1cm,
-			pos={below left=.8cm and -3mm of cblock},
-		]
+		\nskBlock[id=cblock, text-center=\Large C, width=2cm, height=1cm,]
+		\nskBlock[id=dblock,text-center=D, width=1cm, height=1cm, last-pos={below left=.8cm and -3mm},]
 		\nskFillBetween[
-			from=cblock,
-			to=dblock,
-			fill=blue!20,
-			draw=blue!50,
-			opacity=0.4,
-			edge=curved,
-			orientation=vertical,
+			from=cblock,to=dblock,
+			edge=curved,orientation=vertical,
 		]
 
-		\nskBlock[
-			id=eblock,
-			text-center={hello},
-			width=1cm, height=2cm,
-			last-pos={above right=-1.5cm and 2cm},
-		]
-		\nskBlock[
-			id=fblock,
-			text-center={hello},
-			width=1cm, height=1cm,
-			pos={right=.8cm of eblock},
-		]
-
+		\nskBlock[id=eblock, text-center=\Large E, width=1cm, height=2cm, last-pos={above right=-1.5cm and 2cm},]
+		\nskBlock[id=fblock, text-center=F, width=1cm, height=1cm, last-pos={right=.8cm}, ]
 		\nskFillBetween[
-			from=eblock,
-			to=fblock,
-			fill=blue!20,
-			draw=blue!50,
-			opacity=0.4,
-			edge=curved,
-			orientation=horizontal,
+			from=eblock,to=fblock,
+			edge=curved, orientation=horizontal,
 		]
 	}
 \end{nskFigure}
