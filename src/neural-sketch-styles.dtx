@@ -41,6 +41,13 @@
 \keys_define:nn { nsk / style }
 {
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% nsk / figure
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	block-distance .tl_gset:N = \g__nsk_style_figure_block_distance_tl,
+	block-distance .initial:n = {1cm and 1cm},
+	block-distance .default:n = {1cm and 1cm},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% nsk / Block
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	block-fill .tl_gset:N = \g__nsk_style_block_fill_tl,
@@ -187,6 +194,42 @@
 	shorten-to .dim_gset:N = \g__nsk_style_connect_shorten_to_dim,
 	shorten-to .initial:n  = {0pt},
 	shorten-to .default:n  = {0pt},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% fillbetween
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	fillbetween-fill .tl_gset:N = \g__nsk_style_fillbetween_fill_tl,
+	fillbetween-fill .initial:n = {nskStrongBlue!50!nskBg},
+	fillbetween-fill .default:n = {nskStrongBlue!50!nskBg},
+
+	fillbetween-border-color .tl_gset:N = \g__nsk_style_fillbetween_draw_tl,
+	fillbetween-border-color .initial:n = {nskStrongBlue!80},
+	fillbetween-border-color .default:n = {nskStrongBlue!80},
+
+	fillbetween-opacity .fp_gset:N = \g__nsk_style_fillbetween_opacity_fp,
+	fillbetween-opacity .initial:n = {0.4},
+	fillbetween-opacity .default:n = {0.4},
+
+	fillbetween-edge .tl_gset:N = \g__nsk_style_fillbetween_edge_tl,
+	fillbetween-edge .initial:n = {straight},
+	fillbetween-edge .default:n = {straight},
+
+	fillbetween-orientation .tl_gset:N = \g__nsk_style_fillbetween_orient_tl,
+	fillbetween-orientation .initial:n = {vertical},
+	fillbetween-orientation .default:n = {vertical},
+
+	fillbetween-out .tl_gset:N = \g__nsk_style_fillbetween_out_tl,
+	fillbetween-out .initial:n = {},
+	fillbetween-out .default:n = {},
+
+	fillbetween-in .tl_gset:N = \g__nsk_style_fillbetween_in_tl,
+	fillbetween-in .initial:n = {},
+	fillbetween-in .default:n = {},
+
+	fillbetween-corner-offset .dim_gset:N = \g__nsk_style_fillbetween_corner_offset_dim,
+	% reference existing block border radius
+	fillbetween-corner-offset .initial:V = \g__nsk_style_block_border_radius_dim,
+	fillbetween-corner-offset .default:V = \g__nsk_style_block_border_radius_dim,
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Outer-border
@@ -376,8 +419,8 @@
 	annotate-border-radius .default:n = {1mm},
 
 	annotate-width .dim_gset:N = \g__nsk_style_annotate_width_dim,
-	annotate-width .initial:n  = {0cm},
-	annotate-width .default:n  = {0cm},
+	annotate-width .initial:n  = {4.5cm},
+	annotate-width .default:n  = {4.5cm},
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -387,10 +430,11 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \prop_new:N \g_nsk_pattern_aliases_prop
 
-\prop_put:Nnn \g_nsk_pattern_aliases_prop { hlines } { horizontal\space lines }
-\prop_put:Nnn \g_nsk_pattern_aliases_prop { vlines } { vertical\space lines }
-\prop_put:Nnn \g_nsk_pattern_aliases_prop { hatch } { north\space east\space lines }
-\prop_put:Nnn \g_nsk_pattern_aliases_prop { rhatch } { north\space west\space lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { hlines } { horizontal~lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { vlines } { vertical~lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { hatch } { north~east~lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { rhatch } { north~west~lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { hatchd } { crosshatch~dots}
 
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

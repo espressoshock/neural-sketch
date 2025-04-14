@@ -383,8 +383,12 @@ every~node/.append~style={text=c__nsk_principal},
 	pattern .default:n = { },
 
 	pattern-color .tl_set:N = \l_nsk_block_pattern_color_tl,
-	pattern-color .initial:n = { },
-	pattern-color .default:n = { },
+	pattern-color .initial:n = {nskFg},
+	pattern-color .default:n = {nskFg},
+
+	pattern-opacity .tl_set:N = \l_nsk_block_pattern_opacity_tl,
+	pattern-opacity .initial:n = {.2},
+	pattern-opacity .default:n = {.2},
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Fade
@@ -798,14 +802,14 @@ every~node/.append~style={text=c__nsk_principal},
 \bool_if:NTF \g_nsk_wrap_left_bool
 {
 	\tl_set:Nn \l_nsk_block_anchor_tl {north~west}
-  \tl_set:Nn \l_nsk_block_pos_tl {below~left=0cm~of~\nskID{2}}
+	\tl_set:Nn \l_nsk_block_pos_tl {below~left=0cm~of~\nskID{2}}
 
 	\bool_gset_false:N \g_nsk_wrap_left_bool
 }{
 	\bool_if:NTF \g_nsk_wrap_right_bool
 	{
 		\tl_set:Nn \l_nsk_block_anchor_tl {north~east}
-    \tl_set:Nn \l_nsk_block_pos_tl {below~right=0cm~of~\nskID{2}}
+		\tl_set:Nn \l_nsk_block_pos_tl {below~right=0cm~of~\nskID{2}}
 
 		\bool_gset_false:N \g_nsk_wrap_right_bool
 	}{}
@@ -887,6 +891,17 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 \tl_if_blank:VTF \l_nsk_block_pattern_tl
 { }
 {
+
+  \tl_if_blank:VTF \l_nsk_text_center_style_tl
+  {
+    % add default 
+    \tl_put_right:No \l_nsk_text_center_style_tl {
+      fill=\l_nsk_block_fill_tl, fill~opacity=.7, text~opacity=1, rounded~corners,
+      inner~sep=.5mm,
+    }
+  }
+  {}
+
 	% something like:
 	%   postaction={pattern=..., pattern color=...}
 	\tl_clear_new:N \l_tmpb_tl
@@ -894,8 +909,11 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	\tl_if_blank:VTF \l_nsk_block_pattern_color_tl
 	{ }
 	{
-		\tl_put_right:Nx \l_tmpb_tl { pattern\space color=\l_nsk_block_pattern_color_tl, }
+		\tl_put_right:Nx \l_tmpb_tl { pattern~color=\l_nsk_block_pattern_color_tl, }
 	}
+
+	% pattern-opacity
+	\tl_put_right:Nx \l_tmpb_tl {opacity=\l_nsk_block_pattern_opacity_tl, }
 
 	% append to post-actions
 	\tl_put_right:Nx \l_tmp_post_acts {\l_tmpb_tl}
@@ -1267,14 +1285,14 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Wraps (resets)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand {\nskWrap} {t!o}{
+\NewDocumentCommand {\nskWrapUnder} {t!o}{
 	\IfBooleanTF{#1}{
-		\nskMark[pos={below~right=\tl_use:N \g__nsk_style_figure_block_distance_tl~of~#2}]
+		\nskMark[pos={below~right=\tl_use:N \g__nsk_style_figure_block_distance_tl~and~0cm~of~#2}]
 
 		% set wrap flag
 		\bool_gset_true:N \g_nsk_wrap_right_bool
 	}{
-		\nskMark[pos={below~left=\tl_use:N \g__nsk_style_figure_block_distance_tl~of~#2}]
+		\nskMark[pos={below~left=\tl_use:N \g__nsk_style_figure_block_distance_tl~and~0cm~of~#2}]
 
 		% set wrap flag
 		\bool_gset_true:N \g_nsk_wrap_left_bool
