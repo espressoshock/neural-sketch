@@ -794,6 +794,23 @@ every~node/.append~style={text=c__nsk_principal},
 % id-ref ---------------------------------------------------
 \tl_put_right:No \l_tmps_tl { name=\l_nsk_block_id_tl,}
 
+% wrapping --
+\bool_if:NTF \g_nsk_wrap_left_bool
+{
+	\tl_set:Nn \l_nsk_block_anchor_tl {north~west}
+  \tl_set:Nn \l_nsk_block_pos_tl {below~left=0cm~of~\nskID{2}}
+
+	\bool_gset_false:N \g_nsk_wrap_left_bool
+}{
+	\bool_if:NTF \g_nsk_wrap_right_bool
+	{
+		\tl_set:Nn \l_nsk_block_anchor_tl {north~east}
+    \tl_set:Nn \l_nsk_block_pos_tl {below~right=0cm~of~\nskID{2}}
+
+		\bool_gset_false:N \g_nsk_wrap_right_bool
+	}{}
+}
+
 % {x,y} pos ------------------------------------------------
 \tl_if_blank:VTF \l_nsk_block_pos_tl
 {
@@ -806,6 +823,7 @@ every~node/.append~style={text=c__nsk_principal},
 	% i.e., [right=2cm of otherNode]
 	\tl_put_right:No \l_tmps_tl { \l_nsk_block_pos_tl, }
 }
+
 
 \tl_if_blank:VF \l_nsk_block_anchor_tl
 {
@@ -834,6 +852,7 @@ every~node/.append~style={text=c__nsk_principal},
 \tl_if_eq:NnTF \l_nsk_block_fade_tl { none }
 {\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}}
 {\tl_put_right:No \l_tmps_tl {fill=nskBg,}}
+
 
 % stacks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \bool_if:NT \l_nsk_block_stack_bool
@@ -1250,15 +1269,15 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand {\nskWrap} {t!o}{
 	\IfBooleanTF{#1}{
-		\nskMark[pos={below~right=\tl_use:N \g__nsk_style_figure_block_distance_tl-.5mm~of~#2}, marker=x]
+		\nskMark[pos={below~right=\tl_use:N \g__nsk_style_figure_block_distance_tl~of~#2}]
 
-    % set wrap flag
-    \bool_gset_true:N \g_nsk_wrap_right_bool
+		% set wrap flag
+		\bool_gset_true:N \g_nsk_wrap_right_bool
 	}{
-		\nskMark[pos={below~left=\tl_use:N \g__nsk_style_figure_block_distance_tl+.5mm~of~#2}, marker=o]
+		\nskMark[pos={below~left=\tl_use:N \g__nsk_style_figure_block_distance_tl~of~#2}]
 
-    % set wrap flag
-    \bool_gset_true:N \g_nsk_wrap_left_bool
+		% set wrap flag
+		\bool_gset_true:N \g_nsk_wrap_left_bool
 	}
 }
 

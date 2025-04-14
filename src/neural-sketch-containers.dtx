@@ -381,6 +381,31 @@
 	% (b) Parse recognized container keys + store unknown keys
 	\keys_set:nn {nsk / container}{#1}
 
+	% wrapping --
+	\bool_if:NTF \g_nsk_wrap_left_bool
+	{
+		\tl_set:Nn \l_nsk_container_anchor_tl {north~west}
+		\tl_set:Nn \l_nsk_container_pos_tl { % account for shadow
+			below~right=\l_nsk_container_padding_tl+.5mm~and~
+			\l_nsk_container_padding_tl+0mm
+			~of~\nskID{1}
+		}
+
+		\bool_gset_false:N \g_nsk_wrap_left_bool
+	}{
+		\bool_if:NTF \g_nsk_wrap_right_bool
+		{
+			\tl_set:Nn \l_nsk_container_anchor_tl {north~east}
+			\tl_set:Nn \l_nsk_container_pos_tl { % account for shadow
+				below~right=\l_nsk_container_padding_tl+.5mm~and~
+				-\l_nsk_container_padding_tl+0mm
+				~of~\nskID{1}
+			}
+
+			\bool_gset_false:N \g_nsk_wrap_right_bool
+		}{}
+	}
+
 	% --- Process relative positioning:
 	\tl_if_blank:VTF \l_nsk_container_last_pos_s_tl
 	{ \nsk__process_container_last_pos: }
@@ -390,18 +415,6 @@
 	%     get recognized by nsk / group (or remain unknown for that domain).
 
 
-  % wrapping --
-	\bool_if:NTF \g_nsk_wrap_left_bool
-	{
-		\tl_set:Nn \l_nsk_container_anchor_tl {north~west}
-    \bool_gset_false:N \g_nsk_wrap_left_bool
-  }{
-    \bool_if:NTF \g_nsk_wrap_right_bool
-    {
-      \tl_set:Nn \l_nsk_container_anchor_tl {north~east}
-      \bool_gset_false:N \g_nsk_wrap_right_bool
-    }{}
-  }
 
 	% % compute offsets
 	\nsk__container_compute_anchor_offsets:
