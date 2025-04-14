@@ -129,6 +129,10 @@
 	arrow-style .initial:V = \g__nsk_style_arrow_style_tl,
 	arrow-style .default:V = \g__nsk_style_arrow_style_tl,
 
+	arrow-type .tl_set:N = \l_nsk_connect_arrow_type_tl,
+	arrow-type .initial:V = \g__nsk_style_arrow_type_tl,
+	arrow-type .default:V = \g__nsk_style_arrow_type_tl,
+
 	arrow-tip .tl_set:N = \l_nsk_connect_arrow_tip_tl,
 	arrow-tip .initial:V = \g__nsk_style_arrow_tip_tl,
 	arrow-tip .default:V = \g__nsk_style_arrow_tip_tl,
@@ -285,6 +289,11 @@
 
 	\cs_if_exist:NF \l_tmpp_tl { \tl_new:N \l_tmpp_tl }
 	\tl_set:Nx \l_tmpp_tl { path\int_use:N \g__nsk_connect_counter_int }
+
+	% compose arrow style
+	\tl_put_left:No \l_nsk_connect_arrow_style_tl {
+		\l_nsk_connect_arrow_type_tl,
+	}
 
 	% (d) bridging check
 	\bool_if:NTF \l__nsk_connect_bridging_bool
@@ -578,109 +587,124 @@ arc[
 	\pgfextractx{\l_cx_to_dim}{\pgfpointanchor{to_pt}{center}}
 	\pgfextracty{\l_cy_to_dim}{\pgfpointanchor{to_pt}{center}}
 
-
-	\str_case:Vn { \l__nsk_connect_bend_type_tl }
+	\bool_set_false:N \l_tmpskip_bool
+	\ifdim\l_cy_from_dim=\l_cy_to_dim
+		\bool_set_true:N \l_tmpskip_bool
+	\else
+		\ifdim\l_cx_from_dim=\l_cx_to_dim
+			\bool_set_true:N \l_tmpskip_bool
+		\fi
+		%
+	\fi
+	\bool_if:NTF \l_tmpskip_bool
 	{
+		\tl_set:Nx \l_nsk_connect_route_tl
+		{ -- }
+	}
+	{
+		\str_case:Vn { \l__nsk_connect_bend_type_tl }
+		{
 
-		{single} {
-				\str_case:Vn { \l_tmpa_tl }
-				{
-					{up}
-						{
-							% (ax, by)
-							\tl_set:Nx \midpoint {
-								(\dim_use:N \l_cx_from_dim,\dim_use:N \l_cy_to_dim)
-							}
-
-							\tl_set:Nx \l_nsk_connect_route_tl
-							{ -- \midpoint -- }
-						}
-						{down}
-						{
-							% (bx, ay)
-							\tl_set:Nx \midpoint {
-								(\dim_use:N \l_cx_to_dim,\dim_use:N \l_cy_from_dim)
-							}
-							\tl_set:Nx \l_nsk_connect_route_tl
-							{ -- \midpoint -- }
-						}
-						{right}
-						{
-							% (ax, ay)
-							\tl_set:Nx \l_nsk_connect_route_tl {
-								-- ++(\l__nsk_connect_bend_amount_dim, 0)
-								-- (\l_cx_from_dim + \l__nsk_connect_bend_amount_dim, \l_cy_to_dim) -- }
-
-						}
-				}
-			}
-			{double}
-			{
-				% Now do a case on \l_tmpa_tl rather than raw \l__nsk_connect_bend_direction_tl
-				\str_case:Vn { \l_tmpa_tl }
-				{
-					{up}
-						{ \tl_put_right:No \l_nsk_connect_route_tl
-							{ \dim_use:N \l__nsk_connect_bend_amount_dim )}
-							\tl_put_right:No \l_nsk_connect_route_tl {
-								-|
-							}
-						}
-						{down}
-						{ \tl_put_right:No \l_nsk_connect_route_tl
-							{ -\dim_use:N \l__nsk_connect_bend_amount_dim ) -| } }
-						{left}
-						{
-							\tl_set:Nn \l_nsk_connect_route_tl { -- ++( }
-							\tl_put_right:No \l_nsk_connect_route_tl
-							{ -\dim_use:N \l__nsk_connect_bend_amount_dim , 0 )  }
-							\tl_put_right:No \l_nsk_connect_route_tl {
-								[rounded~corners=\l__nsk_connect_corner_radius_dim]
-								|-
-							}
-						}
-						{right}
-						{
-							\tl_set:Nn \l_nsk_connect_route_tl { -- ++( }
-							\tl_put_right:No \l_nsk_connect_route_tl
-							{ \dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) |- }
-						}
-				}
-				{
-					% fallback => treat as "up"
-					\tl_put_right:No \l_nsk_connect_route_tl
-					{ \dim_use:N \l__nsk_connect_bend_amount_dim ) -| }
-				}
-			}
-			{straight}
-			{
-				\str_case:Vn { \l_tmpa_tl }
-				{
-					{left}
-						{
-							\tl_set:Nx \l_nsk_connect_route_tl
-							{ -- ++(-\dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) -- (\dim_use:N \l_cx_to_dim + \dim_use:N \l__nsk_connect_bend_amount_dim, \dim_use:N \l_cy_to_dim) -- }
-						}
-						{right}
-						{
-							\tl_set:Nx \l_nsk_connect_route_tl
-							{ -- ++(\dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) -- (-\dim_use:N \l_cx_to_dim + \dim_use:N \l__nsk_connect_bend_amount_dim, \dim_use:N \l_cy_to_dim) -- }
-						}
-
-						{down}
-						{
-							\tl_set:Nx \l_nsk_connect_route_tl
-							{ -- ++(0, -\dim_use:N \l__nsk_connect_bend_amount_dim) -- (\dim_use:N \l_cx_to_dim,  \dim_use:N \l__nsk_connect_bend_amount_dim + \dim_use:N \l_cy_to_dim) -- }
-						}
-
+			{single} {
+					\str_case:Vn { \l_tmpa_tl }
+					{
 						{up}
-						{
-							\tl_set:Nx \l_nsk_connect_route_tl
-							{ -- ++(0, \dim_use:N \l__nsk_connect_bend_amount_dim) -- (\dim_use:N \l_cx_to_dim, \dim_use:N \l_cy_to_dim - \dim_use:N \l__nsk_connect_bend_amount_dim ) -- }
-						}
-				}
+							{
+								% (ax, by)
+								\tl_set:Nx \midpoint {
+									(\dim_use:N \l_cx_from_dim,\dim_use:N \l_cy_to_dim)
+								}
 
-			}
+								\tl_set:Nx \l_nsk_connect_route_tl
+								{ -- \midpoint -- }
+							}
+							{down}
+							{
+								% (bx, ay)
+								\tl_set:Nx \midpoint {
+									(\dim_use:N \l_cx_to_dim,\dim_use:N \l_cy_from_dim)
+								}
+								\tl_set:Nx \l_nsk_connect_route_tl
+								{ -- \midpoint -- }
+							}
+							{right}
+							{
+								% (ax, ay)
+								\tl_set:Nx \l_nsk_connect_route_tl {
+									-- ++(\l__nsk_connect_bend_amount_dim, 0)
+									-- (\l_cx_from_dim + \l__nsk_connect_bend_amount_dim, \l_cy_to_dim) -- }
+
+							}
+					}
+				}
+				{double}
+				{
+					% Now do a case on \l_tmpa_tl rather than raw \l__nsk_connect_bend_direction_tl
+					\str_case:Vn { \l_tmpa_tl }
+					{
+						{up}
+							{ \tl_put_right:No \l_nsk_connect_route_tl
+								{ \dim_use:N \l__nsk_connect_bend_amount_dim )}
+								\tl_put_right:No \l_nsk_connect_route_tl {
+									-|
+								}
+							}
+							{down}
+							{ \tl_put_right:No \l_nsk_connect_route_tl
+								{ -\dim_use:N \l__nsk_connect_bend_amount_dim ) -| } }
+							{left}
+							{
+								\tl_set:Nn \l_nsk_connect_route_tl { -- ++( }
+								\tl_put_right:No \l_nsk_connect_route_tl
+								{ -\dim_use:N \l__nsk_connect_bend_amount_dim , 0 )  }
+								\tl_put_right:No \l_nsk_connect_route_tl {
+									[rounded~corners=\l__nsk_connect_corner_radius_dim]
+									|-
+								}
+							}
+							{right}
+							{
+								\tl_set:Nn \l_nsk_connect_route_tl { -- ++( }
+								\tl_put_right:No \l_nsk_connect_route_tl
+								{ \dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) |- }
+							}
+					}
+					{
+						% fallback => treat as "up"
+						\tl_put_right:No \l_nsk_connect_route_tl
+						{ \dim_use:N \l__nsk_connect_bend_amount_dim ) -| }
+					}
+				}
+				{straight}
+				{
+					\str_case:Vn { \l_tmpa_tl }
+					{
+						{left}
+							{
+								\tl_set:Nx \l_nsk_connect_route_tl
+								{ -- ++(-\dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) -- (\dim_use:N \l_cx_to_dim + \dim_use:N \l__nsk_connect_bend_amount_dim, \dim_use:N \l_cy_to_dim) -- }
+							}
+							{right}
+							{
+								\tl_set:Nx \l_nsk_connect_route_tl
+								{ -- ++(\dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) -- (-\dim_use:N \l_cx_to_dim + \dim_use:N \l__nsk_connect_bend_amount_dim, \dim_use:N \l_cy_to_dim) -- }
+							}
+
+							{down}
+							{
+								\tl_set:Nx \l_nsk_connect_route_tl
+								{ -- ++(0, -\dim_use:N \l__nsk_connect_bend_amount_dim) -- (\dim_use:N \l_cx_to_dim,  \dim_use:N \l__nsk_connect_bend_amount_dim + \dim_use:N \l_cy_to_dim) -- }
+							}
+
+							{up}
+							{
+								\tl_set:Nx \l_nsk_connect_route_tl
+								{ -- ++(0, \dim_use:N \l__nsk_connect_bend_amount_dim) -- (\dim_use:N \l_cx_to_dim, \dim_use:N \l_cy_to_dim - \dim_use:N \l__nsk_connect_bend_amount_dim ) -- }
+							}
+					}
+
+				}
+		}
 	}
 }
 
@@ -698,38 +722,45 @@ arc[
 
 	% styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	fill .tl_set:N = \l_nsk_fillbetween_fill_tl,
-	fill .initial:n = {nskStrongBlue!20},
+	fill .initial:V = \g__nsk_style_fillbetween_fill_tl,
+	fill .default:V = \g__nsk_style_fillbetween_fill_tl,
 
 	border-color .tl_set:N = \l_nsk_fillbetween_draw_tl,
-	border-color .initial:n = {nskStrongBlue!50},
+	border-color .initial:V = \g__nsk_style_fillbetween_draw_tl,
+	border-color .default:V = \g__nsk_style_fillbetween_draw_tl,
 
 	opacity .fp_set:N = \l_nsk_fillbetween_opacity_fp,
-	opacity .initial:n = {0.4},
+	opacity .initial:V = \g__nsk_style_fillbetween_opacity_fp,
+	opacity .default:V = \g__nsk_style_fillbetween_opacity_fp,
 
 	% edge-types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	edge .choice:,
 	edge / straight .code:n = { \tl_set:Nn \l_nsk_fillbetween_edge_tl { straight } },
 	edge / curved  .code:n  = { \tl_set:Nn \l_nsk_fillbetween_edge_tl { curved } },
-	edge .initial:n = {straight},
+	edge .initial:V = \g__nsk_style_fillbetween_edge_tl,
+	edge .default:V = \g__nsk_style_fillbetween_edge_tl,
 
 	% orientation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	orientation .choice:,
 	orientation / vertical   .code:n = { \tl_set:Nn \l_nsk_fillbetween_orient_tl { vertical } },
 	orientation / horizontal .code:n = { \tl_set:Nn \l_nsk_fillbetween_orient_tl { horizontal } },
-	orientation .initial:n   = { vertical },
+	orientation .initial:V   = \g__nsk_style_fillbetween_orient_tl,
+	orientation .default:V   = \g__nsk_style_fillbetween_orient_tl,
 
 	% overrides ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	% If you want an explicit “out=xx, in=yy” override, you could add:
 	out .tl_set:N = \l_nsk_fillbetween_out_tl,
-	out .initial:n = {},
+	out .initial:V = \g__nsk_style_fillbetween_out_tl,
+	out .default:V = \g__nsk_style_fillbetween_out_tl,
 
 	in .tl_set:N  = \l_nsk_fillbetween_in_tl,
-	in .initial:n = {},
+	in .initial:V = \g__nsk_style_fillbetween_in_tl,
+	in .default:V = \g__nsk_style_fillbetween_in_tl,
 
 	% corner-offsets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	corner-offset .dim_set:N = \l_nsk_fillbetween_corner_offset_dim,
-	corner-offset .initial:V = \g__nsk_style_block_border_radius_dim,
-	corner-offset .default:V = \g__nsk_style_block_border_radius_dim,
+	corner-offset .initial:V = \g__nsk_style_fillbetween_corner_offset_dim,
+	corner-offset .default:V = \g__nsk_style_fillbetween_corner_offset_dim,
 
 }
 
@@ -793,7 +824,7 @@ arc[
 		}
 	}
 	% draw ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\begin{pgfonlayer}{background}
+	\begin{pgfonlayer}{fills}
 		\draw[
 			spath/save~global=\tl_use:N \l_nsk_connect_id_tl,
 			fill=\l_nsk_fillbetween_fill_tl,
