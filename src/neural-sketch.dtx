@@ -619,7 +619,7 @@ every~node/.append~style={text=c__nsk_principal},
 		{
 			% exec last block id retrieval ~~~~~~~~~~~~~~~ <<<
 			% block is already registered, so get prev
-			\nsk__internal_get_nth_block_id:n{2}
+			\nsk__internal_get_nth_block_id:n{1}
 			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
 
 			\str_if_in:NnTF \l_nsk_block_last_pos_tl {=}
@@ -636,7 +636,7 @@ every~node/.append~style={text=c__nsk_principal},
 			}
 			{
 				% case (b) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-				% There's NO '=' in the user’s string
+				% There's NO '=' in the user's string
 				% e.g. "below right"
 				% => produce "below right=of <blockID>"
 				\tl_set:Nx \l_nsk_block_pos_tl
@@ -654,21 +654,19 @@ every~node/.append~style={text=c__nsk_principal},
 	\tl_if_blank:VF \l_nsk_block_last_pos_s_tl
 	{
 		% Check that there is more than one block in the history.
-		\int_compare:nNnTF {\seq_count:N \g_nsk_block_id_history_seq} > {1}
+		\int_compare:nNnTF {\seq_count:N \g_nsk_block_id_history_seq} > {0}
 			{
-				% There is a previous block. Retrieve it without calling the error‐triggering routine.
+				% There is a previous block. Retrieve it without calling the error-triggering routine.
 				\int_set:Nn \l_tmpa_int { \seq_count:N \g_nsk_block_id_history_seq }
-
-				\int_show:N \l_tmpa_int
 
 				\tl_set:No \l_tmpa_tl
 				{
 					\seq_item:Nn \g_nsk_block_id_history_seq
-					{ \int_eval:n { \l_tmpa_int - 1 } }
+					{ \int_eval:n { \l_tmpa_int} }
 				}
 				\tl_show:N \l_tmpa_tl
 
-				% Process the key’s value as in the original routine:
+				% Process the key's value as in the original routine:
 				\str_if_in:NnTF \l_nsk_block_last_pos_s_tl {=}
 				{
 					\tl_set:Nx \l_nsk_block_pos_tl
@@ -755,7 +753,7 @@ every~node/.append~style={text=c__nsk_principal},
 	\tl_if_blank:VTF \l_nsk_block_pattern_tl
 	{ }
 	{
-		% Check if the user’s pattern key is in the alias property
+		% Check if the user's pattern key is in the alias property
 		\prop_if_in:NVTF \g_nsk_pattern_aliases_prop \l_nsk_block_pattern_tl
 		{
 			% It's an alias => retrieve the real pattern
@@ -983,7 +981,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 				}
 			}
 			{
-				% We want the item at “(total - n + 1).”
+				% We want the item at "(total - n + 1)."
 				\tl_set:No \l_tmpa_tl
 				{
 					\seq_item:Nn
@@ -1065,6 +1063,9 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	% # 1 -> k=v list
 	\keys_set:nn {nsk / block } {#1}
 
+	% check if type is polygon[n]
+	\nsk__check_polygon_type:
+
 	% possibly autogenerate the id
 	\nsk__maybe_set_id:
 
@@ -1081,6 +1082,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
 	% store id in history
 	\nsk__store_block_in_history:
+
 
 	\group_end:
 }
@@ -1148,6 +1150,11 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 % robust ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 % reference counting ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 % \nskBlockIDLast[1] -> "the nth last block ID"
+\NewDocumentCommand \nskBlockID {}
+{
+	\tl_use:N \l_nsk_block_id_tl
+}
+
 \NewDocumentCommand \nskRBlockIDLast { O{1} }
 {
 	\nsk__internal_get_nth_block_id:n {#1}
@@ -1310,6 +1317,36 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	}
 }
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Check if type is polygon[n] and process accordingly
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__check_polygon_type:
+{
+	% Create temporary seq variable for regex extraction
+	\seq_clear_new:N \l_tmpa_seq
+
+	% Check if type matches polygon[n] pattern
+	\regex_match:nVTF {polygon\[[0-9]+\]} \l_nsk_block_type_tl
+	{
+		% Extract the number of sides using regex
+		\regex_extract_once:nVN {polygon\[([0-9]+)\]} \l_nsk_block_type_tl \l_tmpa_seq
+		\tl_set:Nx \l_poly_n_tl {\seq_item:Nn \l_tmpa_seq {2}}
+
+		% Set the type to "regular polygon"
+		\tl_set:Nn \l_nsk_block_type_tl {regular~polygon}
+		\tl_show:N \l_poly_n_tl
+
+		% Append "regular polygon sides=n" to tikz-opts
+		\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+		{
+			\tl_set:Nx \l_nsk_block_extra_style_tl {regular~polygon~sides=\l_poly_n_tl}
+		}
+		{
+			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, regular~polygon~sides=\l_poly_n_tl}
+		}
+	}
+	{ }
+}
 
 \ExplSyntaxOff
 
