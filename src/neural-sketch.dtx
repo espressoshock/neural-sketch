@@ -132,6 +132,12 @@ every~node/.append~style={text=c__nsk_principal},
 % to track block-id reference counters
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \seq_new:N \g_nsk_block_id_history_seq
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Global flag -
+% to track wrapping
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\bool_new:N \g_nsk_wrap_right_bool
+\bool_new:N \g_nsk_wrap_left_bool
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Main nsk / Block Primitive
@@ -262,8 +268,8 @@ every~node/.append~style={text=c__nsk_principal},
 
 	% shadow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	shadow .bool_set:N = \l_nsk_block_shadow_bool,
-  shadow .initial:n = {true},
-  shadow .default:n = {true},
+	shadow .initial:n = {true},
+	shadow .default:n = {true},
 
 	% importance ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	importance .fp_set:N = \l_nsk_block_importance_fp,
@@ -396,8 +402,8 @@ every~node/.append~style={text=c__nsk_principal},
 	% Stacks
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	stack .bool_set:N            = \l_nsk_block_stack_bool,
-  stack .initial:n             = {false},
-  stack .default:n             = {false},
+	stack .initial:n             = {false},
+	stack .default:n             = {false},
 
 	stack-opts .tl_set:N         = \l_nsk_block_stack_opts_tl,
 	stack-opts .initial:V        = \g__nsk_style_block_stack_opts_tl,
@@ -434,7 +440,7 @@ every~node/.append~style={text=c__nsk_principal},
 	% If shape key not in the counters prop yet, init to 0
 	\prop_if_in:NVF \g_nsk_block_counters_prop \l_nsk_block_type_tl
 	{
-		% (★) Use \prop_gput to store globally:
+		% (*) Use \prop_gput to store globally:
 		\prop_gput:NVn \g_nsk_block_counters_prop \l_nsk_block_type_tl { 0 }
 	}
 
@@ -970,6 +976,12 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	center .initial:n  = { false },
 	center .default:n  = { true },
 
+
+	block-distance .tl_set:N = \l_nsk_figure_block_distance_tl,
+	block-distance .initial:V = \g__nsk_style_figure_block_distance_tl,
+	block-distance .default:V = \g__nsk_style_figure_block_distance_tl,
+
+
 	% pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	unknown .code:n =
 		{
@@ -1039,11 +1051,6 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
 % (d) Convert the unknown key=value pairs into a comma list
 \tl_clear_new:N \l_nsk_figure_opts_tl
-% \prop_map_inline:Nn \l_nsk_figure_unknown_prop
-% {
-% 	\tl_put_right:Nx \l_nsk_figure_opts_tl { ##1 = { ##2 }, }
-% }
-
 \prop_map_inline:Nn \l_nsk_figure_unknown_prop
 {
 	\tl_put_right:Nn \l_nsk_figure_opts_tl
@@ -1052,25 +1059,39 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	}
 }
 
+% build styles, later refactor in own fn
+\tl_put_right:Nx \l_nsk_figure_opts_tl {node~distance=\l_nsk_figure_block_distance_tl}
+
 % (e) If center=true, wrap the tikzpicture in a center environment
 \bool_if:NTF \l_nsk_figure_center_bool
 {
 	\begin{center}
-	\begin{tikzpicture}[\tl_use:N \l_nsk_figure_opts_tl]
+	\nsk__render_figure:V \l_nsk_figure_opts_tl
 	\begin{scope}[spy~using~outlines]
 }
 {
-	\begin{tikzpicture}[\tl_use:N \l_nsk_figure_opts_tl]
-		\begin{scope}[spy~using~outlines]
-			}
-			}{
-		\end{scope}
+	\nsk__render_figure:V \l_nsk_figure_opts_tl
+	\begin{scope}[spy~using~outlines]
+		}
+		}{
+	\end{scope}
 	\end{tikzpicture}
 	\bool_if:NT \l_nsk_figure_center_bool
 	{
 		\end{center}
 	}
 }
+
+\cs_new_protected_nopar:Npn \nsk__render_figure:n #1
+{
+	\begin{tikzpicture}[#1]
+
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Variant Generation :V
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_generate_variant:Nn \nsk__render_figure:n { V }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Miscs Utils
@@ -1223,6 +1244,23 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 % Variant Generation :V
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_generate_variant:Nn \nsk__render_edge_fading:nnnn { VVVV }
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Wraps (resets)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\NewDocumentCommand {\nskWrap} {t!o}{
+	\IfBooleanTF{#1}{
+		\nskMark[pos={below~right=\tl_use:N \g__nsk_style_figure_block_distance_tl-.5mm~of~#2}, marker=x]
+
+    % set wrap flag
+    \bool_gset_true:N \g_nsk_wrap_right_bool
+	}{
+		\nskMark[pos={below~left=\tl_use:N \g__nsk_style_figure_block_distance_tl+.5mm~of~#2}, marker=o]
+
+    % set wrap flag
+    \bool_gset_true:N \g_nsk_wrap_left_bool
+	}
+}
 
 
 \ExplSyntaxOff

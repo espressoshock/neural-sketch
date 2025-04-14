@@ -36,9 +36,10 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \pgfdeclarelayer{background}
 \pgfdeclarelayer{interim}
+\pgfdeclarelayer{fills}
 \pgfdeclarelayer{foreground}
 % layer registration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\pgfsetlayers{background,interim,main,foreground}
+\pgfsetlayers{background,interim,fills,main,foreground}
 
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -135,7 +136,7 @@
 
 		\tl_set:Nx \l_tmpp_anc_tl {\seq_item:Nn \l_tmpa_seq {1}}
 		\tl_trim_spaces:N \l_tmpp_anc_tl
-		
+
 		% Replace "and" with space if present
 		\tl_replace_all:Nnn \l_tmpp_anc_tl {and} { }
 		\tl_trim_spaces:N \l_tmpp_anc_tl
@@ -144,13 +145,13 @@
 		\str_case:Vn \l_tmpp_anc_tl
 		{
 			{right}{\tl_set:Nn \l_nsk_container_anchor_tl {west}}
-			{left}{\tl_set:Nn \l_nsk_container_anchor_tl {east}}
-			{below}{\tl_set:Nn \l_nsk_container_anchor_tl {north}}
-			{above}{\tl_set:Nn \l_nsk_container_anchor_tl {south}}
-			{above~right}{\tl_set:Nn \l_nsk_container_anchor_tl {south~west}}
-			{above~left}{\tl_set:Nn \l_nsk_container_anchor_tl {south~east}}
-			{below~left}{\tl_set:Nn \l_nsk_container_anchor_tl {north~east}}
-			{below~right}{\tl_set:Nn \l_nsk_container_anchor_tl {north~west}}
+				{left}{\tl_set:Nn \l_nsk_container_anchor_tl {east}}
+				{below}{\tl_set:Nn \l_nsk_container_anchor_tl {north}}
+				{above}{\tl_set:Nn \l_nsk_container_anchor_tl {south}}
+				{above~right}{\tl_set:Nn \l_nsk_container_anchor_tl {south~west}}
+				{above~left}{\tl_set:Nn \l_nsk_container_anchor_tl {south~east}}
+				{below~left}{\tl_set:Nn \l_nsk_container_anchor_tl {north~east}}
+				{below~right}{\tl_set:Nn \l_nsk_container_anchor_tl {north~west}}
 		}
 		{
 			% add default
@@ -173,25 +174,25 @@
 	\str_case:Vn \l_nsk_container_anchor_tl
 	{
 		{north}       { \tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl } }
-		{south}       { \tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } }
-		{east}        { \tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl } }
-		{west}        { \tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl } }
-		{north east}  {
-			\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl }
-			\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl }
-		}
-		{north west}  {
-			\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl }
-			\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl }
-		}
-		{south east}  { 
-			\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl }
-			\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } 
-		}
-		{south west}  { 
-			\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl }
-			\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } 
-		}
+			{south}       { \tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } }
+			{east}        { \tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl } }
+			{west}        { \tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl } }
+			{north east}  {
+				\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl }
+				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl }
+			}
+			{north west}  {
+				\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl }
+				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl }
+			}
+			{south east}  {
+				\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl }
+				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl }
+			}
+			{south west}  {
+				\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl }
+				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl }
+			}
 	}
 }
 
@@ -388,6 +389,20 @@
 	% (c) Now call \nskGroup, passing the same #1 so that shift-x, rotate, etc.
 	%     get recognized by nsk / group (or remain unknown for that domain).
 
+
+  % wrapping --
+	\bool_if:NTF \g_nsk_wrap_left_bool
+	{
+		\tl_set:Nn \l_nsk_container_anchor_tl {north~west}
+    \bool_gset_false:N \g_nsk_wrap_left_bool
+  }{
+    \bool_if:NTF \g_nsk_wrap_right_bool
+    {
+      \tl_set:Nn \l_nsk_container_anchor_tl {north~east}
+      \bool_gset_false:N \g_nsk_wrap_right_bool
+    }{}
+  }
+
 	% % compute offsets
 	\nsk__container_compute_anchor_offsets:
 
@@ -410,10 +425,6 @@
 	\tl_if_empty:VTF \l_nsk_container_anchor_tl
 	{\tl_set:Nn \l_nsk_container_anchor_tl {center}}
 	{}
-
-
-	\tl_show:N \l_nsk_container_anchor_tl
-	\tl_show:N \l_tmpx_tl
 
 	\nsk__expand_group_aux:Vn \l_tmpx_tl {#2}
 
