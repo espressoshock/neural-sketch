@@ -172,6 +172,14 @@ every~node/.append~style={text=c__nsk_principal},
 	y .initial:V = \g__nsk_style_block_y_fp,
 	y .default:V = \g__nsk_style_block_y_fp,
 
+	shift-x .tl_set:N = \l_nsk_block_shiftx_tl,
+	shift-x .initial:n = {0},
+	shift-x .default:n = {0},
+
+	shift-y .tl_set:N = \l_nsk_block_shifty_tl,
+	shift-y .initial:n = {0},
+	shift-y .default:n = {0},
+
 	anchor .tl_set:N = \l_nsk_block_anchor_tl,
 	anchor .initial:V = \g__nsk_style_block_anchor_tl,
 	anchor .default:V = \g__nsk_style_block_anchor_tl,
@@ -302,7 +310,7 @@ every~node/.append~style={text=c__nsk_principal},
 	text-north-loc .initial:V = \g__nsk_style_text_north_loc_tl,
 
 	text-north-style .tl_set:N = \l_nsk_text_north_style_tl,
-	text-north-style .initial:n = { },
+	text-north-style .initial:V = \g__nsk_style_text_north_style_tl,
 
 	%---------------------------
 	% text-south
@@ -314,7 +322,7 @@ every~node/.append~style={text=c__nsk_principal},
 	text-south-loc .initial:V = \g__nsk_style_text_south_loc_tl,
 
 	text-south-style .tl_set:N = \l_nsk_text_south_style_tl,
-	text-south-style .initial:n = { },
+	text-south-style .initial:V = \g__nsk_style_text_south_style_tl,
 
 	%---------------------------
 	% text-east
@@ -326,7 +334,7 @@ every~node/.append~style={text=c__nsk_principal},
 	text-east-loc .initial:V = \g__nsk_style_text_east_loc_tl,
 
 	text-east-style .tl_set:N = \l_nsk_text_east_style_tl,
-	text-east-style .initial:n = { },
+	text-east-style .initial:V = \g__nsk_style_text_east_style_tl,
 
 	%---------------------------
 	% text-west
@@ -338,7 +346,7 @@ every~node/.append~style={text=c__nsk_principal},
 	text-west-loc .initial:V = \g__nsk_style_text_west_loc_tl,
 
 	text-west-style .tl_set:N = \l_nsk_text_west_style_tl,
-	text-west-style .initial:n = { },
+	text-west-style .initial:V = \g__nsk_style_text_west_style_tl,
 
 	%---------------------------
 	% text-center
@@ -350,7 +358,7 @@ every~node/.append~style={text=c__nsk_principal},
 	text-center-loc .initial:V = \g__nsk_style_text_center_loc_tl,
 
 	text-center-style .tl_set:N = \l_nsk_text_center_style_tl,
-	text-center-style .initial:n = { },
+	text-center-style .initial:V = \g__nsk_style_text_north_style_tl,
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Embedding
@@ -828,6 +836,10 @@ every~node/.append~style={text=c__nsk_principal},
 	\tl_put_right:No \l_tmps_tl { \l_nsk_block_pos_tl, }
 }
 
+% additional shift ~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_put_right:No \l_tmps_tl { xshift=\l_nsk_block_shiftx_tl,}
+\tl_put_right:No \l_tmps_tl { yshift=\l_nsk_block_shifty_tl,}
+
 
 \tl_if_blank:VF \l_nsk_block_anchor_tl
 {
@@ -892,15 +904,15 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 { }
 {
 
-  \tl_if_blank:VTF \l_nsk_text_center_style_tl
-  {
-    % add default 
-    \tl_put_right:No \l_nsk_text_center_style_tl {
-      fill=\l_nsk_block_fill_tl, fill~opacity=.7, text~opacity=1, rounded~corners,
-      inner~sep=.5mm,
-    }
-  }
-  {}
+	\tl_if_blank:VTF \l_nsk_text_center_style_tl
+	{
+		% add default 
+		\tl_put_right:No \l_nsk_text_center_style_tl {
+			fill=\l_nsk_block_fill_tl, fill~opacity=.7, text~opacity=1, rounded~corners,
+			inner~sep=.5mm,
+		}
+	}
+	{}
 
 	% something like:
 	%   postaction={pattern=..., pattern color=...}
@@ -1056,10 +1068,6 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	% possibly autogenerate the id
 	\nsk__maybe_set_id:
 
-	% store id in history
-	\nsk__store_block_in_history:
-
-
 	% process last-pos -> set cpos if neeeded
 	% if last-pos-s is given, use it (without error); otherwise use last-pos
 	\tl_if_blank:VTF \l_nsk_block_last_pos_s_tl
@@ -1070,6 +1078,9 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
 	% actually draw the block
 	\nsk__draw_block:
+
+	% store id in history
+	\nsk__store_block_in_history:
 
 	\group_end:
 }
