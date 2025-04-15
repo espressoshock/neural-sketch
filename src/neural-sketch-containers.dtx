@@ -36,11 +36,36 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \pgfdeclarelayer{background}
 \pgfdeclarelayer{interim}
+\pgfdeclarelayer{interim-oh}
 \pgfdeclarelayer{fills}
 \pgfdeclarelayer{foreground}
-% layer registration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\pgfsetlayers{background,interim,fills,main,foreground}
 
+% Create additional interim layers for deeper nesting
+\pgfdeclarelayer{interim-2}
+\pgfdeclarelayer{interim-3}
+\pgfdeclarelayer{interim-4}
+\pgfdeclarelayer{interim-5}
+
+% layer registration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\pgfsetlayers{background,interim,interim-oh,interim-2,interim-3,interim-4,interim-5,fills,main,foreground}
+
+% Container nesting level counter
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\int_new:N \g_nsk_container_nesting_level_int
+\int_gset:Nn \g_nsk_container_nesting_level_int {0}
+
+% Helper to get the appropriate layer for a given nesting level
+\cs_new:Npn \nsk__get_container_layer:n #1 {
+	\int_case:nnF {#1} {
+		{1} {interim}
+			{2} {interim-oh}
+			{3} {interim-2}
+			{4} {interim-3}
+			{5} {interim-4}
+			{6} {interim-5}
+	}
+	{interim-all}
+}
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Pass-through
@@ -373,6 +398,9 @@
 
 \NewDocumentCommand \nskContainerR { O{} +m }
 {
+	% Increment nesting level counter
+	\int_gincr:N \g_nsk_container_nesting_level_int
+
 	\group_begin:
 
 	% (a) Clear the property list so it doesn't retain any old unknown keys
@@ -447,6 +475,8 @@
 
 	\group_end:
 
+	% Decrement nesting level counter
+	\int_gdecr:N \g_nsk_container_nesting_level_int
 }
 
 \cs_new_protected:Npn \nsk__expand_group_aux:nn #1 #2
@@ -461,8 +491,18 @@
 % block expander ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__expand_block_aux:n #1
 {
+	% Determine which layer to use based on nesting level
+	\int_case:nnF {\g_nsk_container_nesting_level_int} {
+		{1} {\tl_set:Nn \l_tmpa_tl {interim}}
+			{2} {\tl_set:Nn \l_tmpa_tl {interim-oh}}
+			{3} {\tl_set:Nn \l_tmpa_tl {interim-2}}
+			{4} {\tl_set:Nn \l_tmpa_tl {interim-3}}
+			{5} {\tl_set:Nn \l_tmpa_tl {interim-4}}
+			{6} {\tl_set:Nn \l_tmpa_tl {interim-5}}
+	}
+	{\tl_set:Nn \l_tmpa_tl {fills}}
 
-	\begin{pgfonlayer}{interim}
+	\begin{pgfonlayer}{\l_tmpa_tl}
 		\nskBlock [
 			% this are computed by bounding box
 			width=0pt, height=0pt,
