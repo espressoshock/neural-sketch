@@ -1021,15 +1021,15 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	\tl_if_blank:VF \l_nsk_text_center_tl
 	{
 		% Create a phantom node to measure text dimensions
-		\node[inner~sep=0pt] (temp) {\l_nsk_text_center_tl};
+		\node[
+		  inner~sep=0pt,outer~setp=0,draw=none,fill=none,text opacity=0, opacity=0
+		] (temp) at (...) {\l_nsk_text_center_tl};
 		% Get natural dimensions
 		\pgfextractx{\l_tmpa_dim}{\pgfpointdiff{\pgfpointanchor{temp}{west}}{\pgfpointanchor{temp}{east}}}
 		\pgfextracty{\l_tmpb_dim}{\pgfpointdiff{\pgfpointanchor{temp}{south}}{\pgfpointanchor{temp}{north}}}
 		% Set block dimensions to text size plus padding
 		\dim_set:Nn \l_nsk_block_width_dim {\l_tmpa_dim + 2\l_nsk_block_padding_x_dim}
 		\dim_set:Nn \l_nsk_block_height_dim {\l_tmpb_dim + 2\l_nsk_block_padding_y_dim}
-		% Clean up temporary node
-		\node[draw=none,fill=none] at (temp) {};
 	}
 }
 
