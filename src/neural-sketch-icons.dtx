@@ -37,6 +37,11 @@
 \msg_new:nnn {nsk-icon} {unrecognized-key} {Unrecognized~key~'#1'~will~be~ignored.}
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Global variables for tracking icons
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\prop_new:N \g__nsk_used_icons_prop  % Property list to store icons by type
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Key definitions for icon options with simplified interface
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \keys_define:nn { nsk/icon }
@@ -98,6 +103,23 @@
 		\msg_error:nn {nsk-icon}{no-name}
 	}
 	{
+		% Add the icon to the global tracking property list by type
+		\prop_get:NVNTF \g__nsk_used_icons_prop \l__nsk_icon_type_tl \l_tmpa_tl
+		{
+			% Type already exists in the property list
+			% Check if the icon name is already in the list
+			\tl_if_in:NnF \l_tmpa_tl {\l__nsk_icon_name_tl,}
+			{
+				% Add the icon name to the list
+				\prop_gput:Nxx \g__nsk_used_icons_prop {\l__nsk_icon_type_tl}
+				{\tl_use:N \l_tmpa_tl \l__nsk_icon_name_tl,}
+			}
+		}
+		{
+			% Add the icon name to the property list
+			\prop_gput:Nxx \g__nsk_used_icons_prop {\l__nsk_icon_type_tl} {\l__nsk_icon_name_tl,}
+		}
+
 		% Check if the icon file already exists
 		\file_if_exist:nF {\tl_use:N \g__nsk_style_icon_outdir_tl/\l__nsk_icon_name_tl.svg}
 		{
@@ -110,18 +132,43 @@
 		% always update - the check is on the py-side
 		\sys_shell_now:x {python3~../scripts/neural-sketch/pyfetch.py~update-color~\#\l__nsk_color_hex_tl\space\l__nsk_icon_name_tl\space--dest=\g__nsk_style_icon_outdir_tl}
 
-
 		% Determine the file path based on type
 		\tl_if_eq:NnTF \l__nsk_icon_type_tl {lucide}
 		{
 			% Include the SVG file with the specified dimensions
-			\includesvg[pretex=\color{red}, width=\l__nsk_icon_width_dim,height=\l__nsk_icon_height_dim]{\g__nsk_style_icon_outdir_tl/\l__nsk_icon_name_tl.svg}
+			\includesvg[pretex=\l__nsk_icon_style_tl, width=\l__nsk_icon_width_dim,height=\l__nsk_icon_height_dim]{\g__nsk_style_icon_outdir_tl/\l__nsk_icon_name_tl.svg}
 		}
 		{
 			% For other types, display a warning message
 			\msg_warning:nx {nsk-icon}{unsupported-type}{\l__nsk_icon_type_tl}
 		}
 	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Helper function to process each icon type for cleanup
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\cs_new_protected:Nn \__nsk_process_icon_type_cleanup:nn
+{
+	% #1 = icon type (key), #2 = comma-separated list of icon names (value)
+	\tl_set:Nn \l_tmpa_tl {#2}
+	\tl_if_empty:NF \l_tmpa_tl
+	{
+		% Remove trailing comma if present
+		\regex_replace_once:nnN {,\s*$} {} \l_tmpa_tl
+
+		% Call the appropriate clean command based on the icon type
+		\sys_shell_now:x {python3~../scripts/neural-sketch/pyfetch.py~clean-#1~\l_tmpa_tl\space--dest=\g__nsk_style_icon_outdir_tl\space--intdir=\g__nsk_style_icon_outdir_tl/\g__nsk_style_icon_intdir_tl}
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Clean unused icons
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\NewDocumentCommand{\nskCleanUnusedIcons}{ }
+{
+	% Process each icon type in the property list
+	\prop_map_function:NN \g__nsk_used_icons_prop \__nsk_process_icon_type_cleanup:nn
 }
 
 \ExplSyntaxOff
