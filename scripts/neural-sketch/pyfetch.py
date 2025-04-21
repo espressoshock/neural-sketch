@@ -6,7 +6,7 @@ and cleaning up unused Lucide icons in a target folder.
 Usage (shell-escape from LaTeX):
   \write18{pyfetch fetch https://example.com/image.png --dest=images}
   \write18{pyfetch fetch-lucide a-arrow-down --dest=icons}
-  \write18{pyfetch clean-lucide arrow-down,chevron-up --dest=icons}
+  \write18{pyfetch clean-lucide arrow-down,chevron-up --intdir=icons/out --dest=icons}
   \write18{pyfetch update-color #FF0000 arrow-down,chevron-up --dest=icons}
 
 Dependencies:
@@ -23,6 +23,7 @@ from pathlib import Path
 import requests
 import click
 import xml.etree.ElementTree as ET
+import re
 
 
 # Configure logging
@@ -112,36 +113,71 @@ def fetch_lucide(ctx, icon_name, dest_folder):
 @cli.command("clean-lucide")
 @click.argument("icons")
 @click.option(
+    "-i",
+    "--intdir",
+    "int_dir",
+    required=True,
+    type=click.Path(file_okay=False),
+    help="Intermediate folder to clean",
+)
+@click.option(
     "-d",
     "--dest",
     "dest_folder",
     default=".",
     type=click.Path(file_okay=False),
-    help="Target folder to clean",
+    help="Folder of SVG icons to clean",
 )
 @click.pass_context
-def clean_lucide(ctx, icons, dest_folder):
-    """Remove Lucide icons not listed in comma-separated ICONS from DEST folder."""
+def clean_lucide(ctx, icons, int_dir, dest_folder):
+    """Remove icons not in ICONS from DEST and related files in INTDIR."""
     dest = Path(dest_folder)
-    if not dest.exists() or not dest.is_dir():
-        logging.error(f"Destination folder does not exist: {dest}")
-        sys.exit(1)
+    int_dir = Path(int_dir)
+
+    # Validate directories
+    for path, name in ((dest, "dest"), (int_dir, "intdir")):
+        if not path.exists() or not path.is_dir():
+            logging.error(f"{name} folder does not exist or is not a directory: {path}")
+            sys.exit(1)
+
     keep = set(name.strip() for name in icons.split(","))
-    removed = []
+    removed_icons = []
+
+    # Clean DEST svg files
     for file in dest.iterdir():
         if file.is_file() and file.suffix == ".svg":
-            name = file.stem
-            if name not in keep:
+            stem = file.stem
+            if stem not in keep:
                 try:
                     file.unlink()
-                    removed.append(name)
-                    logging.info(f"Removed unused icon: {name}")
+                    removed_icons.append(stem)
+                    logging.info(f"Removed unused icon: {stem}")
                 except Exception as e:
                     logging.error(f"Failed to remove {file}: {e}")
-    if not removed:
-        logging.info("No unused icons found to remove.")
+    if not removed_icons:
+        logging.info("No unused SVG icons found to remove.")
     else:
-        logging.info(f"Cleaned {len(removed)} icons.")
+        logging.info(f"Removed {len(removed_icons)} unused icons.")
+
+    removed_int = []
+    # Clean INTDIR files matching prefix_*.* where prefix not in keep
+    prefix_re = re.compile(r"^([^_]+)_")
+    for file in int_dir.iterdir():
+        if file.is_file():
+            m = prefix_re.match(file.name)
+            if m:
+                prefix = m.group(1)
+                if prefix not in keep:
+                    try:
+                        file.unlink()
+                        removed_int.append(file.name)
+                        logging.info(f"Removed unused file in intdir: {file.name}")
+                    except Exception as e:
+                        logging.error(f"Failed to remove {file}: {e}")
+    if not removed_int:
+        logging.info("No unused intdir files found to remove.")
+    else:
+        logging.info(f"Removed {len(removed_int)} files from intdir.")
 
 
 @cli.command("update-color")
