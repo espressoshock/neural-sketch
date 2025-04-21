@@ -22,6 +22,7 @@ import logging
 from pathlib import Path
 import requests
 import click
+import xml.etree.ElementTree as ET
 
 # Configure logging
 def configure_logging(verbose: bool):
@@ -114,6 +115,42 @@ def clean_lucide(ctx, icons, dest_folder):
         logging.info("No unused icons found to remove.")
     else:
         logging.info(f"Cleaned {len(removed)} icons.")
+
+
+@cli.command('update-color')
+@click.argument('color')
+@click.argument('icons')
+@click.option('-d', '--dest', 'dest_folder', default='.', type=click.Path(file_okay=False), help='Target folder containing SVGs')
+@click.pass_context
+def update_color(ctx, color, icons, dest_folder):
+    """Update the SVG 'stroke' attribute to COLOR for listed Lucide icons."""
+    dest = Path(dest_folder)
+    if not dest.exists() or not dest.is_dir():
+        logging.error(f"Destination folder does not exist: {dest}")
+        sys.exit(1)
+    names = set(name.strip() for name in icons.split(','))
+    updated = []
+    for name in names:
+        file_path = dest / f"{name}.svg"
+        if not file_path.exists():
+            logging.warning(f"Icon file not found, skipping: {file_path}")
+            continue
+        try:
+            tree = ET.parse(file_path)
+            root = tree.getroot()
+            # Update stroke on all elements
+            for elem in root.iter():
+                if 'stroke' in elem.attrib:
+                    elem.set('stroke', color)
+            tree.write(file_path, encoding='utf-8', xml_declaration=True)
+            updated.append(name)
+            logging.info(f"Updated stroke color for: {name}")
+        except Exception as e:
+            logging.error(f"Failed to update {file_path}: {e}")
+    if not updated:
+        logging.info("No icons were updated.")
+    else:
+        logging.info(f"Updated color on {len(updated)} icons.")
 
 if __name__ == '__main__':
     cli()
