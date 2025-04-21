@@ -1,0 +1,130 @@
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%  neural-sketch-icons.dtx
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% \iffalse
+%<*driver>
+\documentclass{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+
+\begin{document}
+\DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+
+\ProvidesFile{neural-sketch-icons.dtx}%
+[2025/01/22 v0.2 neural-sketch-icons – Icon system for neural-sketch]
+
+% <*package>
+%    \begin{macrocode}
+
+
+\ExplSyntaxOn
+
+% imports ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\exp_args:Nx \PassOptionsToPackage
+{ inkscapepath={./\g__nsk_style_icon_outdir_tl/\g__nsk_style_icon_intdir_tl/} }
+{ svg }
+\RequirePackage{svg}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Message definitions
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\msg_new:nnn {nsk-icon} {no-name} {No~icon~name~provided.~Please~specify~a~name.}
+\msg_new:nnn {nsk-icon} {unsupported-type} {Icon~type~'#1'~is~not~yet~supported~for~display.}
+\msg_new:nnn {nsk-icon} {unrecognized-key} {Unrecognized~key~'#1'~will~be~ignored.}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Key definitions for icon options with simplified interface
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\keys_define:nn { nsk/icon }
+{
+	type .choice:,
+	type / lucide .code:n = { \tl_set:Nn \l__nsk_icon_type_tl {lucide} },
+	type .initial:V = \g__nsk_style_icon_type_tl,
+	type .default:V = \g__nsk_style_icon_type_tl,
+
+	name .tl_set:N = \l__nsk_icon_name_tl,
+	name .value_required:n = true,
+	name .initial:n = {},
+	name .default:n = {},
+
+	color .tl_set:N = \l__nsk_icon_color_tl,
+	color .initial:V = \g__nsk_style_icon_color_tl,
+	color .default:V = \g__nsk_style_icon_color_tl,
+
+	width .dim_set:N = \l__nsk_icon_width_dim,
+	width .initial:V = \g__nsk_style_icon_width_dim,
+	width .default:V = \g__nsk_style_icon_width_dim,
+
+	height .dim_set:N = \l__nsk_icon_height_dim,
+	height .initial:V = \g__nsk_style_icon_height_dim,
+	height .default:V = \g__nsk_style_icon_height_dim,
+
+	style .tl_set:N = \l__nsk_icon_style_tl,
+	style .initial:V = \g__nsk_style_icon_style_tl,
+	style .default:V = \g__nsk_style_icon_style_tl,
+
+	unknown .code:n =
+		{
+			\msg_warning:nnx {nsk-icon}{unrecognized-key}{\l_keys_key_tl}
+		},
+}
+
+\NewDocumentCommand \nskIcon { sO{} }
+{
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskIconR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskIconR[#2]
+	}
+}
+
+\NewDocumentCommand{\nskIconR}{ o }
+{
+	% key=val,
+	\keys_set:nn { nsk/icon } {#1}
+
+	% Check if name is provided
+	\tl_if_blank:VTF \l__nsk_icon_name_tl
+	{
+		% If no name is provided, show an error
+		\msg_error:nn {nsk-icon}{no-name}
+	}
+	{
+		% Check if the icon file already exists
+		\file_if_exist:nF {\tl_use:N \g__nsk_style_icon_outdir_tl/\l__nsk_icon_name_tl.svg}
+		{
+			% Execute the appropriate command based on the type
+			\sys_shell_now:x {python3~../scripts/neural-sketch/pyfetch.py~fetch-\l__nsk_icon_type_tl\space\l__nsk_icon_name_tl\space--dest=\g__nsk_style_icon_outdir_tl}
+		}
+
+		% update color ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+		\convertcolorspec{named}{\tl_use:N \l__nsk_icon_color_tl}{HTML}{\l__nsk_color_hex_tl}
+		% always update - the check is on the py-side
+		\sys_shell_now:x {python3~../scripts/neural-sketch/pyfetch.py~update-color~\#\l__nsk_color_hex_tl\space\l__nsk_icon_name_tl\space--dest=\g__nsk_style_icon_outdir_tl}
+
+
+		% Determine the file path based on type
+		\tl_if_eq:NnTF \l__nsk_icon_type_tl {lucide}
+		{
+			% Include the SVG file with the specified dimensions
+			\includesvg[pretex=\color{red}, width=\l__nsk_icon_width_dim,height=\l__nsk_icon_height_dim]{\g__nsk_style_icon_outdir_tl/\l__nsk_icon_name_tl.svg}
+		}
+		{
+			% For other types, display a warning message
+			\msg_warning:nx {nsk-icon}{unsupported-type}{\l__nsk_icon_type_tl}
+		}
+	}
+}
+
+\ExplSyntaxOff
+%    \end{macrocode}
+% </*package>
+\endinput
