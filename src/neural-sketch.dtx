@@ -159,6 +159,15 @@ every~node/.append~style={text=c__nsk_principal},
 	type .initial:n = {rectangle},
 	type .default:n = {rectangle},
 
+	% padding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	padding-x .dim_set:N = \l_nsk_block_padding_x_dim,
+	padding-x .initial:V = \g__nsk_style_block_padding_y_dim,
+	padding-x .default:V = \g__nsk_style_block_padding_y_dim,
+
+	padding-y .dim_set:N = \l_nsk_block_padding_y_dim,
+	padding-y .initial:V = \g__nsk_style_block_padding_y_dim,
+	padding-y .default:V = \g__nsk_style_block_padding_y_dim,
+
 	% ref-id ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	id .tl_set:N = \l_nsk_block_id_tl,
 	id .initial:n = { },
@@ -854,7 +863,9 @@ every~node/.append~style={text=c__nsk_principal},
 \tl_if_eq:NnT \l_nsk_block_fade_tl { none }
 {\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}}
 \tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
-\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}
+\tl_if_eq:NnTF \l_nsk_block_type_tl {rounded~rectangle}
+{\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
+{\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}}
 \tl_put_right:No \l_tmps_tl {line\space width=\l_nsk_block_border_size_dim,}
 % outer border ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \tl_put_right:No \l_tmp_pre_acts {draw=\l_nsk_block_outer_border_color_tl,}
@@ -1002,10 +1013,36 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Text measurement and block resizing
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__maybe_resize_block_to_text:
+{
+	% If text-center is not empty, calculate natural dimensions
+	\tl_if_blank:VF \l_nsk_text_center_tl
+	{
+		% Create a phantom node to measure text dimensions
+		\node[inner~sep=0pt] (temp) {\l_nsk_text_center_tl};
+		% Get natural dimensions
+		\pgfextractx{\l_tmpa_dim}{\pgfpointdiff{\pgfpointanchor{temp}{west}}{\pgfpointanchor{temp}{east}}}
+		\pgfextracty{\l_tmpb_dim}{\pgfpointdiff{\pgfpointanchor{temp}{south}}{\pgfpointanchor{temp}{north}}}
+		% Set block dimensions to text size plus padding
+		\dim_set:Nn \l_nsk_block_width_dim {\l_tmpa_dim + 2\l_nsk_block_padding_x_dim}
+		\dim_set:Nn \l_nsk_block_height_dim {\l_tmpb_dim + 2\l_nsk_block_padding_y_dim}
+		% Clean up temporary node
+		\node[draw=none,fill=none] at (temp) {};
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Main block draw
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__draw_block:
 {
+	\dim_compare:nNnT {\l_nsk_block_width_dim} = {0pt}
+	{
+		\nsk__maybe_resize_block_to_text:
+	}
+
 	% 1. draw the main block shape
 	\nsk__build_block_style:
 
@@ -1063,8 +1100,9 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	% # 1 -> k=v list
 	\keys_set:nn {nsk / block } {#1}
 
-	% check if type is polygon[n]
+	% check if type is ...[n]
 	\nsk__check_polygon_type:
+	\nsk__check_star_type:
 
 	% possibly autogenerate the id
 	\nsk__maybe_set_id:
@@ -1132,7 +1170,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		}
 		}{
 	\end{scope}
-  % auto clean icons
+	% auto clean icons
 	\bool_if:NTF \g__nsk_style_icon_clean_bool
 	{
 		\nskCleanUnusedIcons
@@ -1371,7 +1409,6 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
 		% Set the type to "regular polygon"
 		\tl_set:Nn \l_nsk_block_type_tl {regular~polygon}
-		\tl_show:N \l_poly_n_tl
 
 		% Append "regular polygon sides=n" to tikz-opts
 		\tl_if_empty:VTF \l_nsk_block_extra_style_tl
@@ -1380,6 +1417,33 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		}
 		{
 			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, regular~polygon~sides=\l_poly_n_tl}
+		}
+	}
+	{ }
+}
+
+\cs_new_protected_nopar:Npn \nsk__check_star_type:
+{
+	% Create temporary seq variable for regex extraction
+	\seq_clear_new:N \l_tmpa_seq
+
+	% Check if type matches polygon[n] pattern
+	\regex_match:nVTF {star\[[0-9]+\]} \l_nsk_block_type_tl
+	{
+		% Extract the number of sides using regex
+		\regex_extract_once:nVN {star\[([0-9]+)\]} \l_nsk_block_type_tl \l_tmpa_seq
+		\tl_set:Nx \l_poly_n_tl {\seq_item:Nn \l_tmpa_seq {2}}
+
+		% strip the []
+		\tl_set:Nn \l_nsk_block_type_tl {star}
+
+		% Append "star points=n" to tikz-opts
+		\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+		{
+			\tl_set:Nx \l_nsk_block_extra_style_tl {star~points=\l_poly_n_tl}
+		}
+		{
+			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, star~points=\l_poly_n_tl}
 		}
 	}
 	{ }
