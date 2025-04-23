@@ -1022,8 +1022,8 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	{
 		% Create a phantom node to measure text dimensions
 		\node[
-		  inner~sep=0pt,outer~setp=0,draw=none,fill=none,text opacity=0, opacity=0
-		] (temp) at (...) {\l_nsk_text_center_tl};
+		  inner~sep=0pt,outer~sep=0,draw=none,fill=none,text~opacity=0, opacity=0
+		] (temp) {\l_nsk_text_center_tl};
 		% Get natural dimensions
 		\pgfextractx{\l_tmpa_dim}{\pgfpointdiff{\pgfpointanchor{temp}{west}}{\pgfpointanchor{temp}{east}}}
 		\pgfextracty{\l_tmpb_dim}{\pgfpointdiff{\pgfpointanchor{temp}{south}}{\pgfpointanchor{temp}{north}}}
