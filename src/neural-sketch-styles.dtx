@@ -131,7 +131,7 @@
 	text-center-loc .initial:n = {},
 	text-center-loc .default:n = {},
 
-  % text-style ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	% text-style ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	text-north-style .tl_gset:N = \g__nsk_style_text_north_style_tl,
 	text-north-style .initial:n = {},
 	text-north-style .default:n = {},
@@ -212,9 +212,13 @@
 	arrow-style .initial:n = {ultra~thick, line~cap=round},
 	arrow-style .default:n = {ultra~thick, line~cap=round},
 
+	arrow-color .tl_gset:N = \g__nsk_style_arrow_color_tl,
+	arrow-color .initial:n = { c__nsk_principal },
+	arrow-color .default:n = { c__nsk_principal },
+
 	arrow-type .tl_set:N = \g__nsk_style_arrow_type_tl,
-  arrow-type .initial:n = {solid},
-  arrow-type .default:n = {solid},
+	arrow-type .initial:n = {solid},
+	arrow-type .default:n = {solid},
 
 	bend-distance .dim_gset:N = \g__nsk_style_connect_bend_distance_dim,
 	bend-distance .initial:n  = {1cm},
@@ -455,9 +459,9 @@
 	annotate-width .initial:n  = {4.5cm},
 	annotate-width .default:n  = {4.5cm},
 
-  % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  % nsk / icon
-  % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% nsk / icon
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 
 	icon-width .dim_gset:N = \g__nsk_style_icon_width_dim,
 	icon-width .initial:n  = 5mm,
@@ -467,29 +471,34 @@
 	icon-height .initial:n  = 5mm,
 	icon-height .default:n  = 5mm,
 
+	icon-shift-y .dim_gset:N = \g__nsk_style_icon_shift_y_dim,
+	icon-shift-y .initial:n  = 0mm,
+	icon-shift-y .default:n  = 0mm,
+
 	icon-type .tl_set:N = \g__nsk_style_icon_type_tl,
-  icon-type .initial:n  = {lucide},
-  icon-type .default:n  = {lucide},
+	icon-type .initial:n  = {lucide},
+	icon-type .default:n  = {lucide},
 
 	icon-outdir .tl_set:N = \g__nsk_style_icon_outdir_tl,
-  icon-outdir .initial:n  = {icons},
-  icon-outdir .default:n  = {icons},
+	icon-outdir .initial:n  = {icons},
+	icon-outdir .default:n  = {icons},
 
 	icon-intdir .tl_set:N = \g__nsk_style_icon_intdir_tl,
-  icon-intdir .initial:n  = {out},
-  icon-intdir .default:n  = {out},
+	icon-intdir .initial:n  = {out},
+	icon-intdir .default:n  = {out},
 
 	icon-style .tl_gset:N = \g__nsk_style_icon_style_tl,
-  icon-style .initial:n  = {},
-  icon-style .default:n  = {},
+	icon-style .initial:n  = {},
+	icon-style .default:n  = {},
 
 	icon-color .tl_set:N = \g__nsk_style_icon_color_tl,
-  icon-color .initial:n  = {nskFg},
-  icon-color .default:n  = {nskFg},
+	icon-color .initial:n  = {nskFg},
+	icon-color .default:n  = {nskFg},
 
 	icon-clean .bool_gset:N = \g__nsk_style_icon_clean_bool,
-  icon-clean .initial:n  = {true},
-  icon-clean .default:n  = {true},
+	icon-clean .initial:n  = {true},
+	icon-clean .default:n  = {true},
+
 
 }
 
