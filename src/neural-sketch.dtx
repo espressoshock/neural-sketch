@@ -161,8 +161,8 @@ every~node/.append~style={text=c__nsk_principal},
 
 	% padding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	padding-x .dim_set:N = \l_nsk_block_padding_x_dim,
-	padding-x .initial:V = \g__nsk_style_block_padding_y_dim,
-	padding-x .default:V = \g__nsk_style_block_padding_y_dim,
+	padding-x .initial:V = \g__nsk_style_block_padding_x_dim,
+	padding-x .default:V = \g__nsk_style_block_padding_x_dim,
 
 	padding-y .dim_set:N = \l_nsk_block_padding_y_dim,
 	padding-y .initial:V = \g__nsk_style_block_padding_y_dim,
@@ -367,7 +367,7 @@ every~node/.append~style={text=c__nsk_principal},
 	text-center-loc .initial:V = \g__nsk_style_text_center_loc_tl,
 
 	text-center-style .tl_set:N = \l_nsk_text_center_style_tl,
-	text-center-style .initial:V = \g__nsk_style_text_north_style_tl,
+	text-center-style .initial:V = \g__nsk_style_text_center_style_tl,
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Embedding
@@ -528,13 +528,12 @@ every~node/.append~style={text=c__nsk_principal},
 	% Compute the node anchor based on the block's side (#1)
 	% and the extra alignment provided (#3)
 	\tl_set:Nx \l_tmpa_tl { \nsk_compute_text_node_anchor:nn {#1} {#3} }
-	\tl_show:N \l_tmpa_tl
 	% Draw the node at the block's anchor coordinate (e.g. (blockID.north))
 	% but with the computed node anchor.
 	\tl_if_blank:nTF {#3}
 	{
 		\draw[shift=(\l_nsk_block_id_tl.#1)]
-		node[font=\l_nsk_block_text_size_tl, align=center, anchor=\l_tmpa_tl, #4] {#2};
+    node[font=\l_nsk_block_text_size_tl, align=center, anchor=\l_tmpa_tl, #4]  {#2};
 	}{
 		% If extra alignment (#3) is "north" or "south", swap the order.
 		\str_if_eq:nnTF {#3}{north}
@@ -596,7 +595,7 @@ every~node/.append~style={text=c__nsk_principal},
 	{ \l_nsk_text_west_style_tl }
 
 	\nsk__render_one_text:nnnn {center}
-	{ \l_nsk_text_center_tl }
+  { \l_nsk_text_center_tl }
 	{ \l_nsk_text_center_loc_tl }
 	{ \l_nsk_text_center_style_tl }
 }
@@ -1024,6 +1023,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		\node[
 		  inner~sep=0pt,outer~sep=0,draw=none,fill=none,text~opacity=0, opacity=0
 		] (temp) {\l_nsk_text_center_tl};
+
 		% Get natural dimensions
 		\pgfextractx{\l_tmpa_dim}{\pgfpointdiff{\pgfpointanchor{temp}{west}}{\pgfpointanchor{temp}{east}}}
 		\pgfextracty{\l_tmpb_dim}{\pgfpointdiff{\pgfpointanchor{temp}{south}}{\pgfpointanchor{temp}{north}}}
