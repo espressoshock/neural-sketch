@@ -8,6 +8,7 @@ Usage (shell-escape from LaTeX):
   \write18{pyfetch fetch-lucide a-arrow-down --dest=icons}
   \write18{pyfetch clean-lucide arrow-down,chevron-up --intdir=icons/out --dest=icons}
   \write18{pyfetch update-color #FF0000 arrow-down,chevron-up --dest=icons}
+  \write18{pyfetch update-stroke 2 arrow-down,chevron-up --dest=icons}
 
 Dependencies:
   - Python 3.7+
@@ -225,6 +226,61 @@ def update_color(ctx, color, icons, dest_folder):
         logging.info("No icons were updated.")
     else:
         logging.info(f"Updated color on {len(updated)} icons.")
+
+
+@cli.command("update-stroke")
+@click.argument("width")
+@click.argument("icons")
+@click.option(
+    "-d",
+    "--dest",
+    "dest_folder",
+    default=".",
+    type=click.Path(file_okay=False),
+    help="Target folder containing SVGs",
+)
+@click.pass_context
+def update_stroke(ctx, width, icons, dest_folder):
+    """Update the SVG 'stroke-width' attribute to WIDTH for listed Lucide icons only if different."""
+    dest = Path(dest_folder)
+    if not dest.exists() or not dest.is_dir():
+        logging.error(f"Destination folder does not exist: {dest}")
+        sys.exit(1)
+    # Validate width is a non-negative number or numeric string
+    try:
+        float(width)
+    except ValueError:
+        logging.error(f"Invalid stroke width '{width}'. Must be a number.")
+        sys.exit(1)
+
+    names = set(name.strip() for name in icons.split(","))
+    updated = []
+    for name in names:
+        file_path = dest / f"{name}.svg"
+        if not file_path.exists():
+            logging.warning(f"Icon file not found, skipping: {file_path}")
+            continue
+        try:
+            tree = ET.parse(file_path)
+            root = tree.getroot()
+            changed = False
+            for elem in root.iter():
+                current = elem.attrib.get("stroke-width")
+                if current != width:
+                    elem.set("stroke-width", width)
+                    changed = True
+            if changed:
+                tree.write(file_path, encoding="utf-8", xml_declaration=True)
+                updated.append(name)
+                logging.info(f"Updated stroke-width for: {name}")
+            else:
+                logging.info(f"{name}: stroke-width already set to {width}, skipping.")
+        except Exception as e:
+            logging.error(f"Failed to update stroke-width for {file_path}: {e}")
+    if not updated:
+        logging.info("No icons had their stroke-width updated.")
+    else:
+        logging.info(f"Updated stroke-width on {len(updated)} icons.")
 
 
 if __name__ == "__main__":

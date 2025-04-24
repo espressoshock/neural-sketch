@@ -60,6 +60,10 @@
 	color .initial:V = \g__nsk_style_icon_color_tl,
 	color .default:V = \g__nsk_style_icon_color_tl,
 
+  border-size .fp_set:N = \l_nsk_icon_border_size_fp,
+  border-size .initial:V = \g__nsk_style_icon_border_size_fp,
+  border-size .default:V = \g__nsk_style_icon_border_size_fp,
+
 	width .dim_set:N = \l__nsk_icon_width_dim,
 	width .initial:V = \g__nsk_style_icon_width_dim,
 	width .default:V = \g__nsk_style_icon_width_dim,
@@ -146,6 +150,9 @@
 		\convertcolorspec{named}{\tl_use:N \l__nsk_icon_color_tl}{HTML}{\l__nsk_color_hex_tl}
 		% always update - the check is on the py-side
 		\sys_shell_now:x {python3~../scripts/neural-sketch/pyfetch.py~update-color~\#\l__nsk_color_hex_tl\space\l__nsk_icon_name_tl\space--dest=\g__nsk_style_icon_outdir_tl}
+
+    % update border size ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+		\sys_shell_now:x {python3~../scripts/neural-sketch/pyfetch.py~update-stroke~\fp_to_tl:N \l_nsk_icon_border_size_fp\space\l__nsk_icon_name_tl\space--dest=\g__nsk_style_icon_outdir_tl}
 
 		% Determine the file path based on type
 		\tl_if_eq:NnTF \l__nsk_icon_type_tl {lucide}
