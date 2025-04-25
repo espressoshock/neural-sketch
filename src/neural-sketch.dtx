@@ -147,14 +147,21 @@ every~node/.append~style={text=c__nsk_principal},
 	% block type ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	type .code:n =
 		{
-			\tl_set:Nn \l_nsk_block_type_tl {#1}
-			\str_if_eq:nnTF {#1}{text}
+			\bool_lazy_or:nnTF
+			{ \str_if_eq_p:nn {#1}{text} }
+			{ \str_if_eq_p:nn {#1}{icon} }
 			{
+				\tl_set:Nn \l_nsk_block_type_tl {rectangle}
 				\tl_set:Nn \l_nsk_block_border_type_tl {draw=none}
 				\bool_set_false:N \l_nsk_block_shadow_bool
 				\tl_set:Nn \l_nsk_block_fill_tl {none}
+				% auto width
+				\dim_set:Nn \l_nsk_block_width_dim {0cm}
+				\dim_set:Nn \l_nsk_block_padding_x_dim {0mm}
 			}
-			{ }
+			{
+				\tl_set:Nn \l_nsk_block_type_tl {#1}
+			} % false branch (do nothing)
 		},
 	type .initial:n = {rectangle},
 	type .default:n = {rectangle},
@@ -392,6 +399,10 @@ every~node/.append~style={text=c__nsk_principal},
 	embed-border-size .initial:V = \g__nsk_style_block_embed_border_size_dim,
 	embed-border-size .default:V = \g__nsk_style_block_embed_border_size_dim,
 
+	embed-border-color .tl_set:N = \l_nsk_block_embed_border_color_tl,
+	embed-border-color .initial:V = \g__nsk_style_block_embed_border_color_tl,
+	embed-border-color .default:V = \g__nsk_style_block_embed_border_color_tl,
+
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Patterns
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -533,7 +544,7 @@ every~node/.append~style={text=c__nsk_principal},
 	\tl_if_blank:nTF {#3}
 	{
 		\draw[shift=(\l_nsk_block_id_tl.#1)]
-    node[font=\l_nsk_block_text_size_tl, align=center, anchor=\l_tmpa_tl, #4]  {#2};
+		node[font=\l_nsk_block_text_size_tl, align=center, anchor=\l_tmpa_tl, #4]  {#2};
 	}{
 		% If extra alignment (#3) is "north" or "south", swap the order.
 		\str_if_eq:nnTF {#3}{north}
@@ -595,7 +606,7 @@ every~node/.append~style={text=c__nsk_principal},
 	{ \l_nsk_text_west_style_tl }
 
 	\nsk__render_one_text:nnnn {center}
-  { \l_nsk_text_center_tl }
+	{ \l_nsk_text_center_tl }
 	{ \l_nsk_text_center_loc_tl }
 	{ \l_nsk_text_center_style_tl }
 }
@@ -718,12 +729,13 @@ every~node/.append~style={text=c__nsk_principal},
 			\dim_compare:nNnTF {\l_nsk_block_embed_border_size_dim} = {0pt}
 			{
 			% Ember border size is 0, so do not draw a border.
-			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{clip}}
+        \pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{clip}}
 			}
 			{
 			% Ember border size is nonzero; set the linewidth and draw border.
-			\pgfsetlinewidth{\l_nsk_block_embed_border_size_dim}
-			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
+        \pgfsetlinewidth{\l_nsk_block_embed_border_size_dim}
+        \pgfsetstrokecolor{\l_nsk_block_embed_border_color_tl}
+        \pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
 			}
 			% raw embedding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 			\tl_use:N \l_nsk_embed_tl
@@ -738,13 +750,24 @@ every~node/.append~style={text=c__nsk_principal},
 
 		\begin{scope}
 			\pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
-			\pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
+			\pgfset{minimum~width=\l_tmpa_dim, minimum~height=\l_tmpb_dim}
 			\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
-			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
+
+			\dim_compare:nNnTF {\l_nsk_block_embed_border_size_dim} = {0pt}
+			{
+        % Ember border size is 0, so do not draw a border.
+        \pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{clip}}
+			}
+			{
+        % Ember border size is nonzero; set the linewidth and draw border.
+        \pgfsetlinewidth{\l_nsk_block_embed_border_size_dim}
+        \pgfsetstrokecolor{\l_nsk_block_embed_border_color_tl}
+        \pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
+			}
 
 			% gfx node ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 			\node[]
-			{\includegraphics[width=\l_nsk_block_width_dim, height=\l_nsk_block_height_dim]{\tl_use:N \l_nsk_embed_gfx_tl};};
+			{\includegraphics[width=\l_nsk_block_width_dim, height=\l_nsk_block_height_dim]{\tl_use:N \l_nsk_embed_gfx_tl}};
 		\end{scope}
 
 	}
@@ -853,8 +876,10 @@ every~node/.append~style={text=c__nsk_principal},
 }
 
 % shape-type ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\tl_if_eq:NnF \l_nsk_block_type_tl {text}
-{\tl_put_right:No \l_tmps_tl {shape=\l_nsk_block_type_tl,}}
+\tl_if_eq:NnF \l_nsk_block_type_tl {text}{
+	\tl_if_eq:NnF \l_nsk_block_type_tl {icon}
+	{\tl_put_right:No \l_tmps_tl {shape=\l_nsk_block_type_tl,}}
+}
 % dims ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \tl_put_right:No \l_tmps_tl {minimum\space width=\l_nsk_block_width_dim,}
 \tl_put_right:No \l_tmps_tl {minimum\space height=\l_nsk_block_height_dim,}
@@ -862,9 +887,17 @@ every~node/.append~style={text=c__nsk_principal},
 \tl_if_eq:NnT \l_nsk_block_fade_tl { none }
 {\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}}
 \tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
-\tl_if_eq:NnTF \l_nsk_block_type_tl {rounded~rectangle}
+
+
+\tl_if_in:nVTF {cylinder~cloud~signal~tape} \l_nsk_block_type_tl
 {\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
-{\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}}
+{
+	\tl_if_eq:NnTF \l_nsk_block_type_tl {rounded~rectangle}
+	{\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
+	{\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}}
+}
+
+
 \tl_put_right:No \l_tmps_tl {line\space width=\l_nsk_block_border_size_dim,}
 % outer border ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \tl_put_right:No \l_tmp_pre_acts {draw=\l_nsk_block_outer_border_color_tl,}
@@ -1021,7 +1054,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	{
 		% Create a phantom node to measure text dimensions
 		\node[
-		  inner~sep=0pt,outer~sep=0,draw=none,fill=none,text~opacity=0, opacity=0
+			inner~sep=0pt,outer~sep=0,draw=none,fill=none,text~opacity=0, opacity=0
 		] (temp) {\l_nsk_text_center_tl};
 
 		% Get natural dimensions
@@ -1039,9 +1072,9 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 \cs_new_protected_nopar:Npn \nsk__draw_block:
 {
 	\dim_compare:nNnT {\l_nsk_block_width_dim} = {0pt}
-	{
-		\nsk__maybe_resize_block_to_text:
-	}
+		{
+			\nsk__maybe_resize_block_to_text:
+		}
 
 	% 1. draw the main block shape
 	\nsk__build_block_style:
@@ -1103,6 +1136,8 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	% check if type is ...[n]
 	\nsk__check_polygon_type:
 	\nsk__check_star_type:
+	\nsk__check_rrect_type:
+	\nsk__check_crect_type:
 
 	% possibly autogenerate the id
 	\nsk__maybe_set_id:
@@ -1397,9 +1432,6 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__check_polygon_type:
 {
-	% Create temporary seq variable for regex extraction
-	\seq_clear_new:N \l_tmpa_seq
-
 	% Check if type matches polygon[n] pattern
 	\regex_match:nVTF {polygon\[[0-9]+\]} \l_nsk_block_type_tl
 	{
@@ -1424,9 +1456,6 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
 \cs_new_protected_nopar:Npn \nsk__check_star_type:
 {
-	% Create temporary seq variable for regex extraction
-	\seq_clear_new:N \l_tmpa_seq
-
 	% Check if type matches polygon[n] pattern
 	\regex_match:nVTF {star\[[0-9]+\]} \l_nsk_block_type_tl
 	{
@@ -1444,6 +1473,54 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		}
 		{
 			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, star~points=\l_poly_n_tl}
+		}
+	}
+	{ }
+}
+
+\cs_new_protected_nopar:Npn \nsk__check_rrect_type:
+{
+	% Check if type matches polygon[n] pattern
+	\regex_match:nVTF {rrect\[[0-9]+\]} \l_nsk_block_type_tl
+	{
+		% Extract the number of sides using regex
+		\regex_extract_once:nVN {rrect\[([0-9]+)\]} \l_nsk_block_type_tl \l_tmpa_seq
+		\tl_set:Nx \l_poly_n_tl {\seq_item:Nn \l_tmpa_seq {2}}
+
+		% strip the []
+		\tl_set:Nn \l_nsk_block_type_tl {rounded~rectangle}
+
+		% Append to tikz-opts
+		\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+		{
+			\tl_set:Nx \l_nsk_block_extra_style_tl {rounded~rectangle~arc~length=\l_poly_n_tl}
+		}
+		{
+			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, rounded~rectangle~arc~length=\l_poly_n_tl}
+		}
+	}
+	{ }
+}
+
+\cs_new_protected_nopar:Npn \nsk__check_crect_type:
+{
+	% Check if type matches polygon[n] pattern
+	\regex_match:nVTF {crect\[[0-9]+\]} \l_nsk_block_type_tl
+	{
+		% Extract the number of sides using regex
+		\regex_extract_once:nVN {crect\[([0-9]+)\]} \l_nsk_block_type_tl \l_tmpa_seq
+		\tl_set:Nx \l_poly_n_tl {\seq_item:Nn \l_tmpa_seq {2}}
+
+		% strip the []
+		\tl_set:Nn \l_nsk_block_type_tl {chamfered~rectangle}
+
+		% Append to tikz-opts
+		\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+		{
+			\tl_set:Nx \l_nsk_block_extra_style_tl {rounded~rectangle~arc~length=\l_poly_n_tl}
+		}
+		{
+			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, rounded~rectangle~arc~length=\l_poly_n_tl}
 		}
 	}
 	{ }

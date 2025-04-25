@@ -82,6 +82,10 @@
 	block-embed-border-size .initial:n = {1pt},
 	block-embed-border-size .default:n = {1pt},
 
+	block-embed-border-color .tl_gset:N = \g__nsk_style_block_embed_border_color_tl,
+	block-embed-border-color .initial:n = {c__nsk_principal},
+	block-embed-border-color .default:n = {c__nsk_principal},
+
 	block-embed-padding .dim_gset:N = \g__nsk_style_block_embed_padding_dim,
 	block-embed-padding .initial:n = {1mm},
 	block-embed-padding .default:n = {1mm},
@@ -518,6 +522,9 @@
 \prop_put:Nnn \g_nsk_pattern_aliases_prop { hatch } { north~east~lines }
 \prop_put:Nnn \g_nsk_pattern_aliases_prop { rhatch } { north~west~lines }
 \prop_put:Nnn \g_nsk_pattern_aliases_prop { hatchd } { crosshatch~dots}
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { check } { checkerboard }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { star5 } { fivepointed~stars }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { star6 } { sixpointed~stars }
 
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
