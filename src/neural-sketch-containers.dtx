@@ -41,24 +41,117 @@
 \pgfdeclarelayer{foreground}
 
 % Create additional interim layers for deeper nesting
+\pgfdeclarelayer{interim-1}
 \pgfdeclarelayer{interim-2}
 \pgfdeclarelayer{interim-3}
 \pgfdeclarelayer{interim-4}
 \pgfdeclarelayer{interim-5}
 
 % layer registration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\pgfsetlayers{background,interim,interim-oh,interim-2,interim-3,interim-4,interim-5,fills,main,foreground}
+\pgfsetlayers{background,fills,interim,interim-oh,interim-1,interim-2,interim-3,interim-4,interim-5,main,foreground}
 
 % Container nesting level counter
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \int_new:N \g_nsk_container_nesting_level_int
 \int_gset:Nn \g_nsk_container_nesting_level_int {0}
 
+% Stack implementation for container properties
+\seq_new:N \g_nsk_container_pos_stack_seq
+\seq_new:N \g_nsk_container_last_pos_stack_seq
+\seq_new:N \g_nsk_container_last_pos_s_stack_seq
+\seq_new:N \g_nsk_container_anchor_stack_seq
+\seq_new:N \g_nsk_container_border_type_stack_seq
+\seq_new:N \g_nsk_container_border_color_stack_seq
+\seq_new:N \g_nsk_container_fill_stack_seq
+\seq_new:N \g_nsk_container_padding_stack_seq
+\seq_new:N \g_nsk_container_x_stack_seq
+\seq_new:N \g_nsk_container_y_stack_seq
+\seq_new:N \g_nsk_container_rotate_stack_seq
+\seq_new:N \g_nsk_container_scale_stack_seq
+\seq_new:N \g_nsk_group_extra_style_stack_seq
+\seq_new:N \g_nsk_block_id_stack_seq
+\seq_new:N \g_nsk_group_bounds_name_stack_seq
+
+% Helper functions to push and pop container properties to/from stack
+\cs_new_protected:Npn \nsk__container_push_to_stack:
+{
+	% Push the properties to their respective stacks
+	\seq_gpush:NV \g_nsk_container_pos_stack_seq \l_nsk_container_pos_tl
+	\seq_gpush:NV \g_nsk_container_last_pos_stack_seq \l_nsk_container_last_pos_tl
+	\seq_gpush:NV \g_nsk_container_last_pos_s_stack_seq \l_nsk_container_last_pos_s_tl
+	\seq_gpush:NV \g_nsk_container_anchor_stack_seq \l_nsk_container_anchor_tl
+	\seq_gpush:NV \g_nsk_container_border_type_stack_seq \l_nsk_container_border_type_tl
+	\seq_gpush:NV \g_nsk_container_border_color_stack_seq \l_nsk_container_border_color_tl
+	\seq_gpush:NV \g_nsk_container_fill_stack_seq \l_nsk_container_fill_tl
+	\seq_gpush:NV \g_nsk_container_padding_stack_seq \l_nsk_container_padding_tl
+	\seq_gpush:Nx \g_nsk_container_x_stack_seq {\fp_use:N \l_nsk_container_x_fp}
+	\seq_gpush:Nx \g_nsk_container_y_stack_seq {\fp_use:N \l_nsk_container_y_fp}
+	\seq_gpush:Nx \g_nsk_container_rotate_stack_seq {\fp_use:N \l_nsk_container_rotate_fp}
+	\seq_gpush:Nx \g_nsk_container_scale_stack_seq {\fp_use:N \l_nsk_container_scale_fp}
+	\seq_gpush:NV \g_nsk_group_extra_style_stack_seq \l_nsk_group_extra_style_tl
+	\seq_gpush:NV \g_nsk_block_id_stack_seq \l_nsk_block_id_tl
+	\seq_gpush:NV \g_nsk_group_bounds_name_stack_seq \l_nsk_group_bounds_name_tl
+	
+	% Clear the unknown properties for the new level
+	\prop_clear:N \l_nsk_container_unknown_prop
+}
+
+\cs_new_protected:Npn \nsk__container_pop_from_stack:
+{
+	% Restore properties from their stacks
+	\seq_gpop:NNTF \g_nsk_container_pos_stack_seq \l_nsk_container_pos_tl 
+	{
+		% Successfully popped, continue with other properties
+		\seq_gpop:NN \g_nsk_container_last_pos_stack_seq \l_nsk_container_last_pos_tl
+		\seq_gpop:NN \g_nsk_container_last_pos_s_stack_seq \l_nsk_container_last_pos_s_tl
+		\seq_gpop:NN \g_nsk_container_anchor_stack_seq \l_nsk_container_anchor_tl
+		\seq_gpop:NN \g_nsk_container_border_type_stack_seq \l_nsk_container_border_type_tl
+		\seq_gpop:NN \g_nsk_container_border_color_stack_seq \l_nsk_container_border_color_tl
+		\seq_gpop:NN \g_nsk_container_fill_stack_seq \l_nsk_container_fill_tl
+		\seq_gpop:NN \g_nsk_container_padding_stack_seq \l_nsk_container_padding_tl
+		
+		% Pop numeric values and convert them back to their fp types
+		\seq_gpop:NN \g_nsk_container_x_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l_nsk_container_x_fp {\l_tmpa_tl}
+		
+		\seq_gpop:NN \g_nsk_container_y_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l_nsk_container_y_fp {\l_tmpa_tl}
+		
+		\seq_gpop:NN \g_nsk_container_rotate_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l_nsk_container_rotate_fp {\l_tmpa_tl}
+		
+		\seq_gpop:NN \g_nsk_container_scale_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l_nsk_container_scale_fp {\l_tmpa_tl}
+		
+		\seq_gpop:NN \g_nsk_group_extra_style_stack_seq \l_nsk_group_extra_style_tl
+		\seq_gpop:NN \g_nsk_block_id_stack_seq \l_nsk_block_id_tl
+		\seq_gpop:NN \g_nsk_group_bounds_name_stack_seq \l_nsk_group_bounds_name_tl
+	}
+	{
+		% If the pop failed, stack is empty, reset to defaults
+		\tl_clear:N \l_nsk_container_pos_tl
+		\tl_clear:N \l_nsk_container_last_pos_tl
+		\tl_clear:N \l_nsk_container_last_pos_s_tl
+		\tl_clear:N \l_nsk_container_anchor_tl
+		\tl_set:NV \l_nsk_container_border_type_tl \g__nsk_style_container_border_type_tl
+		\tl_set:NV \l_nsk_container_border_color_tl \g__nsk_style_container_border_color_tl
+		\tl_set:NV \l_nsk_container_fill_tl \g__nsk_style_container_fill_tl
+		\dim_set:Nn \l_nsk_container_padding_tl {\g__nsk_style_container_padding_dim}
+		\fp_set:NV \l_nsk_container_x_fp \g__nsk_style_container_x_fp
+		\fp_set:NV \l_nsk_container_y_fp \g__nsk_style_container_y_fp
+		\fp_set:NV \l_nsk_container_rotate_fp \g__nsk_style_container_rotate_fp
+		\fp_set:NV \l_nsk_container_scale_fp \g__nsk_style_container_scale_fp
+		\tl_clear:N \l_nsk_group_extra_style_tl
+		\tl_clear:N \l_nsk_block_id_tl
+		\tl_set:Nn \l_nsk_group_bounds_name_tl {__nsk_container_bounds}
+	}
+}
+
 % Helper to get the appropriate layer for a given nesting level
 \cs_new:Npn \nsk__get_container_layer:n #1 {
 	\int_case:nnF {#1} {
 		{1} {interim}
-			{2} {interim-oh}
+			{2} {interim-1}
 			{3} {interim-2}
 			{4} {interim-3}
 			{5} {interim-4}
@@ -401,6 +494,12 @@
 	% Increment nesting level counter
 	\int_gincr:N \g_nsk_container_nesting_level_int
 
+	% Create a unique bounds name for this nesting level
+	\tl_set:Nx \l_nsk_group_bounds_name_tl {__nsk_container_bounds_\int_use:N \g_nsk_container_nesting_level_int}
+
+	% Save the current state to the stack
+	\nsk__container_push_to_stack:
+	
 	\group_begin:
 
 	% (a) Clear the property list so it doesn't retain any old unknown keys
@@ -415,7 +514,7 @@
 		\tl_set:Nn \l_nsk_container_anchor_tl {north~west}
 		\tl_set:Nn \l_nsk_container_pos_tl { % account for shadow
 			below~right=\l_nsk_container_padding_tl+.5mm~and~
-			\l_nsk_container_padding_tl+0mm
+			\l_nsk_container_padding_tl-.5mm
 			~of~\nskID{1}
 		}
 
@@ -442,13 +541,12 @@
 	% (c) Now call \nskGroup, passing the same #1 so that shift-x, rotate, etc.
 	%     get recognized by nsk / group (or remain unknown for that domain).
 
-
-
 	% % compute offsets
 	\nsk__container_compute_anchor_offsets:
 
 	\tl_set:Nx \l_tmpx_tl
 	{
+		bounds-name=\l_nsk_group_bounds_name_tl,
 		shift-x=\fp_to_dim:n{\l_nsk_container_x_fp}+\l_tmpa_tl,
 		shift-y=\fp_to_dim:n{\l_nsk_container_y_fp}+\l_tmpb_tl,
 		rotate=\l_nsk_container_rotate_fp,
@@ -474,6 +572,9 @@
 	\nsk__container_draw_block:
 
 	\group_end:
+	
+	% Restore previous state from stack
+	\nsk__container_pop_from_stack:
 
 	% Decrement nesting level counter
 	\int_gdecr:N \g_nsk_container_nesting_level_int
@@ -532,7 +633,7 @@
 \tl_put_right:No \l_tmpa_tl { type=rectangle, }
 \tl_put_right:No \l_tmpa_tl { fill=\l_nsk_container_fill_tl, }
 \tl_put_right:No \l_tmpa_tl { border-color=\l_nsk_container_border_color_tl, }
-% use tikz-ops keys
+% use tikz-ops keys with the current level's bounding box name
 \tl_put_right:Nx \l_tmpa_tl
 { tikz-opts={fit=(\l_nsk_group_bounds_name_tl), inner\space sep=\l_nsk_container_padding_tl,
 			\l_nsk_container_border_type_tl}, }
