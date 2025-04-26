@@ -1,0 +1,174 @@
+\documentclass[12pt]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  auto-increment-duplicates=true,
+  text-south-style={yshift=-5mm},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\wave{type=icon, width=2cm, height=6cm, embed-border-size=0mm, embed-padding=-2mm,}
+\def\b{height=\h, text-center-style={rotate=90}}
+\def\elipsis{type=text, text-center={$\bullet\bullet\bullet$}, text-center-style={rotate=90}}
+\def\n{fill=nskRed, pattern=hatch}
+\def\ttip{arrow-tip={-Straight Barb}}
+\def\ftip{arrow-tip={Straight Barb-}}
+\def\enc{
+  fill=nskMainAccent!50!nskBg, border-color=nskMainAccent,
+  text-south=Neural Encoder, text-south-style={yshift=-5mm},
+  border-type=dashed,
+}
+\def\dec{
+  fill=nskGreen!50!nskBg, border-color=nskGreen,
+  text-south=Neural Decoder, text-south-style={yshift=-5mm},
+  border-type=dashed,
+}
+\def\quant{
+  fill=nskPink!50!nskBg, border-color=nskPink,
+  text-south=Split Residual Vector Quantization and Reconstruction,
+  text-south-style={yshift=-5mm},
+}
+\def\trn{
+  fill=nskSecondaryAccent!50!nskBg, border-color=nskSecondaryAccent,
+  % border-radius=8mm,
+}
+
+
+\def\t{width=1.3cm}
+\def\sn{width=5mm, height=5mm, fill=nskOrange, border-radius=1.3mm, pattern=hatch}
+\def\add{width=6mm, height=6mm, fill=nskMainAccent, type=circle, text-center=+}
+
+\NewDocumentCommand {\inodes}{t-t!m}{
+  \IfBooleanTF{#1}{\def\xs{1.5cm} }{ \def\xs{1cm}}
+  \IfBooleanTF{#2}{\def\dir{left} }{ \def\dir{right}}
+  \nskBlock*[\n, id=ib, pos={\dir=\xs of #3}, align=top]
+  \nskBlock*[\elipsis, last-pos={below=2mm}]
+  \nskBlock*[\n, id=ib, pos={\dir=\xs of #3}]
+  \nskBlock*[\elipsis, last-pos={below=2mm}]
+  \nskBlock*[\n, id=ib, pos={\dir=\xs of #3}, align=bottom]
+}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskBlock*[id=audio_i, text-south=24kHz, embed-gfx={../assets/wave_24khz.pdf}, \wave]
+	\nskMeasure[from=\nskID{1}.south, to=\nskID{1}.north, axis=vertical, into=h]
+
+  % encoder ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\nskContainer*[id=enc, last-pos={right=}, \enc]{
+    \nskBlock*[id=cb, text-center=Convnet, \b]
+    \inodes{cb}
+    \nskBlock*[id=tb, text-center=Transformer, pos={right=of \nskID{3}}, \b]
+	}
+	\inodes-{tb}
+  \nskConnect*[from=audio_i.east, to=enc3.west, arrow-type=dashed, \ttip]
+	% conn ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  \foreach \i in {3,5,...,7} {
+    \nskConnect*[to=\nskID!{\i}, from={\nskID!{2}.east |- \nskID!{\i}}, \ttip]
+    \nskConnect*[from=\nskID!{\i}, to={\nskID!{8}.west |- \nskID!{\i}}, \ttip]
+  }
+  \foreach \i in {10,12,...,14} {
+    \nskConnect*[to=\nskID!{\i}, from={\nskID!{8}.east |- \nskID!{\i}}, \ttip]
+  }
+  % quantization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  \nskContainer*[id=qc, pos={right=of ib5}, \quant]{
+    \nskBlock*[id=sn0, \sn]
+	  \foreach \i in {1,...,7} {\nskBlock*[id={sn\i}, last-pos={below=2mm}, \sn]}
+    % left --v ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+    \nskBlock*[id=vq, text-center=VQ, pos={left=2cm of \nskID{6}}, shift-y=0mm, \t]
+    \nskBlock*[last-pos={left=.5cm}, \sn]
+    \nskConnect[from=\nskID{1}, to=\nskID{2}]
+    \nskBlock*[id=lin1, text-center=Lin., last-pos={left=.5cm}, \t]
+    \nskConnect[from=\nskID{1}, to=\nskID{2}]
+
+    \nskWrap[under=\nskID{1}]
+
+    \nskBlock*[id=lin2, text-center=Lin., \t]
+    \nskBlock*[last-pos={right=.5cm}, \sn]
+    \nskConnect[from=\nskID{1}, to=\nskID{2}]
+    \nskBlock*[id=rvq, text-center=RVQ, last-pos={right=.5cm}, \t]
+    \nskConnect[from=\nskID{1}, to=\nskID{2}]
+    % right --v  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+    \nskBlock*[\add, id=add1,  pos={right=1.8cm of sn4}]
+    \nskBlock*[id=lin3, text-center=Lin., pos={right=6cm of vq}, \t]
+    \nskBlock*[last-pos={right=}, \n]
+    \nskConnect[from=\nskID{1}, to=\nskID{2}]
+    \nskBlock*[id=lin4, text-center=Lin., pos={right=6cm of rvq}, \t]
+    \nskBlock*[last-pos={right=}, \n]
+    \nskConnect[from=\nskID{1}, to=\nskID{2}]
+    \nskBlock*[\add, id=add2,  last-pos={above right=.2cm and 1cm}]
+    \nskConnect[from=\nskID{2}.east, to=add2.west, bend-type=single, bend-direction=right, bend-distance=5mm]
+    \nskConnect[from=\nskID{4}.east, to=add2.west, bend-type=single, bend-direction=right, bend-distance=5mm]
+  }
+  % conn ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  \nskConnect*[from=ib5.east, to=lin1.west, bend-type=straight, bend-direction=right, bend-distance=5mm, \ttip]
+  \nskConnect*[from=ib5.east, to=lin2.west, bend-type=straight, bend-direction=right, bend-distance=5mm, \ttip]
+  \nskConnect[from=vq.east, to=sn0.west, bend-type=straight, bend-direction=right, bend-distance=5mm, corner-radius=3mm]
+
+	  % bend alt. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	  % \nskConnect[from=vq.east, to=sn0.west, bend-type=single, bend-direction=right, bend-distance=5mm, corner-radius=5mm]
+	  % \nskConnect[from=rvq.east, to=sn5.west]
+	  % \foreach \i in {1,...,4} {\nskConnect[from=rvq.east, to=sn\i.west, bend-type=single, bend-direction=right]}
+	  % \foreach \i in {6,...,7} {\nskConnect[from=rvq.east, to=sn\i.west, bend-type=single, bend-direction=right]}
+	  % \foreach \i in {1,...,7} {\nskConnect[from=sn\i.east, to=add1.west, bend-type=single, bend-direction=right]}
+	  % bend alt. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+  \foreach \i in {1,...,7} {
+    \nskConnect[from=rvq.east, to=sn\i.west, bend-type=straight, bend-direction=right, bend-distance=5mm]
+    \nskConnect*[from=sn\i.east, to=add1.west, bend-type=straight, bend-direction=right, bend-distance=5mm, \ttip]
+  }
+  \nskConnect[from=sn0.east, to=lin3.west, bend-type=straight, bend-direction=right, bend-distance=5mm]
+  \nskConnect[from=add1.east, to=lin4.west, bend-type=straight, bend-direction=right, bend-distance=3mm]
+
+  % decoder ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  \nskContainer*[id=dec, pos={right=3cm of qc5}, \dec]{
+    \nskBlock*[id=tb, text-center=Transformer, \b] % <- autoincremented
+    \inodes{tb2}
+    \nskBlock*[id=cb, text-center=Convnet, pos={right=of \nskID{3}}, \b]
+	}
+	\inodes-!{tb2}
+	% conn ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  \foreach \i in {7,...,9} {
+    \nskConnect*[to=ib\i, from={tb2.east |- ib\i}, \ttip]
+    \nskConnect*[from=ib\i, to={cb2.west |- ib\i}, \ttip]
+  }
+  \foreach \i in {10,...,12} {\nskConnect*[from=ib\i, to={tb2.west |- ib\i}, \ttip]}
+  \nskConnect*[from=add2, to=ib11, \ttip]
+
+  \nskBlock*[id=audio_o, pos={right=of dec3}, text-south=24kHz, embed-gfx={../assets/wave_24khz.pdf}, \wave]
+  \nskConnect*[from=dec3, to=audio_o, arrow-type=dashed, \ttip]
+
+  % training ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  \nskContainer*[pos={above=of qc5.north}, anchor=south, \trn]{
+    \nskBlock[id=wavlm, text-center={\nskIcon[name=audio-lines]\\WavLM}, text-south=\textbf{Distillation}, width=0cm, padding-y=8mm, fill=nskSecondaryAccent, padding-x=8mm]
+    \nskBlock[id=cs, text-center=Cosine\\Similarity, last-pos={right=5cm}, shift-y=-5mm, width=0cm, padding-y=8mm]
+    \nskBlock[id=lin, text-center=Lin., last-pos={below left=-11mm and 8mm}, width=0cm, padding-y=4mm]
+    \nskMark[id=cst, at=cs.west, shift-y=4mm]
+    \nskMark[id=csb, at=cs.west, shift-y=-4mm]
+
+    \nskConnect*[id=wcp, from=wavlm, to=cst, \ttip]
+    \nskConnect*[from={lin.east |- csb}, to=csb, \ttip]
+    \nskMarkPath[at=.5]{wcp}{
+      \nskMark[]
+      \nskBlock[
+        pos={at={(\nskID{1})}},
+        type=icon, height=1mm, width=1mm, text-north-style={yshift=-3mm},
+        text-north={\nskIcon[name=audio-waveform]\quad\nskIcon[name=box]\quad\nskIcon[name=package-open]}
+      ]
+    }
+  }
+  \nskBlock[
+    id=al, last-pos={above=5mm}, text-center=Adversarial Losses,
+    width=0cm, fill=nskRed,
+  ]
+  \nskConnect[from=sn0, to=lin, bend-type=double, bend-direction=up]
+
+  \nskConnect*[from=audio_i.north, to=wavlm.west, bend-type=single, bend-direction=up, corner-radius=3cm, \ttip ]
+  \nskConnect*[from=audio_i.north, to=al.west, bend-type=single, bend-direction=up, corner-radius=5cm, \ttip]
+
+  \nskConnect*[from=audio_o.north, to=al.east, bend-type=single, bend-direction=up, corner-radius=3cm, \ttip]
+
+\end{nskFigure}
+\end{document}
+
+
