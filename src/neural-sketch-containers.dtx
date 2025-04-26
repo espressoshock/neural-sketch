@@ -73,6 +73,10 @@
 \tl_new:N \l_nsk_group_ps_dira_tl
 \tl_new:N \l_nsk_group_ps_dirb_tl
 
+% Temporary variables for position parsing
+\tl_new:N \l_tmpp_pos_tl
+\tl_new:N \l_tmpp_anc_tl
+
 % Helper functions to push and pop container properties to/from stack
 \cs_new_protected:Npn \nsk__container_push_to_stack:
 {
@@ -189,64 +193,114 @@
 % Save the raw pos string to \l_nsk_container_pos_tl
 \tl_set:Nx \l_nsk_container_pos_tl {#1}
 
-% Replace any "and" with spaces in the position string
+% Replace any "and" with spaces in the position string for easier parsing
 \tl_set:Nx \l_tmpp_pos_tl {#1}
 \tl_replace_all:Nnn \l_tmpp_pos_tl {and} { }
 \tl_trim_spaces:N \l_tmpp_pos_tl
 
 % Split at '=' (only if the user wrote e.g. "right=1cm of X").
-\seq_set_split:Nnn \l_tmpa_seq {=}{\l_tmpp_pos_tl}
+\seq_set_split:Nnx \l_tmpa_seq {=}{\l_tmpp_pos_tl}
 
-% If we have exactly 2 items, item 1 is "right" or "below right" and item 2 is "1cm of X".
+% Process if we have a recognized format
 \int_compare:nNnT { \seq_count:N \l_tmpa_seq } = {2}
 {
-% The direction (left/right/above/below/above right/etc.)
-\tl_set:Nx \l_tmpa_tl { \seq_item:Nn \l_tmpa_seq {1} }
-\tl_trim_spaces:N \l_tmpa_tl
+    % The direction (left/right/above/below/above right/etc.)
+    \tl_set:Nx \l_tmpa_tl { \seq_item:Nn \l_tmpa_seq {1} }
+    \tl_trim_spaces:N \l_tmpa_tl
+    
+    % The distance+node portion
+    \tl_set:Nx \l_tmpb_tl { \seq_item:Nn \l_tmpa_seq {2} }
+    \tl_trim_spaces:N \l_tmpb_tl
+    
+    % split at " of "
+    \seq_set_split:Nnx \l_tmpb_seq {of}{\l_tmpb_tl}
+    
+    \int_compare:nNnT { \seq_count:N \l_tmpb_seq } = {2}
+    {
+        % item 1 = "1cm", item 2 = "X"
+        \tl_set:Nx \l_tmpc_tl { \seq_item:Nn \l_tmpb_seq {1} }
+        \tl_trim_spaces:N \l_tmpc_tl
+        
+        \tl_if_empty:NTF \l_tmpc_tl
+        {
+            % No distance was provided; use default distance.
+            \tl_set:Nn \l_tmpc_tl {\g__nsk_style_figure_block_distance_tl}
+        }
+        {}
+        
+        % Get the node name
+        \tl_set:Nx \l_tmpd_tl { \seq_item:Nn \l_tmpb_seq {2} }
+        \tl_trim_spaces:N \l_tmpd_tl
+        
+        % Check if node already has a compass point (.east, .north, etc.)
+        \bool_set_false:N \l_tmpa_bool
+        \tl_if_in:NnT \l_tmpd_tl {.} { \bool_set_true:N \l_tmpa_bool }
+        
+        % If no compass point is present, determine appropriate one based on direction
+        \bool_if:NF \l_tmpa_bool
+        {
+            % Determine compass point based on direction
+            \str_case:VnF \l_tmpa_tl
+            {
+                {right} { \tl_put_right:Nn \l_tmpd_tl {.east} }
+                {left} { \tl_put_right:Nn \l_tmpd_tl {.west} }
+                {above} { \tl_put_right:Nn \l_tmpd_tl {.north} }
+                {below} { \tl_put_right:Nn \l_tmpd_tl {.south} }
+                {above~right} { \tl_put_right:Nn \l_tmpd_tl {.north~east} }
+                {above~left} { \tl_put_right:Nn \l_tmpd_tl {.north~west} }
+                {below~right} { \tl_put_right:Nn \l_tmpd_tl {.south~west} }
+                {below~left} { \tl_put_right:Nn \l_tmpd_tl {.south~east} }
+            }
+            {}
+            
+            % Also set the corresponding anchor if it's not already set
+            \tl_if_blank:VT \l_nsk_container_anchor_tl 
+            {
+                % Set anchor to the opposite of the compass point
+                \str_case:VnF \l_tmpa_tl
+                {
+                    {right} { \tl_set:Nn \l_nsk_container_anchor_tl {west} }
+                    {left} { \tl_set:Nn \l_nsk_container_anchor_tl {east} }
+                    {above} { \tl_set:Nn \l_nsk_container_anchor_tl {south} }
+                    {below} { \tl_set:Nn \l_nsk_container_anchor_tl {north} }
+                    {above~right} { \tl_set:Nn \l_nsk_container_anchor_tl {south~west} }
+                    {above~left} { \tl_set:Nn \l_nsk_container_anchor_tl {south~east} }
+                    {below~right} { \tl_set:Nn \l_nsk_container_anchor_tl {north~west} }
+                    {below~left} { \tl_set:Nn \l_nsk_container_anchor_tl {north~east} }
+                }
+                {
+                    % Default anchor if direction isn't recognized
+                    \tl_set:Nn \l_nsk_container_anchor_tl {center}
+                }
+            }
+        }
 
-% The distance+node portion
-\tl_set:Nx \l_tmpb_tl { \seq_item:Nn \l_tmpa_seq {2} }
-\tl_trim_spaces:N \l_tmpb_tl
+        \tl_show:N \l_nsk_container_anchor_tl
+        \tl_show:N \l_tmpd_tl
+        
+        % Convert "1cm" to a dimension variable
+        \dim_set:Nn \l__nsk_tmp_dim {\tl_use:N \l_tmpc_tl}
+        \tl_show:N \l_tmpc_tl
 
-% split at " of "
-\seq_set_split:Nnx \l_tmpb_seq {of}{\l_tmpb_tl}
-
-
-\int_compare:nNnT { \seq_count:N \l_tmpb_seq } = {2}
-{
-% item 1 = "1cm", item 2 = "X"
-\tl_set:Nx \l_tmpc_tl { \seq_item:Nn \l_tmpb_seq {1} }
-\tl_trim_spaces:N \l_tmpc_tl
-
-\tl_if_empty:NTF \l_tmpc_tl
-{
-	% No distance was provided; use default distance.
-	\tl_set:Nn \l_tmpc_tl {2cm}
-}
-{}
-
-\tl_set:Nx \l_tmpd_tl { \seq_item:Nn \l_tmpb_seq {2} }
-\tl_trim_spaces:N \l_tmpd_tl
-
-% Convert "1cm" to a dimension variable
-\dim_set:Nn \l__nsk_tmp_dim {\tl_use:N \l_tmpc_tl}
-% Now add the container's padding
-\dim_add:Nn \l__nsk_tmp_dim  { #2 }
-\dim_add:Nn \l__nsk_tmp_dim  { #2 }
-\dim_add:Nn \l__nsk_tmp_dim  { #2 }
-
-% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-% String buld
-% Rebuild "right=(dist+pad) of X" or "below right=(dist+pad) of X"
-% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\tl_set:Nx \l_nsk_container_pos_tl
-{
-	\tl_use:N \l_tmpa_tl
-	= \dim_use:N \l__nsk_tmp_dim
-	\c_space_tl of \c_space_tl
-	\tl_use:N \l_tmpd_tl
-}
-}
+        % we shouldn't need this anymore
+        % todo: just double check r#13
+        % Now add the container's padding
+        % \dim_add:Nn \l__nsk_tmp_dim  { #2 }
+        % \dim_add:Nn \l__nsk_tmp_dim  { #2 }
+        % \dim_add:Nn \l__nsk_tmp_dim  { #2 }
+        
+        % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        % String build
+        % Rebuild "right=(dist+pad) of X.west" or "below right=(dist+pad) of X.north-west"
+        % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+        \tl_set:Nx \l_nsk_container_pos_tl
+        {
+            \tl_use:N \l_tmpa_tl
+            = \dim_use:N \l__nsk_tmp_dim
+            \c_space_tl of \c_space_tl
+            \tl_use:N \l_tmpd_tl
+        }
+    }
 }
 }
 
@@ -255,9 +309,7 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected:Npn \nsk__container_compute_anchor
 {
-
 	\tl_if_blank:VT \l_nsk_container_anchor_tl {
-
 		% split at '='
 		\tl_if_blank:VTF \l_nsk_container_last_pos_s_tl
 		{\seq_set_split:Nnx \l_tmpa_seq {=} { \l_nsk_container_last_pos_tl }}
@@ -269,25 +321,23 @@
 		% Replace "and" with space if present
 		\tl_replace_all:Nnn \l_tmpp_anc_tl {and} { }
 		\tl_trim_spaces:N \l_tmpp_anc_tl
-		\tl_show:N \l_tmpp_anc_tl
 
-		\str_case:Vn \l_tmpp_anc_tl
+		\str_case:VnF \l_tmpp_anc_tl
 		{
 			{right}{\tl_set:Nn \l_nsk_container_anchor_tl {west}}
-				{left}{\tl_set:Nn \l_nsk_container_anchor_tl {east}}
-				{below}{\tl_set:Nn \l_nsk_container_anchor_tl {north}}
-				{above}{\tl_set:Nn \l_nsk_container_anchor_tl {south}}
-				{above~right}{\tl_set:Nn \l_nsk_container_anchor_tl {south~west}}
-				{above~left}{\tl_set:Nn \l_nsk_container_anchor_tl {south~east}}
-				{below~left}{\tl_set:Nn \l_nsk_container_anchor_tl {north~east}}
-				{below~right}{\tl_set:Nn \l_nsk_container_anchor_tl {north~west}}
+			{left}{\tl_set:Nn \l_nsk_container_anchor_tl {east}}
+			{above}{\tl_set:Nn \l_nsk_container_anchor_tl {south}}
+			{below}{\tl_set:Nn \l_nsk_container_anchor_tl {north}}
+			{above~right}{\tl_set:Nn \l_nsk_container_anchor_tl {south~west}}
+			{above~left}{\tl_set:Nn \l_nsk_container_anchor_tl {south~east}}
+			{below~left}{\tl_set:Nn \l_nsk_container_anchor_tl {north~east}}
+			{below~right}{\tl_set:Nn \l_nsk_container_anchor_tl {north~west}}
 		}
 		{
 			% add default
 			\tl_set:Nn \l_nsk_container_anchor_tl {center}
 		}
 	}
-	\tl_show:N \l_nsk_container_anchor_tl
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
