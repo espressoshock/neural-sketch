@@ -68,11 +68,10 @@
 \seq_new:N \g_nsk_container_y_stack_seq
 \seq_new:N \g_nsk_container_rotate_stack_seq
 \seq_new:N \g_nsk_container_scale_stack_seq
-\seq_new:N \g_nsk_group_extra_style_stack_seq
 \seq_new:N \g_nsk_block_id_stack_seq
-\seq_new:N \g_nsk_group_bounds_name_stack_seq
-\seq_new:N \g_nsk_group_ps_dira_stack_seq
-\seq_new:N \g_nsk_group_ps_dirb_stack_seq
+% --
+\tl_new:N \l_nsk_group_ps_dira_tl
+\tl_new:N \l_nsk_group_ps_dirb_tl
 
 % Helper functions to push and pop container properties to/from stack
 \cs_new_protected:Npn \nsk__container_push_to_stack:
@@ -95,10 +94,10 @@
 	\seq_gpush:NV \g_nsk_group_bounds_name_stack_seq \l_nsk_group_bounds_name_tl
 	\seq_gpush:NV \g_nsk_group_ps_dira_stack_seq \l_nsk_group_ps_dira_tl
 	\seq_gpush:NV \g_nsk_group_ps_dirb_stack_seq \l_nsk_group_ps_dirb_tl
-	
+
 	% Clear the unknown properties for the new level
 	\prop_clear:N \l_nsk_container_unknown_prop
-	
+
 	% Clear position direction token lists for new level
 	\tl_clear:N \l_nsk_group_ps_dira_tl
 	\tl_clear:N \l_nsk_group_ps_dirb_tl
@@ -107,7 +106,7 @@
 \cs_new_protected:Npn \nsk__container_pop_from_stack:
 {
 	% Restore properties from their stacks
-	\seq_gpop:NNTF \g_nsk_container_pos_stack_seq \l_nsk_container_pos_tl 
+	\seq_gpop:NNTF \g_nsk_container_pos_stack_seq \l_nsk_container_pos_tl
 	{
 		% Successfully popped, continue with other properties
 		\seq_gpop:NN \g_nsk_container_last_pos_stack_seq \l_nsk_container_last_pos_tl
@@ -117,20 +116,20 @@
 		\seq_gpop:NN \g_nsk_container_border_color_stack_seq \l_nsk_container_border_color_tl
 		\seq_gpop:NN \g_nsk_container_fill_stack_seq \l_nsk_container_fill_tl
 		\seq_gpop:NN \g_nsk_container_padding_stack_seq \l_nsk_container_padding_tl
-		
+
 		% Pop numeric values and convert them back to their fp types
 		\seq_gpop:NN \g_nsk_container_x_stack_seq \l_tmpa_tl
 		\fp_set:Nn \l_nsk_container_x_fp {\l_tmpa_tl}
-		
+
 		\seq_gpop:NN \g_nsk_container_y_stack_seq \l_tmpa_tl
 		\fp_set:Nn \l_nsk_container_y_fp {\l_tmpa_tl}
-		
+
 		\seq_gpop:NN \g_nsk_container_rotate_stack_seq \l_tmpa_tl
 		\fp_set:Nn \l_nsk_container_rotate_fp {\l_tmpa_tl}
-		
+
 		\seq_gpop:NN \g_nsk_container_scale_stack_seq \l_tmpa_tl
 		\fp_set:Nn \l_nsk_container_scale_fp {\l_tmpa_tl}
-		
+
 		\seq_gpop:NN \g_nsk_group_extra_style_stack_seq \l_nsk_group_extra_style_tl
 		\seq_gpop:NN \g_nsk_block_id_stack_seq \l_nsk_block_id_tl
 		\seq_gpop:NN \g_nsk_group_bounds_name_stack_seq \l_nsk_group_bounds_name_tl
@@ -177,16 +176,6 @@
 % store unkown keys to pass-through
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \prop_new:N \l_nsk_container_unknown_prop
-
-% Initialize token lists used for position parsing
-\tl_new:N \l_nsk_group_ps_dira_tl
-\tl_new:N \l_nsk_group_ps_dirb_tl
-\tl_new:N \l_tmpa_lx_tl
-\tl_new:N \l_tmpa_rx_tl
-\tl_new:N \l_tmpa_ps_seq
-\tl_new:N \l_anchor_tl
-\tl_new:N \l_tmpp_pos_tl
-\tl_new:N \l_tmpp_anc_tl
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Position Parser
@@ -521,7 +510,7 @@
 
 	% Save the current state to the stack
 	\nsk__container_push_to_stack:
-	
+
 	\group_begin:
 
 	% (a) Clear the property list so it doesn't retain any old unknown keys
@@ -559,9 +548,6 @@
 	\tl_if_blank:VTF \l_nsk_container_last_pos_s_tl
 	{ \nsk__process_container_last_pos: }
 	{ \nsk__process_container_last_pos_s: }
-	
-	% Process position to set direction variables and detect anchor
-	\nsk__container_detect_anchor_pos:
 
 	% (c) Now call \nskGroup, passing the same #1 so that shift-x, rotate, etc.
 	%     get recognized by nsk / group (or remain unknown for that domain).
@@ -597,7 +583,7 @@
 	\nsk__container_draw_block:
 
 	\group_end:
-	
+
 	% Restore previous state from stack
 	\nsk__container_pop_from_stack:
 
@@ -674,89 +660,6 @@
 	}
 
 	\nsk__expand_block_aux:V \l_tmpa_tl
-}
-
-\cs_new_protected_nopar:Npn \nsk__container_parse_pos:
-{
-  % "below right=0cm and 0cm of basics"
-  \seq_set_split:Nnx \l_tmpa_seq {=}{\l_nsk_container_pos_tl}
-  
-  % Clear the direction token lists
-  \tl_clear:N \l_nsk_group_ps_dira_tl
-  \tl_clear:N \l_nsk_group_ps_dirb_tl
-  
-  % If there's at least two items, we can inspect the first part
-  % (the directions) to pick a multi-word anchor.
-  \int_compare:nNnT { \seq_count:N \l_tmpa_seq } > {1}
-  {
-    % \l_tmpa_tl := "below right" (for example)
-    \tl_set:Nx \l_tmpa_lx_tl { \seq_item:Nn \l_tmpa_seq {1} }
-    % 0cm and 0cm of basics.<..>
-    \tl_set:Nx \l_tmpa_rx_tl { \seq_item:Nn \l_tmpa_seq {2} }
-    
-    % split below right
-    \seq_set_split:Nnx \l_tmpa_ps_seq {~} { \tl_use:N \l_tmpa_lx_tl }
-    
-    \int_compare:nNnT { \seq_count:N \l_tmpa_ps_seq } = {1}
-    {
-      \tl_set:Nx \l_nsk_group_ps_dira_tl { \seq_item:Nn \l_tmpa_ps_seq {1} }
-    }
-    
-    \int_compare:nNnT { \seq_count:N \l_tmpa_ps_seq } = {2}
-    {
-      \tl_set:Nx \l_nsk_group_ps_dira_tl { \seq_item:Nn \l_tmpa_ps_seq {1} }
-      \tl_set:Nx \l_nsk_group_ps_dirb_tl { \seq_item:Nn \l_tmpa_ps_seq {2} }
-    }
-  }
-  
-  % prepend proper alignment if needed
-  \str_if_in:NnTF \l_nsk_container_pos_tl {.}
-  {}
-  {
-    % not given --
-    \tl_clear_new:N \l_anchor_tl
-    \str_case:Vn \l_nsk_group_ps_dira_tl
-    {
-      {above}{\tl_set:Nn \l_anchor_tl {north}}
-      {below}{\tl_set:Nn \l_anchor_tl {south}}
-      {left}{\tl_set:Nn \l_anchor_tl {west}}
-      {right}{\tl_set:Nn \l_anchor_tl {east}}
-    }
-    
-    \tl_put_right:Nx \l_nsk_container_pos_tl
-    {.\l_anchor_tl}
-  }
-}
-
-\cs_new_protected_nopar:Npn \nsk__container_detect_anchor_pos:
-{
-  \nsk__container_parse_pos:
-  
-  % Set alignment based on position direction
-  \tl_if_blank:VTF \l_nsk_container_pos_tl
-  {}
-  {
-    \tl_if_blank:VT \l_nsk_container_anchor_tl
-    {
-      \tl_if_blank:VF \l_nsk_group_ps_dira_tl
-      {
-        \str_case:Vn \l_nsk_group_ps_dira_tl {
-          {above}{\tl_set:Nn \l_nsk_container_anchor_tl {south~}}
-          {below}{\tl_set:Nn \l_nsk_container_anchor_tl {north~}}
-          {right}{\tl_set:Nn \l_nsk_container_anchor_tl {west~}}
-          {left}{\tl_set:Nn \l_nsk_container_anchor_tl {east~}}
-        }
-      }
-      
-      \tl_if_blank:VF \l_nsk_group_ps_dirb_tl
-      {
-        \str_case:Vn \l_nsk_group_ps_dirb_tl {
-          {right}{\tl_put_right:Nn \l_nsk_container_anchor_tl {west}}
-          {left}{\tl_put_right:Nn \l_nsk_container_anchor_tl {east}}
-        }
-      }
-    }
-  }
 }
 
 \ExplSyntaxOff
