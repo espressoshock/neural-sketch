@@ -1,15 +1,15 @@
---!/usr/bin/env lua
--- Usage: lua generate_variants.lua <texfile> [target_directory]
+#!/usr/bin/env lua
+-- Usage: lua generate_variants.lua <texfile> [target_directory] [output_basename]
 -- This script requires pdflatex, pdf2svg, and mv (or an equivalent copy command on your system).
 
 -- Check command-line arguments.
 if #arg < 1 then
-  print("Usage: lua " .. arg[0] .. " <texfile> [target_directory]")
+  print("Usage: lua " .. arg[0] .. " <texfile> [target_directory] [output_basename]")
   os.exit(1)
 end
 
-local texfile = arg[1]
-local target_dir = arg[2] or "./"  -- default to current directory if not provided
+local texfile       = arg[1]
+local target_dir    = arg[2] or "./"              -- default to current directory if not provided
 
 -- Extract the filename (without path) from the provided tex file.
 local filename = texfile:match("([^/\\]+)$")
@@ -25,17 +25,20 @@ if not basename then
   os.exit(1)
 end
 
--- Define job and file names.
-local light_job       = basename .. "_light"
-local dark_job        = basename .. "_dark"
+-- Set output base name (override basename if provided).
+local output_base = arg[3] or basename
+
+-- Define job and file names using the output base.
+local light_job       = output_base .. "_light"
+local dark_job        = output_base .. "_dark"
 local light_tex       = light_job .. ".tex"
 local dark_tex        = dark_job .. ".tex"
 local light_pdf       = light_job .. ".pdf"
 local dark_pdf        = dark_job .. ".pdf"
 local light_svg_temp  = light_job .. ".svg"
 local dark_svg_temp   = dark_job .. ".svg"
-local final_light_svg = target_dir .. "/" .. basename .. ".svg"
-local final_dark_svg  = target_dir .. "/" .. basename .. "-dark.svg"
+local final_light_svg = target_dir .. "/" .. output_base .. ".svg"
+local final_dark_svg  = target_dir .. "/" .. output_base .. "-dark.svg"
 
 -- Helper function to run a shell command.
 local function run_cmd(cmd)
