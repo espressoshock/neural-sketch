@@ -1,0 +1,34 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+\usepackage[
+  block-width=1.5cm, block-height=1.5cm,
+  block-distance=1.5cm,
+  container-border-type=dashed,
+  container-fill=nskRed!30!nskBg,
+  container-border-color=nskRed,
+  shorten-from=0mm, shorten-to=4mm, arrow-tip={Circle[width=1.5mm, length=1.5mm]-Straight Barb},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\c{type=circle, fill=nskMainAccent}
+\def\r{type=rounded rectangle, border-radius=0mm, width=3cm, fill=nskBlue}
+\def\p{type=polygon[5], fill=nskMainAccent}
+\def\t{type=polygon[3], height=1.6cm, shift-y=-1mm, fill=nskMainAccent}
+\def\s{type=star[6], height=1.6cm, fill=nskRed,
+border-radius=2mm, rotate=0}
+
+\def\cp{fill=nskSecondaryAccent!30!nskBg, border-color=nskSecondaryAccent}
+\def\x{fill=none, pattern=hatch}
+
+\begin{document}
+\begin{nskFigure}[]
+  \nskBlock*[id=a, \p, \x]
+  \nskBlock*[last-pos={right=7mm}, \r, \x]
+  \nskBlock*[last-pos={right=7mm}, \c, \x]
+  \nskBlock*[last-pos={right=7mm}, \t]
+
+	\nskWrap[over=a]
+	\nskBlock*[id=b, \s,]
+\end{nskFigure}
+\end{document}
