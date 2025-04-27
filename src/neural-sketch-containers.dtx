@@ -72,6 +72,8 @@
 % --
 \tl_new:N \l_nsk_group_ps_dira_tl
 \tl_new:N \l_nsk_group_ps_dirb_tl
+% --
+\bool_new:N \l_nsk_container_draw_bool
 
 % Temporary variables for position parsing
 \tl_new:N \l_tmpp_pos_tl
@@ -88,7 +90,7 @@
 	\seq_gpush:NV \g_nsk_container_border_type_stack_seq \l_nsk_container_border_type_tl
 	\seq_gpush:NV \g_nsk_container_border_color_stack_seq \l_nsk_container_border_color_tl
 	\seq_gpush:NV \g_nsk_container_fill_stack_seq \l_nsk_container_fill_tl
-	\seq_gpush:NV \g_nsk_container_padding_stack_seq \l_nsk_container_padding_tl
+	\seq_gpush:NV \g_nsk_container_padding_stack_seq \l_nsk_container_padding_dim
 	\seq_gpush:Nx \g_nsk_container_x_stack_seq {\fp_use:N \l_nsk_container_x_fp}
 	\seq_gpush:Nx \g_nsk_container_y_stack_seq {\fp_use:N \l_nsk_container_y_fp}
 	\seq_gpush:Nx \g_nsk_container_rotate_stack_seq {\fp_use:N \l_nsk_container_rotate_fp}
@@ -119,7 +121,7 @@
 		\seq_gpop:NN \g_nsk_container_border_type_stack_seq \l_nsk_container_border_type_tl
 		\seq_gpop:NN \g_nsk_container_border_color_stack_seq \l_nsk_container_border_color_tl
 		\seq_gpop:NN \g_nsk_container_fill_stack_seq \l_nsk_container_fill_tl
-		\seq_gpop:NN \g_nsk_container_padding_stack_seq \l_nsk_container_padding_tl
+		\seq_gpop:NN \g_nsk_container_padding_stack_seq \l_nsk_container_padding_dim
 
 		% Pop numeric values and convert them back to their fp types
 		\seq_gpop:NN \g_nsk_container_x_stack_seq \l_tmpa_tl
@@ -149,7 +151,7 @@
 		\tl_set:NV \l_nsk_container_border_type_tl \g__nsk_style_container_border_type_tl
 		\tl_set:NV \l_nsk_container_border_color_tl \g__nsk_style_container_border_color_tl
 		\tl_set:NV \l_nsk_container_fill_tl \g__nsk_style_container_fill_tl
-		\dim_set:Nn \l_nsk_container_padding_tl {\g__nsk_style_container_padding_dim}
+		\dim_set:Nn \l_nsk_container_padding_dim {\g__nsk_style_container_padding_dim}
 		\fp_set:NV \l_nsk_container_x_fp \g__nsk_style_container_x_fp
 		\fp_set:NV \l_nsk_container_y_fp \g__nsk_style_container_y_fp
 		\fp_set:NV \l_nsk_container_rotate_fp \g__nsk_style_container_rotate_fp
@@ -204,103 +206,103 @@
 % Process if we have a recognized format
 \int_compare:nNnT { \seq_count:N \l_tmpa_seq } = {2}
 {
-    % The direction (left/right/above/below/above right/etc.)
-    \tl_set:Nx \l_tmpa_tl { \seq_item:Nn \l_tmpa_seq {1} }
-    \tl_trim_spaces:N \l_tmpa_tl
-    
-    % The distance+node portion
-    \tl_set:Nx \l_tmpb_tl { \seq_item:Nn \l_tmpa_seq {2} }
-    \tl_trim_spaces:N \l_tmpb_tl
-    
-    % split at " of "
-    \seq_set_split:Nnx \l_tmpb_seq {of}{\l_tmpb_tl}
-    
-    \int_compare:nNnT { \seq_count:N \l_tmpb_seq } = {2}
-    {
-        % item 1 = "1cm", item 2 = "X"
-        \tl_set:Nx \l_tmpc_tl { \seq_item:Nn \l_tmpb_seq {1} }
-        \tl_trim_spaces:N \l_tmpc_tl
-        
-        \tl_if_empty:NTF \l_tmpc_tl
-        {
-            % No distance was provided; use default distance.
-            \tl_set:Nn \l_tmpc_tl {\g__nsk_style_figure_block_distance_tl}
-        }
-        {}
-        
-        % Get the node name
-        \tl_set:Nx \l_tmpd_tl { \seq_item:Nn \l_tmpb_seq {2} }
-        \tl_trim_spaces:N \l_tmpd_tl
-        
-        % Check if node already has a compass point (.east, .north, etc.)
-        \bool_set_false:N \l_tmpa_bool
-        \tl_if_in:NnT \l_tmpd_tl {.} { \bool_set_true:N \l_tmpa_bool }
-        
-        % If no compass point is present, determine appropriate one based on direction
-        \bool_if:NF \l_tmpa_bool
-        {
-            % Determine compass point based on direction
-            \str_case:VnF \l_tmpa_tl
-            {
-                {right} { \tl_put_right:Nn \l_tmpd_tl {.east} }
-                {left} { \tl_put_right:Nn \l_tmpd_tl {.west} }
-                {above} { \tl_put_right:Nn \l_tmpd_tl {.north} }
-                {below} { \tl_put_right:Nn \l_tmpd_tl {.south} }
-                {above~right} { \tl_put_right:Nn \l_tmpd_tl {.north~east} }
-                {above~left} { \tl_put_right:Nn \l_tmpd_tl {.north~west} }
-                {below~right} { \tl_put_right:Nn \l_tmpd_tl {.south~west} }
-                {below~left} { \tl_put_right:Nn \l_tmpd_tl {.south~east} }
-            }
-            {}
-            
-            % Also set the corresponding anchor if it's not already set
-            \tl_if_blank:VT \l_nsk_container_anchor_tl 
-            {
-                % Set anchor to the opposite of the compass point
-                \str_case:VnF \l_tmpa_tl
-                {
-                    {right} { \tl_set:Nn \l_nsk_container_anchor_tl {west} }
-                    {left} { \tl_set:Nn \l_nsk_container_anchor_tl {east} }
-                    {above} { \tl_set:Nn \l_nsk_container_anchor_tl {south} }
-                    {below} { \tl_set:Nn \l_nsk_container_anchor_tl {north} }
-                    {above~right} { \tl_set:Nn \l_nsk_container_anchor_tl {south~west} }
-                    {above~left} { \tl_set:Nn \l_nsk_container_anchor_tl {south~east} }
-                    {below~right} { \tl_set:Nn \l_nsk_container_anchor_tl {north~west} }
-                    {below~left} { \tl_set:Nn \l_nsk_container_anchor_tl {north~east} }
-                }
-                {
-                    % Default anchor if direction isn't recognized
-                    \tl_set:Nn \l_nsk_container_anchor_tl {center}
-                }
-            }
-        }
+% The direction (left/right/above/below/above right/etc.)
+\tl_set:Nx \l_tmpa_tl { \seq_item:Nn \l_tmpa_seq {1} }
+\tl_trim_spaces:N \l_tmpa_tl
 
-        \tl_show:N \l_nsk_container_anchor_tl
-        \tl_show:N \l_tmpd_tl
-        
-        % Convert "1cm" to a dimension variable
-        \dim_set:Nn \l__nsk_tmp_dim {\tl_use:N \l_tmpc_tl}
-        \tl_show:N \l_tmpc_tl
+% The distance+node portion
+\tl_set:Nx \l_tmpb_tl { \seq_item:Nn \l_tmpa_seq {2} }
+\tl_trim_spaces:N \l_tmpb_tl
 
-        % we shouldn't need this anymore
-        % todo: just double check r#13
-        % Now add the container's padding
-        % \dim_add:Nn \l__nsk_tmp_dim  { #2 }
-        % \dim_add:Nn \l__nsk_tmp_dim  { #2 }
-        % \dim_add:Nn \l__nsk_tmp_dim  { #2 }
-        
-        % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        % String build
-        % Rebuild "right=(dist+pad) of X.west" or "below right=(dist+pad) of X.north-west"
-        % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-        \tl_set:Nx \l_nsk_container_pos_tl
-        {
-            \tl_use:N \l_tmpa_tl
-            = \dim_use:N \l__nsk_tmp_dim
-            \c_space_tl of \c_space_tl
-            \tl_use:N \l_tmpd_tl
-        }
-    }
+% split at " of "
+\seq_set_split:Nnx \l_tmpb_seq {of}{\l_tmpb_tl}
+
+\int_compare:nNnT { \seq_count:N \l_tmpb_seq } = {2}
+{
+% item 1 = "1cm", item 2 = "X"
+\tl_set:Nx \l_tmpc_tl { \seq_item:Nn \l_tmpb_seq {1} }
+\tl_trim_spaces:N \l_tmpc_tl
+
+\tl_if_empty:NTF \l_tmpc_tl
+{
+	% No distance was provided; use default distance.
+	\tl_set:Nn \l_tmpc_tl {\g__nsk_style_figure_block_distance_tl}
+}
+{}
+
+% Get the node name
+\tl_set:Nx \l_tmpd_tl { \seq_item:Nn \l_tmpb_seq {2} }
+\tl_trim_spaces:N \l_tmpd_tl
+
+% Check if node already has a compass point (.east, .north, etc.)
+\bool_set_false:N \l_tmpa_bool
+\tl_if_in:NnT \l_tmpd_tl {.} { \bool_set_true:N \l_tmpa_bool }
+
+% If no compass point is present, determine appropriate one based on direction
+\bool_if:NF \l_tmpa_bool
+{
+	% Determine compass point based on direction
+	\str_case:VnF \l_tmpa_tl
+	{
+		{right} { \tl_put_right:Nn \l_tmpd_tl {.east} }
+			{left} { \tl_put_right:Nn \l_tmpd_tl {.west} }
+			{above} { \tl_put_right:Nn \l_tmpd_tl {.north} }
+			{below} { \tl_put_right:Nn \l_tmpd_tl {.south} }
+			{above~right} { \tl_put_right:Nn \l_tmpd_tl {.north~east} }
+			{above~left} { \tl_put_right:Nn \l_tmpd_tl {.north~west} }
+			{below~right} { \tl_put_right:Nn \l_tmpd_tl {.south~west} }
+			{below~left} { \tl_put_right:Nn \l_tmpd_tl {.south~east} }
+	}
+	{}
+
+	% Also set the corresponding anchor if it's not already set
+	\tl_if_blank:VT \l_nsk_container_anchor_tl
+	{
+		% Set anchor to the opposite of the compass point
+		\str_case:VnF \l_tmpa_tl
+		{
+			{right} { \tl_set:Nn \l_nsk_container_anchor_tl {west} }
+				{left} { \tl_set:Nn \l_nsk_container_anchor_tl {east} }
+				{above} { \tl_set:Nn \l_nsk_container_anchor_tl {south} }
+				{below} { \tl_set:Nn \l_nsk_container_anchor_tl {north} }
+				{above~right} { \tl_set:Nn \l_nsk_container_anchor_tl {south~west} }
+				{above~left} { \tl_set:Nn \l_nsk_container_anchor_tl {south~east} }
+				{below~right} { \tl_set:Nn \l_nsk_container_anchor_tl {north~west} }
+				{below~left} { \tl_set:Nn \l_nsk_container_anchor_tl {north~east} }
+		}
+		{
+			% Default anchor if direction isn't recognized
+			\tl_set:Nn \l_nsk_container_anchor_tl {center}
+		}
+	}
+}
+
+\tl_show:N \l_nsk_container_anchor_tl
+\tl_show:N \l_tmpd_tl
+
+% Convert "1cm" to a dimension variable
+\dim_set:Nn \l__nsk_tmp_dim {\tl_use:N \l_tmpc_tl}
+\tl_show:N \l_tmpc_tl
+
+% we shouldn't need this anymore
+% todo: just double check r#13
+% Now add the container's padding
+% \dim_add:Nn \l__nsk_tmp_dim  { #2 }
+% \dim_add:Nn \l__nsk_tmp_dim  { #2 }
+% \dim_add:Nn \l__nsk_tmp_dim  { #2 }
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% String build
+% Rebuild "right=(dist+pad) of X.west" or "below right=(dist+pad) of X.north-west"
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_set:Nx \l_nsk_container_pos_tl
+{
+	\tl_use:N \l_tmpa_tl
+	= \dim_use:N \l__nsk_tmp_dim
+	\c_space_tl of \c_space_tl
+	\tl_use:N \l_tmpd_tl
+}
+}
 }
 }
 
@@ -325,13 +327,13 @@
 		\str_case:VnF \l_tmpp_anc_tl
 		{
 			{right}{\tl_set:Nn \l_nsk_container_anchor_tl {west}}
-			{left}{\tl_set:Nn \l_nsk_container_anchor_tl {east}}
-			{above}{\tl_set:Nn \l_nsk_container_anchor_tl {south}}
-			{below}{\tl_set:Nn \l_nsk_container_anchor_tl {north}}
-			{above~right}{\tl_set:Nn \l_nsk_container_anchor_tl {south~west}}
-			{above~left}{\tl_set:Nn \l_nsk_container_anchor_tl {south~east}}
-			{below~left}{\tl_set:Nn \l_nsk_container_anchor_tl {north~east}}
-			{below~right}{\tl_set:Nn \l_nsk_container_anchor_tl {north~west}}
+				{left}{\tl_set:Nn \l_nsk_container_anchor_tl {east}}
+				{above}{\tl_set:Nn \l_nsk_container_anchor_tl {south}}
+				{below}{\tl_set:Nn \l_nsk_container_anchor_tl {north}}
+				{above~right}{\tl_set:Nn \l_nsk_container_anchor_tl {south~west}}
+				{above~left}{\tl_set:Nn \l_nsk_container_anchor_tl {south~east}}
+				{below~left}{\tl_set:Nn \l_nsk_container_anchor_tl {north~east}}
+				{below~right}{\tl_set:Nn \l_nsk_container_anchor_tl {north~west}}
 		}
 		{
 			% add default
@@ -352,25 +354,25 @@
 
 	\str_case:Vn \l_nsk_container_anchor_tl
 	{
-		{north}       { \tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl } }
-			{south}       { \tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl } }
-			{east}        { \tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl } }
-			{west}        { \tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl } }
+		{north}       { \tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_dim } }
+			{south}       { \tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_dim } }
+			{east}        { \tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_dim } }
+			{west}        { \tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_dim } }
 			{north east}  {
-				\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl }
-				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl }
+				\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_dim }
+				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_dim }
 			}
 			{north west}  {
-				\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl }
-				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_tl }
+				\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_dim }
+				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_dim }
 			}
 			{south east}  {
-				\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_tl }
-				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl }
+				\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_dim }
+				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_dim }
 			}
 			{south west}  {
-				\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_tl }
-				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_tl }
+				\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_dim }
+				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_dim }
 			}
 	}
 }
@@ -415,9 +417,7 @@
 	\tl_if_blank:VF \l_nsk_container_last_pos_s_tl
 	{
 		\seq_if_empty:NTF \g_nsk_block_id_history_seq
-		{
-			\msg_warning:nn {nsk}{No-previous-container-for-last-pos}
-		}
+		{}
 		{
 			% Retrieve the previous block ID
 			\nsk__internal_get_nth_block_id:n {1}
@@ -472,7 +472,7 @@
 	fill .initial:V = \g__nsk_style_container_fill_tl,
 	fill .default:V = \g__nsk_style_container_fill_tl,
 
-	padding .dim_set:N = \l_nsk_container_padding_tl,
+	padding .dim_set:N = \l_nsk_container_padding_dim,
 	padding .initial:V = \g__nsk_style_container_padding_dim,
 	padding .default:V = \g__nsk_style_container_padding_dim,
 
@@ -487,7 +487,7 @@
 	% natural positioning using positioning library
 	pos .code:n =
 		{
-			\nsk__container_parse_pos_value:nn {#1} {\l_nsk_container_padding_tl}
+			\nsk__container_parse_pos_value:nn {#1} {\l_nsk_container_padding_dim}
 		},
 	pos .initial:n = { },
 	pos .default:n = { },
@@ -537,17 +537,21 @@
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand \nskContainer { sO{} }
+\NewDocumentCommand \nskContainer { st!O{} }
 {
-	\IfBooleanTF{#1}
-	{
-		% Starred form: auto-expand keys
-		\edef\l_tmpa_tl{#2}
-		\expandafter\nskContainerR\expandafter[\l_tmpa_tl]
-	}
-	{
-		\nskContainerR[#2]
-	}
+
+\IfBooleanTF{#2}{\bool_set_false:N \l_nsk_container_draw_bool}
+{\bool_set_true:N \l_nsk_container_draw_bool}
+
+\IfBooleanTF{#1}
+{
+	% Starred form: auto-expand keys
+	\edef\l_tmpa_tl{#3}
+	\expandafter\nskContainerR\expandafter[\l_tmpa_tl]
+}
+{
+	\nskContainerR[#3]
+}
 }
 
 \NewDocumentCommand \nskContainerR { O{} +m }
@@ -569,13 +573,17 @@
 	% (b) Parse recognized container keys + store unknown keys
 	\keys_set:nn {nsk / container}{#1}
 
+	% if no style, then no padding as well --
+	\bool_if:NF \l_nsk_container_draw_bool
+	{\tl_set:Nn \l_nsk_container_padding_dim {0mm}}
+
 	% wrapping --
 	\bool_if:NTF \g_nsk_wrap_left_bool
 	{
 		\tl_set:Nn \l_nsk_container_anchor_tl {north~west}
 		\tl_set:Nn \l_nsk_container_pos_tl { % account for shadow
-			below~right=\l_nsk_container_padding_tl+.5mm~and~
-			\l_nsk_container_padding_tl-.5mm
+			below~right=\l_nsk_container_padding_dim+.5mm~and~
+			\l_nsk_container_padding_dim-.5mm
 			~of~\nskID{1}
 		}
 
@@ -585,8 +593,8 @@
 		{
 			\tl_set:Nn \l_nsk_container_anchor_tl {north~east}
 			\tl_set:Nn \l_nsk_container_pos_tl { % account for shadow
-				below~right=\l_nsk_container_padding_tl+.5mm~and~
-				-\l_nsk_container_padding_tl+0mm
+				below~right=\l_nsk_container_padding_dim+.5mm~and~
+				-\l_nsk_container_padding_dim+0mm
 				~of~\nskID{1}
 			}
 
@@ -692,11 +700,19 @@
 
 % put recognized container keys:
 \tl_put_right:No \l_tmpa_tl { type=rectangle, }
-\tl_put_right:No \l_tmpa_tl { fill=\l_nsk_container_fill_tl, }
-\tl_put_right:No \l_tmpa_tl { border-color=\l_nsk_container_border_color_tl, }
+
+% unstyled if <!> ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\bool_if:NTF \l_nsk_container_draw_bool
+{
+	\tl_put_right:No \l_tmpa_tl { fill=\l_nsk_container_fill_tl, }
+	\tl_put_right:No \l_tmpa_tl { border-color=\l_nsk_container_border_color_tl, }
+}{
+	\tl_put_right:No \l_tmpa_tl { fill=none, }
+	\tl_put_right:No \l_tmpa_tl { border-type=none, }
+}
 % use tikz-ops keys with the current level's bounding box name
 \tl_put_right:Nx \l_tmpa_tl
-{ tikz-opts={fit=(\l_nsk_group_bounds_name_tl), inner\space sep=\l_nsk_container_padding_tl,
+{ tikz-opts={fit=(\l_nsk_group_bounds_name_tl), inner\space sep=\l_nsk_container_padding_dim,
 			\l_nsk_container_border_type_tl}, }
 
 
