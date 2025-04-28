@@ -4,7 +4,7 @@
 
 ---
 
-[![Version](https://img.shields.io/badge/version-v0.8.0-blue.svg)](#)
+[![Version](https://img.shields.io/badge/version-v1.2.0-blue.svg)](#)
 [![Made with](https://img.shields.io/badge/made%20with-LaTeX3-brightgreen.svg)](https://www.latex-project.org/)
 [![TikZ Compatible](https://img.shields.io/badge/compatible-TikZ-orange.svg)](https://ctan.org/pkg/pgf)
 [![l3build](https://img.shields.io/badge/built%20with-l3build-purple.svg)](https://ctan.org/pkg/l3build)
