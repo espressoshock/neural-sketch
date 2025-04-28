@@ -200,6 +200,14 @@ every~node/.append~style={text=c__nsk_principal},
 	anchor .initial:V = \g__nsk_style_block_anchor_tl,
 	anchor .default:V = \g__nsk_style_block_anchor_tl,
 
+  rotate .tl_set:N = \l_nsk_block_rotate_tl,
+  rotate .initial:V = \g__nsk_style_block_rotate_tl,
+  rotate .default:V = \g__nsk_style_block_rotate_tl,
+
+  opacity .tl_set:N = \l_nsk_block_opacity_tl,
+  opacity .initial:V = \g__nsk_style_block_opacity_tl,
+  opacity .default:V = \g__nsk_style_block_opacity_tl,
+
 	% natural positioning using positioning library
 	pos .tl_set:N = \l_nsk_block_pos_tl,
 	pos .initial:n = { },
@@ -234,6 +242,11 @@ every~node/.append~style={text=c__nsk_principal},
 	height .dim_set:N = \l_nsk_block_height_dim,
 	height .default:V = \g__nsk_style_block_height_dim,
 	height .initial:V = \g__nsk_style_block_height_dim,
+
+  size .code:n = {
+    \dim_set:Nn \l_nsk_block_width_dim {#1}
+    \dim_set:Nn \l_nsk_block_height_dim {#1}
+  },
 
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -323,7 +336,8 @@ every~node/.append~style={text=c__nsk_principal},
 	tikz-opts  .default:n = {},
 
 	text-size .tl_set:N = \l_nsk_block_text_size_tl,
-	text-size .initial:n = {\normalsize},
+	text-size .initial:V = \g__nsk_style_text_size_tl,
+	text-size .default:V = \g__nsk_style_text_size_tl,
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Text Anchoring
@@ -896,15 +910,15 @@ every~node/.append~style={text=c__nsk_principal},
 % wrapping --
 \bool_if:NTF \g_nsk_wrap_left_bool
 {
-	\tl_set:Nn \l_nsk_block_anchor_tl {north~west}
-	\tl_set:Nn \l_nsk_block_pos_tl {below~left=0mm~and~0mm~of~\nskID{1}}
+	\tl_set:Nn \l_nsk_block_anchor_tl {\l__nsk_wrap_anchor_tl\space west}
+	\tl_set:Nn \l_nsk_block_pos_tl {\l__nsk_wrap_direction_tl\space left=0mm~and~-.5mm~of~\nskID{1}}
 
 	\bool_gset_false:N \g_nsk_wrap_left_bool
 }{
 	\bool_if:NTF \g_nsk_wrap_right_bool
 	{
-		\tl_set:Nn \l_nsk_block_anchor_tl {north~east}
-		\tl_set:Nn \l_nsk_block_pos_tl {below~right=0mm~and~1mm~of~\nskID{1}}
+		\tl_set:Nn \l_nsk_block_anchor_tl {\l__nsk_wrap_anchor_tl\space east}
+		\tl_set:Nn \l_nsk_block_pos_tl {\l__nsk_wrap_direction_tl~right=0mm~and~.5mm~of~\nskID{1}}
 
 		\bool_gset_false:N \g_nsk_wrap_right_bool
 	}{}
@@ -922,6 +936,12 @@ every~node/.append~style={text=c__nsk_principal},
 	% i.e., [right=2cm of otherNode]
 	\tl_put_right:No \l_tmps_tl { \l_nsk_block_pos_tl, }
 }
+% rotate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_put_right:Nx \l_tmps_tl
+{ rotate=\l_nsk_block_rotate_tl, }
+% opacity ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_put_right:Nx \l_tmps_tl
+{ opacity=\l_nsk_block_opacity_tl, }
 
 % additional shift ~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \tl_put_right:No \l_tmps_tl { xshift=\l_nsk_block_shiftx_tl,}
@@ -1513,14 +1533,36 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 % Keys for wrap under options
 \keys_define:nn { nsk / wrap }
 {
-	under .tl_set:N = \l__nsk_wrap_under_ref_tl,
-	under .value_required:n = true,
+  under .code:n  = {
+    \tl_set:Nn \l__nsk_wrap_ref_tl {#1}
+    \tl_set:Nn \l__nsk_wrap_direction_tl {below}
+    \tl_set:Nn \l__nsk_wrap_anchor_tl {north}
+  },
 	under .initial:n = {},
+
+  over .code:n  = {
+    \tl_set:Nn \l__nsk_wrap_ref_tl {#1}
+    \tl_set:Nn \l__nsk_wrap_direction_tl {above}
+    \tl_set:Nn \l__nsk_wrap_anchor_tl {south}
+  },
+	over .initial:n = {},
+
+  target .tl_set:N = \l__nsk_wrap_ref_tl,
+  target .initial:n = {},
+
+  direction .tl_set:N = \l__nsk_wrap_direction_tl,
+  direction .initial:n = {},
+
+  anchor .tl_set:N = \l__nsk_wrap_anchor_tl,
+  anchor .initial:n = {},
+
 
 	shift-x .dim_set:N = \l__nsk_wrap_shift_x_dim,
 	shift-x .initial:n = 0cm,
+	shift-x .default:n = 0cm,
 	shift-y .dim_set:N = \l__nsk_wrap_shift_y_dim,
 	shift-y .initial:n = 0cm,
+	shift-y .default:n = 0cm,
 }
 
 % TODO: add support for x and y block-distance
@@ -1530,7 +1572,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
 	\IfBooleanTF{#1}{
 		\nskMark[pos={
-					below~right=\tl_use:N \g__nsk_style_figure_block_distance_tl~and~0cm~of~\tl_use:N \l__nsk_wrap_under_ref_tl
+					\l__nsk_wrap_direction_tl\space right=\tl_use:N \g__nsk_style_figure_block_distance_tl~and~0cm~of~\tl_use:N \l__nsk_wrap_ref_tl,
 				}, shift-x=\dim_use:N \l__nsk_wrap_shift_x_dim,
 			, shift-y=\dim_use:N \l__nsk_wrap_shift_y_dim
 		]
@@ -1538,7 +1580,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		% set wrap flag
 		\bool_gset_true:N \g_nsk_wrap_right_bool
 	}{
-		\nskMark[pos={below~left=\tl_use:N \g__nsk_style_figure_block_distance_tl~and~0cm~of~\tl_use:N \l__nsk_wrap_under_ref_tl
+		\nskMark[pos={\l__nsk_wrap_direction_tl\space left=\tl_use:N \g__nsk_style_figure_block_distance_tl~and~0cm~of~\tl_use:N \l__nsk_wrap_ref_tl,
 				}, shift-x=\dim_use:N \l__nsk_wrap_shift_x_dim,
 			, shift-y=\dim_use:N \l__nsk_wrap_shift_y_dim
 		]

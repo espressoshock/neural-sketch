@@ -50,9 +50,17 @@
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% nsk / Block
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	auto-increment-duplicates .bool_gset:N =  \g__nsk_style_block_auto_duplicates_bool,
+	auto-increment-duplicates .initial:n = {true},
+	auto-increment-duplicates .default:n = {true},
+
 	block-fill .tl_gset:N = \g__nsk_style_block_fill_tl,
 	block-fill .initial:n = { nskLightGray },
 	block-fill .default:n = { nskLightGray },
+
+	block-opacity .tl_gset:N = \g__nsk_style_block_opacity_tl,
+	block-opacity .initial:n = { 1.0 },
+	block-opacity .default:n = { 1.0 },
 
 	block-border-color .tl_gset:N = \g__nsk_style_block_border_color_tl,
 	block-border-color .initial:n = { nskDarkGray },
@@ -69,6 +77,10 @@
 	block-anchor .tl_gset:N = \g__nsk_style_block_anchor_tl,
 	block-anchor .initial:n = {},
 	block-anchor .default:n = {},
+
+	block-rotate .tl_gset:N = \g__nsk_style_block_rotate_tl,
+	block-rotate .initial:n = {0},
+	block-rotate .default:n = {0},
 
 	block-border-radius .dim_gset:N = \g__nsk_style_block_border_radius_dim,
 	block-border-radius .initial:n = {2.5mm},
@@ -156,6 +168,11 @@
 	text-west-style .initial:n = {},
 	text-west-style .default:n = {},
 
+	text-size .tl_set:N = \g__nsk_style_text_size_tl,
+	text-size .initial:n = {\normalsize},
+	text-size .default:n = {\normalsize},
+
+
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% nsk / Container
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -197,8 +214,8 @@
 	% bridging
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	bridging-style .tl_gset:N = \g__nsk_style_bridging_style_tl,
-	bridging-style .initial:n = {arc},
-	bridging-style .default:n = {arc},
+	bridging-style .initial:n = {gap},
+	bridging-style .default:n = {gap},
 
 	bridging-span .dim_gset:N = \g__nsk_style_bridging_span_dim,
 	bridging-span .initial:n = {8pt},
@@ -536,7 +553,7 @@
 			drop shadow={
 					shadow xshift=-.1ex,
 					shadow yshift=-.6ex,
-					fill=nskLighterGray!80,
+					fill=nskLighterGray!85!nskBg,
 				},
 		},
 	bridging path/.initial=\g__nsk_style_bridging_style_tl,
@@ -596,9 +613,80 @@
 {
 	% #1 is the keyval list, e.g.  block-fill=yellow, block-border=blue
 	\keys_set:nn { nsk / style }{ #1 }
+
 }
 
-\ExplSyntaxOff
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Utils
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% expands and evaluates math op / works on int and float
+\NewExpandableDocumentCommand \e { r<> }
+  { \fp_to_decimal:n { \fp_eval:n {#1} } }
+
+% ─────────────────────────────────────────────────────────────────────────────
+% nskLerp: linear interpolation tool for drawing (supports [0–1] & [0–100])
+% ─────────────────────────────────────────────────────────────────────────────
+\keys_define:nn { nsk/lerp }
+{
+	from       .fp_set:N   = \l__nsk_lerp_min_fp,
+	from       .initial:n  = {0.0},
+	from       .default:n  = {0.0},
+
+	to       .fp_set:N   = \l__nsk_lerp_max_fp,
+	to       .initial:n  = {100.0},
+	to       .default:n  = {100.0},
+
+	n .int_set:N  = \l__nsk_lerp_nelements_int,
+	n .initial:n  = {1},
+	n .default:n  = {1},
+
+	into      .tl_set:N   = \l__nsk_lerp_into_tl,
+	into      .initial:n  = {},
+}
+
+\NewDocumentCommand \nskLerp { om }
+{
+	% #1 = optional key list, #2 = index
+	\keys_set:nn { nsk/lerp } { #1 }
+
+	% scale [0–1] → [0–100] if needed
+	\fp_set_eq:NN \l__nsk_lerp_min_scaled_fp \l__nsk_lerp_min_fp
+	\fp_set_eq:NN \l__nsk_lerp_max_scaled_fp \l__nsk_lerp_max_fp
+	\fp_compare:nNnTF { \l__nsk_lerp_max_scaled_fp } ? { 1 }
+	{
+		\fp_set:Nn \l__nsk_lerp_min_scaled_fp { \l__nsk_lerp_min_scaled_fp * 100 }
+		\fp_set:Nn \l__nsk_lerp_max_scaled_fp { \l__nsk_lerp_max_scaled_fp * 100 }
+	}
+	{}
+
+	% compute interpolation
+	\int_compare:nNnTF { #2 } = { 1 }
+	  {
+	    \fp_set_eq:NN \l__nsk_lerp_pct_fp \l__nsk_lerp_min_scaled_fp
+	  }
+	  {
+	    \fp_set:Nn \l__nsk_lerp_pct_fp
+	      {
+	        \l__nsk_lerp_min_scaled_fp
+	        +
+	        ( #2 - 1 )
+	        /
+	        ( \l__nsk_lerp_nelements_int - 1 )
+	        *
+	        ( \l__nsk_lerp_max_scaled_fp - \l__nsk_lerp_min_scaled_fp )
+	      }
+	  }
+
+	% store into user’s macro
+	\tl_if_empty:NF \l__nsk_lerp_into_tl
+	  {
+	    \expandafter
+	    \tl_set:Nx
+	      \csname \l__nsk_lerp_into_tl\endcsname
+	      { \fp_to_decimal:N \l__nsk_lerp_pct_fp }
+	  }
+}
+
 %\end{macrocode}
 %</package>
 

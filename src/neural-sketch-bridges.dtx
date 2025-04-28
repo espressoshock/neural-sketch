@@ -145,9 +145,9 @@
 	shift-y .initial:n = {0mm},
 	shift-y .default:n = {0mm},
 
-	color .tl_set:N                 = \l_nsk_connect_color_tl,
-	color .initial:n                = { c__nsk_principal },
-	color .default:n                = { c__nsk_principal },
+	color .tl_set:N  = \l_nsk_connect_color_tl,
+  color .initial:V = \g__nsk_style_arrow_color_tl,
+  color .default:V = \g__nsk_style_arrow_color_tl,
 
 	% corner-radius ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	corner-radius .dim_set:N = \l__nsk_connect_corner_radius_dim,
@@ -441,7 +441,7 @@ arc[
 	\nsk__init_bridging_code:
 
 	% For storing all path names
-	\seq_new:N \l__nsk_tmp_paths_seq
+	\seq_clear_new:N \l__nsk_tmp_paths_seq
 
 	% Collect path names from bridging info
 	\seq_map_inline:Nn \g__nsk_bridging_info_seq
@@ -687,7 +687,7 @@ arc[
 							{right}
 							{
 								\tl_set:Nx \l_nsk_connect_route_tl
-								{ -- ++(\dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) -- (-\dim_use:N \l_cx_to_dim + \dim_use:N \l__nsk_connect_bend_amount_dim, \dim_use:N \l_cy_to_dim) -- }
+								{ -- ++(\dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) -- (\dim_use:N \l_cx_to_dim - \dim_use:N \l__nsk_connect_bend_amount_dim, \dim_use:N \l_cy_to_dim) -- }
 							}
 
 							{down}
@@ -748,7 +748,7 @@ arc[
 	orientation .default:V   = \g__nsk_style_fillbetween_orient_tl,
 
 	% overrides ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	% If you want an explicit “out=xx, in=yy” override, you could add:
+	% If you want an explicit "out=xx, in=yy" override, you could add:
 	out .tl_set:N = \l_nsk_fillbetween_out_tl,
 	out .initial:V = \g__nsk_style_fillbetween_out_tl,
 	out .default:V = \g__nsk_style_fillbetween_out_tl,
@@ -832,7 +832,7 @@ arc[
 			opacity=\fp_use:N \l_nsk_fillbetween_opacity_fp
 		]
 		let
-		% -- “From” corners --
+		% -- "From" corners --
 		\p{TL_a} = ($(\l_nsk_fillbetween_from_tl.north\space west)
 			+ (\dim_use:N \l__nsk_offset_west_dim,
 			\dim_use:N \l__nsk_offset_north_dim)$),
@@ -849,7 +849,7 @@ arc[
 			+ (\dim_use:N \l__nsk_offset_east_dim,
 			\dim_use:N \l__nsk_offset_south_dim)$),
 
-		% -- “To” corners --
+		% -- "To" corners --
 		\p{TL_b} = ($(\l_nsk_fillbetween_to_tl.north\space west)
 			+ (\dim_use:N \l__nsk_offset_west_dim,
 			\dim_use:N \l__nsk_offset_north_dim)$),

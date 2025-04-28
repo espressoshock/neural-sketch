@@ -88,6 +88,10 @@
 	marker-size .dim_set:N = \l_nsk_coord_marker_size_dim,
 	marker-size .initial:n = {1mm},
 	marker-size .default:n = {1mm},
+
+	register .bool_set:N = \l_nsk_coord_register_bool,
+	register .initial:n = {true},
+	register .default:n = {true},
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -270,29 +274,29 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskMark { sO{} }
 {
-  \IfBooleanTF{#1}
-    {
-      % Starred form: auto-expand keys
-      \edef\l_tmpa_tl{#2}
-      \expandafter\nskCoordR\expandafter[\l_tmpa_tl]
-    }
-    {
-      \nskCoordR[#2]
-    }
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskCoordR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskCoordR[#2]
+	}
 }
 
 % ~~ legacy
 \NewDocumentCommand \nskCoord { sO{} }
 {
-  \IfBooleanTF{#1}
-    {
-      % Starred form: auto-expand keys
-      \edef\l_tmpa_tl{#2}
-      \expandafter\nskCoordR\expandafter[\l_tmpa_tl]
-    }
-    {
-      \nskCoordR[#2]
-    }
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskCoordR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskCoordR[#2]
+	}
 }
 
 \NewDocumentCommand \nskCoordR { O{} }
@@ -310,8 +314,12 @@
 	{ \nsk__process_coord_last_pos_s: }
 	% (4) Build the node style (this will now use \l_nsk_coord_pos_tl if set)
 	\nsk__build_coord_style:
+
 	% (5) Store the coordinate’s ID in the global history (shared with blocks)
-	\seq_gput_right:NV \g_nsk_block_id_history_seq \l_nsk_coord_id_tl
+	\bool_if:NTF \l_nsk_coord_register_bool
+	{
+		\seq_gput_right:NV \g_nsk_block_id_history_seq \l_nsk_coord_id_tl
+  }{}
 
 	\group_end:
 }

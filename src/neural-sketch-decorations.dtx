@@ -28,6 +28,10 @@
 % implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 %<*package>
 %    \begin{macrocode}
+
+
+\usetikzlibrary{decorations.markings,}
+
 \ExplSyntaxOn
 
 
@@ -107,15 +111,15 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskMarkPath { sO{} }
 {
-  \IfBooleanTF{#1}
-    {
-      % Starred form: auto-expand keys
-      \edef\l_tmpa_tl{#2}
-      \expandafter\nskMarkPathR\expandafter[\l_tmpa_tl]
-    }
-    {
-      \nskMarkPathR[#2]
-    }
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskMarkPathR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskMarkPathR[#2]
+	}
 }
 
 \NewDocumentCommand \nskMarkPathR { O{} m m }

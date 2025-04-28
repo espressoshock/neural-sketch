@@ -53,79 +53,84 @@
 \seq_new:N \g_nsk_group_rotate_stack_seq
 \seq_new:N \g_nsk_group_scale_stack_seq
 
+\seq_new:N \g_nsk_group_extra_style_stack_seq
+\seq_new:N \g_nsk_group_bounds_name_stack_seq
+\seq_new:N \g_nsk_group_ps_dira_stack_seq
+\seq_new:N \g_nsk_group_ps_dirb_stack_seq
+
 % Helper functions to push and pop from stacks
 \cs_new_protected:Npn \nsk__group_push_to_stack:
 {
-  \int_gincr:N \g_nsk_group_stack_level_int
-  
-  % Push current values to stacks
-  \seq_gpush:NV \g_nsk_group_bounds_name_stack_seq \l_nsk_group_bounds_name_tl
-  \seq_gpush:NV \g_nsk_group_pos_stack_seq \l_nsk_group_pos_tl
-  \seq_gpush:NV \g_nsk_group_last_pos_stack_seq \l_nsk_group_last_pos_tl
-  \seq_gpush:NV \g_nsk_pos_align_stack_seq \l_nsk_pos_align_tl
-  \seq_gpush:Nx \g_nsk_group_x_stack_seq {\fp_use:N \l_nsk_group_x_fp}
-  \seq_gpush:Nx \g_nsk_group_y_stack_seq {\fp_use:N \l_nsk_group_y_fp}
-  \seq_gpush:Nx \g_nsk_group_rotate_stack_seq {\fp_use:N \l_nsk_group_rotate_fp}
-  \seq_gpush:Nx \g_nsk_group_scale_stack_seq {\fp_use:N \l_nsk_group_scale_fp}
-  \seq_gpush:NV \g_nsk_group_ps_dira_stack_seq \l_nsk_group_ps_dira_tl
-  \seq_gpush:NV \g_nsk_group_ps_dirb_stack_seq \l_nsk_group_ps_dirb_tl
-  
-  % Create a unique refnode ID for this level
-  \tl_set:Nx \l_nsk_group_refnode_id_tl {__nsk_phantom_refnode_\int_use:N \g_nsk_group_stack_level_int}
-  
-  % Clear local variables for this new level
-  \tl_clear:N \l_nsk_group_bounds_name_tl
-  \tl_clear:N \l_nsk_group_pos_tl
-  \tl_clear:N \l_nsk_group_last_pos_tl
-  \tl_clear:N \l_nsk_pos_align_tl
-  \tl_clear:N \l_nsk_group_ps_dira_tl
-  \tl_clear:N \l_nsk_group_ps_dirb_tl
-  \fp_zero:N \l_nsk_group_x_fp
-  \fp_zero:N \l_nsk_group_y_fp
-  \fp_zero:N \l_nsk_group_rotate_fp
-  \fp_set:Nn \l_nsk_group_scale_fp {1.0}
-  
-  % Clear the unknown properties
-  \prop_clear:N \l_nsk_group_unknown_prop
+	\int_gincr:N \g_nsk_group_stack_level_int
+
+	% Push current values to stacks
+	\seq_gpush:NV \g_nsk_group_bounds_name_stack_seq \l_nsk_group_bounds_name_tl
+	\seq_gpush:NV \g_nsk_group_pos_stack_seq \l_nsk_group_pos_tl
+	\seq_gpush:NV \g_nsk_group_last_pos_stack_seq \l_nsk_group_last_pos_tl
+	\seq_gpush:NV \g_nsk_pos_align_stack_seq \l_nsk_pos_align_tl
+	\seq_gpush:Nx \g_nsk_group_x_stack_seq {\fp_use:N \l_nsk_group_x_fp}
+	\seq_gpush:Nx \g_nsk_group_y_stack_seq {\fp_use:N \l_nsk_group_y_fp}
+	\seq_gpush:Nx \g_nsk_group_rotate_stack_seq {\fp_use:N \l_nsk_group_rotate_fp}
+	\seq_gpush:Nx \g_nsk_group_scale_stack_seq {\fp_use:N \l_nsk_group_scale_fp}
+	\seq_gpush:NV \g_nsk_group_ps_dira_stack_seq \l_nsk_group_ps_dira_tl
+	\seq_gpush:NV \g_nsk_group_ps_dirb_stack_seq \l_nsk_group_ps_dirb_tl
+
+	% Create a unique refnode ID for this level
+	\tl_set:Nx \l_nsk_group_refnode_id_tl {__nsk_phantom_refnode_\int_use:N \g_nsk_group_stack_level_int}
+
+	% Clear local variables for this new level
+	\tl_clear:N \l_nsk_group_bounds_name_tl
+	\tl_clear:N \l_nsk_group_pos_tl
+	\tl_clear:N \l_nsk_group_last_pos_tl
+	\tl_clear:N \l_nsk_pos_align_tl
+	\tl_clear:N \l_nsk_group_ps_dira_tl
+	\tl_clear:N \l_nsk_group_ps_dirb_tl
+	\fp_zero:N \l_nsk_group_x_fp
+	\fp_zero:N \l_nsk_group_y_fp
+	\fp_zero:N \l_nsk_group_rotate_fp
+	\fp_set:Nn \l_nsk_group_scale_fp {1.0}
+
+	% Clear the unknown properties
+	\prop_clear:N \l_nsk_group_unknown_prop
 }
 
 \cs_new_protected:Npn \nsk__group_pop_from_stack:
 {
-  % Only pop if we have something on the stack
-  \int_compare:nNnT \g_nsk_group_stack_level_int > 0
-  {
-    % Restore values from stack
-    \tl_set:Nx \l_nsk_group_bounds_name_tl {\seq_item:Nn \g_nsk_group_bounds_name_stack_seq {1}}
-    \tl_set:Nx \l_nsk_group_pos_tl {\seq_item:Nn \g_nsk_group_pos_stack_seq {1}}
-    \tl_set:Nx \l_nsk_group_last_pos_tl {\seq_item:Nn \g_nsk_group_last_pos_stack_seq {1}}
-    \tl_set:Nx \l_nsk_pos_align_tl {\seq_item:Nn \g_nsk_pos_align_stack_seq {1}}
-    \fp_set:Nn \l_nsk_group_x_fp {\seq_item:Nn \g_nsk_group_x_stack_seq {1}}
-    \fp_set:Nn \l_nsk_group_y_fp {\seq_item:Nn \g_nsk_group_y_stack_seq {1}}
-    \fp_set:Nn \l_nsk_group_rotate_fp {\seq_item:Nn \g_nsk_group_rotate_stack_seq {1}}
-    \fp_set:Nn \l_nsk_group_scale_fp {\seq_item:Nn \g_nsk_group_scale_stack_seq {1}}
-    \tl_set:Nx \l_nsk_group_ps_dira_tl {\seq_item:Nn \g_nsk_group_ps_dira_stack_seq {1}}
-    \tl_set:Nx \l_nsk_group_ps_dirb_tl {\seq_item:Nn \g_nsk_group_ps_dirb_stack_seq {1}}
-    
-    % Set refnode ID back to previous level
-    \int_gdecr:N \g_nsk_group_stack_level_int
-    \tl_set:Nx \l_nsk_group_refnode_id_tl {__nsk_phantom_refnode_\int_use:N \g_nsk_group_stack_level_int}
-    \int_compare:nNnT \g_nsk_group_stack_level_int = 0
-    {
-      \tl_set:Nn \l_nsk_group_refnode_id_tl {__nsk_phantom_refnode}
-    }
-    
-    % Pop from all stacks
-    \seq_gpop:NN \g_nsk_group_bounds_name_stack_seq \l_tmpa_tl
-    \seq_gpop:NN \g_nsk_group_pos_stack_seq \l_tmpa_tl
-    \seq_gpop:NN \g_nsk_group_last_pos_stack_seq \l_tmpa_tl
-    \seq_gpop:NN \g_nsk_pos_align_stack_seq \l_tmpa_tl
-    \seq_gpop:NN \g_nsk_group_x_stack_seq \l_tmpa_tl
-    \seq_gpop:NN \g_nsk_group_y_stack_seq \l_tmpa_tl
-    \seq_gpop:NN \g_nsk_group_rotate_stack_seq \l_tmpa_tl
-    \seq_gpop:NN \g_nsk_group_scale_stack_seq \l_tmpa_tl
-    \seq_gpop:NN \g_nsk_group_ps_dira_stack_seq \l_tmpa_tl
-    \seq_gpop:NN \g_nsk_group_ps_dirb_stack_seq \l_tmpa_tl
-  }
+	% Only pop if we have something on the stack
+	\int_compare:nNnT \g_nsk_group_stack_level_int > 0
+		{
+			% Restore values from stack
+			\tl_set:Nx \l_nsk_group_bounds_name_tl {\seq_item:Nn \g_nsk_group_bounds_name_stack_seq {1}}
+			\tl_set:Nx \l_nsk_group_pos_tl {\seq_item:Nn \g_nsk_group_pos_stack_seq {1}}
+			\tl_set:Nx \l_nsk_group_last_pos_tl {\seq_item:Nn \g_nsk_group_last_pos_stack_seq {1}}
+			\tl_set:Nx \l_nsk_pos_align_tl {\seq_item:Nn \g_nsk_pos_align_stack_seq {1}}
+			\fp_set:Nn \l_nsk_group_x_fp {\seq_item:Nn \g_nsk_group_x_stack_seq {1}}
+			\fp_set:Nn \l_nsk_group_y_fp {\seq_item:Nn \g_nsk_group_y_stack_seq {1}}
+			\fp_set:Nn \l_nsk_group_rotate_fp {\seq_item:Nn \g_nsk_group_rotate_stack_seq {1}}
+			\fp_set:Nn \l_nsk_group_scale_fp {\seq_item:Nn \g_nsk_group_scale_stack_seq {1}}
+			\tl_set:Nx \l_nsk_group_ps_dira_tl {\seq_item:Nn \g_nsk_group_ps_dira_stack_seq {1}}
+			\tl_set:Nx \l_nsk_group_ps_dirb_tl {\seq_item:Nn \g_nsk_group_ps_dirb_stack_seq {1}}
+
+			% Set refnode ID back to previous level
+			\int_gdecr:N \g_nsk_group_stack_level_int
+			\tl_set:Nx \l_nsk_group_refnode_id_tl {__nsk_phantom_refnode_\int_use:N \g_nsk_group_stack_level_int}
+			\int_compare:nNnT \g_nsk_group_stack_level_int = 0
+				{
+					\tl_set:Nn \l_nsk_group_refnode_id_tl {__nsk_phantom_refnode}
+				}
+
+			% Pop from all stacks
+			\seq_gpop:NN \g_nsk_group_bounds_name_stack_seq \l_tmpa_tl
+			\seq_gpop:NN \g_nsk_group_pos_stack_seq \l_tmpa_tl
+			\seq_gpop:NN \g_nsk_group_last_pos_stack_seq \l_tmpa_tl
+			\seq_gpop:NN \g_nsk_pos_align_stack_seq \l_tmpa_tl
+			\seq_gpop:NN \g_nsk_group_x_stack_seq \l_tmpa_tl
+			\seq_gpop:NN \g_nsk_group_y_stack_seq \l_tmpa_tl
+			\seq_gpop:NN \g_nsk_group_rotate_stack_seq \l_tmpa_tl
+			\seq_gpop:NN \g_nsk_group_scale_stack_seq \l_tmpa_tl
+			\seq_gpop:NN \g_nsk_group_ps_dira_stack_seq \l_tmpa_tl
+			\seq_gpop:NN \g_nsk_group_ps_dirb_stack_seq \l_tmpa_tl
+		}
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -402,27 +407,27 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskGroup { sO{} }
 {
-  \IfBooleanTF{#1}
-    {
-      % Starred form: auto-expand keys
-      \edef\l_tmpa_tl{#2}
-      \expandafter\nskGroupR\expandafter[\l_tmpa_tl]
-    }
-    {
-      \nskGroupR[#2]
-    }
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskGroupR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskGroupR[#2]
+	}
 }
 
 \NewDocumentCommand \nskGroupR { O{} +m }
 {
 	% Push current state to stack before starting a new group
 	\nsk__group_push_to_stack:
-	
+
 	% Create a unique bounds name for this nesting level, if not explicitly provided
 	\tl_if_blank:VT \l_nsk_group_bounds_name_tl {
 		\tl_set:Nx \l_nsk_group_bounds_name_tl {__nsk_group_bounds_\int_use:N \g_nsk_group_stack_level_int}
 	}
-	
+
 	\group_begin:
 
 	\keys_set:nn { nsk / group } {#1}
@@ -439,7 +444,7 @@
 	\nsk__draw_group_scope_aux:VVn \l_nsk_group_pos_tl \l_tmpa_tl {#2}
 
 	\group_end:
-	
+
 	% Restore previous state from stack when done
 	\nsk__group_pop_from_stack:
 }
