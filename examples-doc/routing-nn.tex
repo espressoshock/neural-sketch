@@ -1,0 +1,63 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  container-padding=2mm,
+  text-west-style={xshift=-3mm},
+  text-south-style={yshift=-3mm},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\d{pattern=hatchd, fill=nskMainAccent, outer-border-type=solid}
+\def\s{outer-border-type=solid, fill=nskSecondaryAccent, outer-border-color=nskSecondaryAccent!50!nskBg, pattern=hatchd}
+\def\a{fill=nskOrange, outer-border-type=solid, outer-border-color=nskOrange!50!nskBg, pattern=hatchd}
+
+\def\tl{pattern=hatch}
+\def\bl{pattern=hatchd, fill=nskRed}
+\def\bll{pattern=hatchd, fill=nskSecondaryAccent}
+
+\def\de{text-south=Default}
+\def\st{text-south=Default}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[text-west=Layer 3]{
+		\foreach \i in {1,...,3} {\nskBlock*[id=l3\i, last-pos-s={right=}, \tl]}
+	}
+	\nskMark[pos={below left=3cm and 1cm of \nskID!{1}}]
+	\nskContainer[text-west=Layer 2, text-south=Default]{
+		\foreach \i in {1,...,3} {\nskBlock*[id=l2\i, pos={right=of \nskID{1}}, \bl]}
+	}
+
+	\foreach \i in {1,...,3} {
+			\foreach \j in {1,...,3} {
+					\nskConnect[
+						from=l2\j.north, to=l3\i.south,
+					]
+				}
+		}
+\end{nskFigure}
+\hspace{0mm}
+\begin{nskFigure}[]
+	\nskContainer[text-west=Layer 3]{
+		\foreach \i in {1,...,3} {\nskBlock*[id=l3\i, last-pos-s={right=}, \tl]}
+	}
+	\nskMark[pos={below left=3cm and 1cm of \nskID!{1}}]
+	\nskContainer[text-west=Layer 2, text-south=Straight]{
+		\foreach \i in {1,...,3} {\nskBlock*[id=l2\i, pos={right=of \nskID{1}}, \bll]}
+	}
+
+	\foreach \i in {1,...,3} {
+			\foreach \j in {1,...,3} {
+					\nskConnect[
+						from=l2\j.north, to=l3\i.south,
+						bend-type=straight, bend-distance=4mm,
+					]
+				}
+		}
+\end{nskFigure}
+\end{document}
+
+

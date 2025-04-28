@@ -1,0 +1,26 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  icon-clean=true,
+  text-south-style={yshift=-6mm, anchor=south},
+  arrow-type=dashed, shorten-from=2mm, shorten-to=1mm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\foreach \i/\c[count=\x] in {aperture/MainAccent, binary/SecondaryAccent, cpu/Red, microchip/Blue, circuit-board/Orange, router/Pink, server-cog/Green} {
+      \nskBlock[fill=nsk\c, text-center={\nskIcon[name=\i]}, last-pos-s={right=}, text-south={\small \i}]
+
+			% \tikzmath{\isc = (\x > 1) ? 1 : 0;} % you can also use tikzmath and eval flag
+      % \begin{nskSwitch}[type=string]{\isc}
+      \begin{nskSwitch}[type=int]{\x}
+				\nskCase[\x > 1]{\nskConnect[from=\nskID{1}, to=\nskID{2}]}
+			\end{nskSwitch}
+		}
+
+	% \nskCleanUnusedIcons
+\end{nskFigure}
+\end{document}

@@ -1,0 +1,66 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  text-north-loc=west,
+  block-distance=1cm,
+  block-outer-border-size=4mm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\d{pattern=hatchd, fill=nskMainAccent, outer-border-type=solid}
+\def\s{outer-border-type=solid, fill=nskSecondaryAccent, outer-border-color=nskSecondaryAccent!50!nskBg, pattern=hatchd}
+\def\a{fill=nskOrange, outer-border-type=solid, outer-border-color=nskOrange!50!nskBg, pattern=hatchd}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[
+		text-north=Rounded Arcs $\leftarrow$,
+		fill=nskMainAccent!30!nskBg, border-color=nskMainAccent,
+	]{
+		\nskBlock*[type=rectangle, id=ablock, text-center=A, \s]
+		\nskBlock[type=rectangle, id=bblock, text-center=B, last-pos={above right=1cm and 3cm},fill=nskRed]
+		\nskBlock[
+			type=circle, id=cblock, text-center=$\bullet$, pattern=hatch,
+			border-type=dashed, pos={above right=3cm and -.5cm of ablock},
+		]
+		\nskBlock[
+			type=circle, id=dblock, text-center=$\bullet$, pattern=hatch,
+			border-type=dashed, pos={below right=.3cm and 1.5cm of ablock},
+		]
+		\nskConnect[
+			from=ablock.east, to=bblock.west,
+			bend-type=double, bend-direction=right,
+			bend-distance=.5cm, bridging=true,
+			bridging-type=over,
+			bridging-style=arc,
+		]
+		\nskConnect[
+			from=cblock.east,to=dblock.north,
+			bend-type=single, bend-direction=down,
+			bend-distance=.5cm, bridging=true,
+		]
+		\nskDoBridging
+
+		\nskMark[id=zo, at=bblock.west, shift-x=-11.3mm]
+
+		\nskZoom[
+			type=rectangle,
+			size=3.5cm,
+      zoomed-fill=nskLightestGray,
+			at=zo,
+			to={(4.2, 3)},
+		]
+
+
+	}
+
+  \nskEdgeFade[edge=up, size=5mm]
+  \nskEdgeFade[edge=down, size=25mm]
+
+\end{nskFigure}
+\end{document}
+
+

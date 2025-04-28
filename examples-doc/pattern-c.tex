@@ -1,0 +1,59 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  text-south-style={yshift=-2mm},
+  block-distance=5mm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskContainer[
+		border-type=dashdotted,
+		text-north-style={nskMidGray},
+		text-north-loc=west,
+		fill=nskMainAccent!30!nskBg,
+		border-color=nskMainAccent,
+	]{
+		\foreach \c in {Red, Blue, Pink}
+			{
+				\nskBlock[
+					pattern=hatch,
+					pattern-color=nsk\c,
+					pattern-opacity=1.0,
+					text-south=\c,
+					last-pos-s={right=},
+				]
+			}
+	}
+
+	\nskContainer[
+		border-type=dashdotted,
+		text-north-style={nskMidGray},
+		text-north-loc=west,
+		fill=nskPink!30!nskBg,
+		border-color=nskPink,
+    pos={right=of \nskID{1}},
+    anchor=west
+	]{
+		\tikzmath{\n = 8;}
+		\foreach \i in {1,...,\n}
+			{
+				\tikzmath{
+				  real \pct; \pct = (\i - 1) / (\n - 1);
+				}
+				\nskBlock[
+          id=a,
+					pattern=hatch,
+					pattern-opacity=\pct,
+          text-south={\pgfmathprintnumber[fixed, precision=2]{\pct}},
+					pos={right=of a},
+				]
+			}
+	}
+\end{nskFigure}
+\end{document}

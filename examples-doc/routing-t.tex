@@ -1,0 +1,54 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  shorten-from=2mm, shorten-to=2mm,
+  block-distance=3cm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\s{color=nskFg!100!nskBg}
+
+\begin{document}
+\begin{nskFigure}[]
+    \nskBlock[
+      id=ablock,text-center=A, fill=nskMainAccent, pattern=hatchd,
+      importance=1.2, outer-border-type=solid, outer-border-size=3mm,
+    ]
+    \nskBlock[id=bblock,last-pos={right=},text-center=B,]
+    \nskConnect[
+      id=ref,
+      from=ablock, to=bblock,
+      arrow-tip={Circle[width=1.3mm, length=1.3mm]->.>.>[sep=3mm]. Circle},
+      shorten-from=-1mm, shorten-to=-1.5mm,
+      % color=nskStrongCyan,
+    ]
+
+    \nskContainer[fill=nskSecondaryAccent!30!nskBg]{
+
+    \foreach \i[count=\i] in {1,...,3} {
+      \tikzmath{int \i, \o; \o = \i * 6;}
+      \nskMark[id=t{\i}l, at=ablock.east, shift-y=\o mm, marker=o]
+      \nskMark[id=t{\i}r, at=bblock.west, shift-y=\o mm, marker=x]
+
+      \nskMark[id=b{\i}l, at=ablock.east, shift-y=-\o mm, marker=o]
+      \nskMark[id=b{\i}r, at=bblock.west, shift-y=-\o mm, marker=x]
+    }
+
+    \foreach \t[count=\i from 2] in {Arc Barb, Straight Barb, |} {
+      \nskConnect*[from=b{\i}l, to=b{\i}r, arrow-tip={-\t}, \s]
+    }
+
+    \foreach \t[count=\i from 2] in {Hooks, Bracket, Diamond} {
+      \nskConnect*[from=t{\i}l, to=t{\i}r, arrow-tip={-\t}, \s]
+    }
+  }
+
+  \nskEdgeFade[edge=up, size=30mm]
+  \nskEdgeFade[edge=down, size=30mm]
+
+
+\end{nskFigure}
+\end{document}

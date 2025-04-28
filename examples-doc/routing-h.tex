@@ -1,0 +1,110 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  text-north-loc=west,
+  block-distance=1cm,
+  dark-mode=true,
+  block-outer-border-size=4mm,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\s{pattern=hatchd, fill=nskMainAccent, outer-border-type=solid}
+\def\d{outer-border-type=solid, outer-border-color=nskSecondaryAccent!50!nskBg, pattern=hatchd, fill=nskSecondaryAccent}
+\def\a{fill=nskPink, outer-border-type=solid, outer-border-color=nskPink!50!nskBg, pattern=hatchd}
+
+\def\n{
+	\nskContainer[
+		text-north=No Arrow Hopping,
+		fill=nskRed!30!nskBg, border-color=nskRed,
+	]{
+		\nskBlock*[id=ablock, text-center=A,\s]
+		\nskBlock[id=bblock, text-center=B, last-pos={right=2cm},]
+		\nskBlock[
+			type=circle,id=cblock,text-center=C,
+			border-type=dashed, pos={above right=.6cm and .6cm of ablock},
+		]
+		\nskBlock[
+			type=circle,id=dblock,text-center=D,
+			border-type=dashed,pos={below right=.6cm and .6cm of ablock},
+		]
+		\nskConnect[from=ablock.east,to=bblock.west, arrow-tip={->},]
+		\nskConnect[from=cblock.south, to=dblock.north, arrow-tip={-},]
+	}
+}
+\def\g{
+	\nskContainer[
+		text-north=Gap,
+		fill=nskSecondaryAccent!30!nskBg, border-color=nskSecondaryAccent,
+	]{
+		\nskBlock*[type=rectangle, id=ablock, text-center=A,\d]
+		\nskBlock[type=rectangle, id=bblock, text-center=B, last-pos={right=2cm},]
+		\nskBlock[
+			type=circle,id=cblock,text-center=C,
+			border-type=dashed,pos={above right=.6cm and .6cm of ablock},
+		]
+		\nskBlock[
+			type=circle,id=dblock,text-center=D,
+			border-type=dashed,pos={below right=.6cm and .6cm of ablock},
+		]
+		\nskConnect[
+			from=ablock.east,to=bblock.west,
+			arrow-tip={->},
+			bridging=true, bridging-type=over, bridging-style=gap,
+		]
+		\nskConnect[
+			from=cblock.south,to=dblock.north,
+			bridging=true,
+		]
+
+		\nskDoBridging
+	}
+}
+
+\def\arc{
+\nskContainer[
+		text-north=Arc,
+		fill=nskMainAccent!30!nskBg, border-color=nskMainAccent,
+]{
+	\nskBlock*[type=rectangle, id=ablock, text-center=A, \a]
+	\nskBlock[type=rectangle, id=bblock, text-center=B, last-pos={right=2cm},]
+	\nskBlock[
+		type=circle,id=cblock,text-center=C,
+		border-type=dashed,pos={above right=.6cm and .6cm of ablock},
+	]
+	\nskBlock[
+		type=circle,id=dblock,text-center=D,
+		border-type=dashed,pos={below right=.6cm and .6cm of ablock},
+	]
+
+	\nskConnect[
+		id=asdfd,
+		from=ablock.east,to=bblock.west,
+		arrow-tip={->},
+		bridging=true, bridging-type=over, bridging-style=arc,
+	]
+	\nskConnect[
+		id=asdf,
+		from=cblock.south,to=dblock.north,
+		bridging=true,
+	]
+
+	\nskDoBridging
+}
+}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\n
+\end{nskFigure}
+\hspace{1cm}
+\begin{nskFigure}[]
+  \g
+\end{nskFigure}
+\hspace{1cm}
+\begin{nskFigure}[]
+	\arc
+\end{nskFigure}
+\end{document}

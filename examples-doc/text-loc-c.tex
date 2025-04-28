@@ -1,0 +1,66 @@
+
+\documentclass[multi=false]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-width=2cm, block-height=2cm,
+  block-distance=1cm,
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[
+    id=df,
+		text-north=Default,
+		border-type=dashed, fill=nskMainAccent!30!nskBg,
+		border-color=nskMainAccent,
+	]{
+		\nskBlock[
+			text-north=-north,
+			text-south=-south,
+			text-center=-center,
+			text-east=-east,
+			text-west=-west,
+		]
+  }
+
+	\nskContainer[
+    id=vt,
+		text-north=Horizontal,
+		border-type=dashed, fill=nskSecondaryAccent!30!nskBg,
+		border-color=nskSecondaryAccent,
+    last-pos={right=},
+	]{
+  \nskBlock[
+    width=2cm, height=2cm,
+    text-north=-west,
+    text-north-loc=west,
+    text-south=-east,
+    text-west-loc=east,
+    pattern=hatch,
+  ]
+	}
+
+	\nskContainer[
+    id=hz,
+		text-north=Vertical,
+		border-type=dashed, fill=nskSecondaryAccent!30!nskBg,
+		border-color=nskSecondaryAccent,
+    last-pos={right=},
+	]{
+  \nskBlock[
+    width=2cm, height=2cm,
+    text-east=-north,
+    text-east-loc=north,
+    text-west=-south,
+    text-west-loc=south,
+    pattern=hatch,
+  ]
+	}
+  \nskConnect[from=df, to=vt, arrow-type=dashed]
+  \nskConnect[from=vt, to=hz, arrow-type=dashed ]
+
+\end{nskFigure}
+\end{document}

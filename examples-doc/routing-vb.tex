@@ -1,0 +1,65 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  text-north-loc=west,
+  block-distance=1cm,
+  dark-mode=true,
+  block-outer-border-size=4mm,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\d{pattern=hatchd, fill=nskMainAccent, outer-border-type=solid}
+\def\s{outer-border-type=solid, fill=nskSecondaryAccent, outer-border-color=nskSecondaryAccent!50!nskBg, pattern=hatchd}
+\def\a{fill=nskOrange, outer-border-type=solid, outer-border-color=nskOrange!50!nskBg, pattern=hatchd}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[
+		text-north=Downard $\downarrow$,
+		fill=nskMainAccent!30!nskBg, border-color=nskMainAccent,
+	]{
+		\nskBlock*[id=ab, type=rectangle, text-center=A, \d]
+		\nskBlock[id=bb, type=rectangle, text-center=B, width=1cm, height=1cm, last-pos={right=4cm}]
+		\nskBlock[id=op, type=rounded rectangle, width=2cm, border-radius=0mm, text-center=node, fill=nskSecondaryAccent, pos={below right=1cm and 1.5cm of ab}]
+
+		\nskAngledc[dir=down, alpha=60]
+		\nskConnect[
+			from=ab.south,to=op.west,
+			arrow-tip={{Rays[n=9]}-},
+			route={to[out=\o, in=\i]},
+			shorten-from=2mm,
+		]
+		\nskConnect[
+			id=cn2,from=bb.south,to=op.east,
+			route={to[out=\oo, in=\ii]},
+			arrow-tip={stealth-},
+			shorten-from=2mm,
+		]
+	}
+	\nskContainer[
+		last-pos={right=},
+		text-north=Upward $\uparrow$,
+		fill=nskSecondaryAccent!30!nskBg, border-color=nskSecondaryAccent,
+	]{
+		\nskBlock*[id=ab, type=rectangle, text-center=A, \s]
+		\nskBlock[id=bb, type=rectangle, text-center=B, last-pos={right=4cm}]
+		\nskBlock[id=op, type=rounded rectangle, width=2cm, border-radius=0mm, text-center=node, fill=nskSecondaryAccent, pos={above right=1cm and 1.5cm of ab}]
+
+		\nskAngledc[dir=up, alpha=60]
+		\nskConnect[
+			from=ab.north,to=op.west,
+			arrow-tip={{Rays[n=9]}-},
+			route={to[out=\o, in=\i]},
+			shorten-from=2mm,
+		]
+		\nskConnect[
+			id=cn2,from=bb.north,to=op.east,
+			route={to[out=\oo, in=\ii]},
+			arrow-tip={stealth-},
+			shorten-from=2mm,
+		]
+	}
+\end{nskFigure}
+\end{document}

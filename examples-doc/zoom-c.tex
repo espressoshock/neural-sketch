@@ -1,0 +1,62 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  container-padding=2mm,
+  text-west-style={xshift=-3mm},
+  text-south-style={yshift=-3mm},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskBlock[
+		type=rounded rectangle, border-radius=0mm,
+		text-center=Crisp, width=2cm, height=1cm,
+    fill=nskRed,
+	]
+	\nskBlock[
+		type=circle,
+		embed-gfx={../assets/adv_patch.png},
+		last-pos=right,
+	]
+	\nskWrapUnder[\nskID!{1}]
+	\nskMeasure[from=\nskID!{1}.west, to=\nskID!{2}.east]
+	\nskBlock[
+		embed-gfx={../assets/oh-7.png},
+		width=\nskDistance, height=\nskDistance,
+		shift-x=-5mm, shift-y=5mm,
+	]
+	\nskMark[id=zo, at={\nskID{1}}, shift-x=-6.05mm, shift-y=-6mm]
+
+	\nskZoom[
+	type=rectangle,
+	zoomed-fill=nskLightestGray,
+	at=\nskID!{1}, to={(2.2, 3)},
+	]
+
+	\nskZoom[
+	type=rectangle,
+	zoomed-fill=nskLightestGray,
+	at=\nskID!{2}, to={(5.2, 2)},
+	]
+
+
+	\nskZoom[
+		type=rectangle,
+		zoomed-fill=nskLightestGray,
+		at=zo, to={(5.2, -3)},
+	]
+
+	\nskZoom[
+		type=rectangle,
+		magnification=18,
+		zoomed-fill=nskLightestGray,
+		at=zo, to={(-2.6, -2)},
+	]
+\end{nskFigure}
+\end{document}
+
+

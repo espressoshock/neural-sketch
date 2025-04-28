@@ -1,0 +1,53 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  icon-clean=false,
+  arrow-type=dashed, shorten-from=1mm, shorten-to=1mm,
+  arrow-color=nskFg!50!nskBg,
+  block-distance=3cm,
+  text-south-style={yshift=-1mm},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\s{
+  width=1.4cm,
+  height=1.4cm,
+  fill=nskMainAccent,
+  border-radius=3.5mm,
+  outer-border-type=solid,
+  pattern=hatchd,
+  text-south-style={yshift=-2mm}
+}
+\def\f{
+  fill=nskFg!60!nskBg,
+}
+
+\begin{document}
+\begin{nskFigure}[]
+  \foreach \i/\c[count=\x] in {brain/Red, cpu/Orange, memory-stick/MainAccent, brick-wall/Pink, bot/Blue, bug/SecondaryAccent, layers-2/Yellow} {
+			\begin{nskSwitch}[type=int]{\x}
+				\nskCase[3] {
+					\nskBlock*[
+						last-pos-s={right=5mm}, width=0cm,
+						text-center={\nskIcon[name=\i, color=nsk\c]},
+            \s, \f
+					]
+				}
+				\nskDefault{
+					\nskBlock*[
+						last-pos-s={right=5mm},
+						text-center={\nskIcon[name=\i, color=nsk\c]},
+            \f
+					]
+				}
+			\end{nskSwitch}
+		}
+
+  \nskEdgeFade[edge=left, size=25mm]
+  \nskEdgeFade[edge=right, size=25mm]
+
+\end{nskFigure}
+
+\end{document}

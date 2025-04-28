@@ -1,0 +1,36 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  icon-clean=true,
+  arrow-type=dashed, shorten-from=2mm, shorten-to=5mm,
+  arrow-color=nskFg!50!nskBg,
+  block-distance=3cm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\s{text-south-style={yshift=-.5mm}, fill=nskSecondaryAccent, pattern=hatchd,}
+\def\ss{fill=nskRed, pattern=grid, pattern-opacity=.05}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskBlock*[
+		text-center ={\nskIcon[name=aperture]},
+    text-north  ={\nskIcon[name=redo, style={rotate=0},   size=4mm]},
+    text-east   ={\nskIcon[name=redo,  style={rotate=-90}, size=4mm]},
+    text-west   ={\nskIcon[name=redo,  style={rotate=90},  size=4mm]},
+    text-south  ={\nskIcon[name=redo, style={rotate=180}, size=4mm]},
+    \s
+	]
+
+	\nskBlock*[
+		width=3cm, last-pos={right=},
+		text-center={\nskIcon[name=memory-stick]\; Memory},
+    \ss
+	]
+
+  \nskConnect[from=\nskID{1}, to=\nskID{2}]
+
+\end{nskFigure}
+\end{document}

@@ -1,0 +1,77 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  text-north-loc=west,
+  block-distance=1cm,
+  dark-mode=true,
+  block-outer-border-size=4mm,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\d{pattern=hatchd, fill=nskMainAccent, outer-border-type=solid}
+\def\s{outer-border-type=solid, fill=nskSecondaryAccent, outer-border-color=nskSecondaryAccent!50!nskBg, pattern=hatchd}
+\def\a{fill=nskOrange, outer-border-type=solid, outer-border-color=nskOrange!50!nskBg, pattern=hatchd}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[
+		text-north=Leftward $\leftarrow$,
+		fill=nskMainAccent!30!nskBg, border-color=nskMainAccent,
+	]{
+		\nskBlock*[id=ab, type=rectangle, text-center=A,\d]
+		\nskBlock[id=bb, type=rectangle, text-center=B, last-pos={below=4cm}]
+		\nskBlock[id=op, type=rounded rectangle, width=2cm, border-radius=0mm, text-center=node, text-center-style={rotate=90}, fill=nskSecondaryAccent, pos={below left=1.5cm and 1.7cm of ab},tikz-opts={rotate=90}
+		]
+
+		\nskAngledc[dir=left, alpha=25]
+		\nskConnect[
+			from=ab.west,to=op.east,
+			arrow-tip={{Rays[n=9]}-},
+			route={to[out=\o, in=\i]},
+			shorten-from=2mm,
+		]
+		\nskConnect[
+			id=cn2,from=bb.west,to=op.west,
+			route={to[out=\oo, in=\ii]},arrow-tip={stealth-},
+			shorten-from=2mm,
+		]
+	}
+	\nskContainer[
+		last-pos={right=},
+		text-north=Rightward $\rightarrow$,
+		fill=nskSecondaryAccent!30!nskBg, border-color=nskSecondaryAccent,
+	]{
+		\nskBlock*[id=ab, type=rectangle, text-center=A,\s]
+		\nskBlock[id=bb, type=rectangle, text-center=B, last-pos={below=4cm}]
+		\nskBlock[
+			id=op,type=rounded rectangle, width=2cm,border-radius=0mm,
+			text-center=node,text-center-style={rotate=90},
+			fill=nskSecondaryAccent,
+			pos={below right=2.5cm and 1cm of ab},
+			tikz-opts={rotate=90}
+		]
+
+		\nskAngledc[dir=right, alpha=25]
+		\nskConnect[
+			from=ab.east,
+			to=op.east,
+			arrow-tip={{Rays[n=9]}-},
+			route={to[out=\o, in=\i]},
+			shorten-from=2mm,
+		]
+		\nskConnect[
+			id=cn2,
+			from=bb.east,
+			to=op.west,
+			route={to[out=\oo, in=\ii]},
+			arrow-tip={stealth-},
+			shorten-from=2mm,
+		]
+	}
+
+\end{nskFigure}
+\end{document}
+
+

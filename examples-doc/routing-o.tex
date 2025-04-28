@@ -1,0 +1,59 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  text-north-loc=west,
+  block-distance=1cm,
+  dark-mode=true,
+  block-outer-border-size=4mm,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\s{pattern=hatchd, fill=nskMainAccent, outer-border-type=solid}
+\def\d{outer-border-type=solid, outer-border-color=nskSecondaryAccent!50!nskBg, pattern=hatchd}
+\def\a{fill=nskOrange, outer-border-type=solid, outer-border-color=nskOrange!50!nskBg, pattern=hatchd}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[
+		text-north=Single Bend,
+		fill=nskMainAccent!30!nskBg, border-color=nskMainAccent,
+	]{
+		\nskBlock*[type=circle, id=ablock, text-center=A, \s]
+		\nskBlock[id=bblock, text-center=B, pos={above right=1cm of ablock},]
+		\nskConnect[from=ablock.east, to=bblock.south, bend-type=single, bend-direction=down,]
+	}
+
+	\nskContainer[
+		text-north=Double Bend,
+		fill=nskSecondaryAccent!30!nskBg, border-color=nskSecondaryAccent,
+		last-pos={right=},
+	]{
+		\nskBlock*[type=circle,id=ablock,text-center=A, fill=nskSecondaryAccent, \d]
+		\nskBlock[type=rectangle, id=bblock, text-center=B, pos={below right=2mm and 1cm of ablock},]
+		\nskConnect[from=ablock, to=bblock.north, bend-type=double, bend-direction=up,]
+	}
+
+	\nskContainer[
+		text-north=Arcs, last-pos={right=},
+		fill=nskOrange!30!nskBg, border-color=nskOrange,
+	]{
+		\nskBlock*[type=circle, id=ablock, text-center=A, \a]
+		\nskBlock[type=rectangle, id=bblock, text-center=B,pos={right=1cm of ablock},]
+		\nskConnect[
+			from=ablock.north, to=bblock.north,
+			arrow-tip={->}, route={to[bend left=90] }
+		]
+		\nskConnect[
+			from=bblock.south,to=ablock.south,
+			arrow-tip={->}, route={to[bend left=90] }
+		]
+	}
+
+	% \nskEdgeFade[edge=up, size=8mm]
+	% \nskEdgeFade[edge=down, size=10mm]
+
+
+\end{nskFigure}
+\end{document}

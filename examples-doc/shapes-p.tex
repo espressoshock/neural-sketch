@@ -1,0 +1,30 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskContainer[
+		border-type=dashdotted,
+		text-north=Polygons,
+		text-north-style={nskMidGray},
+		text-north-loc=west,
+		fill=nskSecondaryAccent!30!nskBg,
+		border-color=nskSecondaryAccent,
+	]{
+		\foreach \ns in {3,...,6}{
+				\nskBlock*[
+          type=polygon[\ns],
+					width=1.5cm, height=1.5cm,
+					last-pos-s={right=.8cm},
+				]
+			}
+	}
+\end{nskFigure}
+\end{document}

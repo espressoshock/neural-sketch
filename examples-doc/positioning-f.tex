@@ -1,0 +1,46 @@
+\documentclass[11pt]{standalone}
+\standaloneconfig{border=5mm}
+\usepackage[
+  block-width=1.5cm, block-height=1.5cm,
+  block-distance=1cm,
+  container-border-type=dashed,
+  container-fill=nskRed!30!nskBg,
+  container-border-color=nskRed,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\c{type=circle, fill=nskMainAccent}
+\def\r{type=rounded rectangle, border-radius=0mm, width=3cm, fill=nskBlue}
+\def\p{type=polygon[5], fill=nskMainAccent}
+\def\t{type=polygon[3], height=2cm, shift-y=-2mm, shift-x=1mm, fill=nskMainAccent}
+
+\def\cp{fill=nskSecondaryAccent!30!nskBg, border-color=nskSecondaryAccent}
+\def\x{fill=none, pattern=hatch, border-type=dashed}
+\def\o{type=circle, size=5mm, fill=nskRed, shift-x=.5mm}
+
+\def\ph{
+  type=rectangle,
+  width=1cm,
+  height=1cm,
+  fill=nskRed,
+  border-radius=2mm,
+  rotate=0,
+  fill=none,
+  shadow=false,
+  opacity=.5,
+  border-type=dashed,
+}
+
+\def\guide{color=nskStrongCyan!85!black, arrow-type=dashed}
+
+\begin{document}
+\begin{nskFigure}[]
+  \nskBlock*[\x, text-center=Reference, text-center-style={rotate=90}, height=6cm]
+
+  \foreach \a in {top, center, bottom} {
+    \nskBlock*[\ph, pos={right=of \nskID!{1}}, align=\a, text-center=\a, width=0cm]
+    \nskBlock*[\ph, pos={left=of \nskID!{1}}, align=\a, text-center=\a, width=0cm]
+  }
+\end{nskFigure}
+\end{document}

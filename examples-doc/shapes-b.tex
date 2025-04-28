@@ -1,0 +1,31 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskContainer[
+		border-type=dashdotted,
+		text-north=Basic Shapes,
+		text-north-style={nskMidGray},
+		text-north-loc=west,
+		fill=nskMainAccent!30!nskBg,
+		border-color=nskMainAccent,
+	]{
+		\foreach \shape in
+			{rectangle, circle, diamond, ellipse, trapezium, semicircle}{
+				\nskBlock[
+					type=\shape,
+					width=1cm, height=1cm,
+					last-pos-s={right=.8cm}
+				]
+			}
+	}
+\end{nskFigure}
+\end{document}
