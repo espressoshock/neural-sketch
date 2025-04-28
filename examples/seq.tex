@@ -1,15 +1,16 @@
 \documentclass{standalone}
-\standaloneconfig{border=1mm}
+\standaloneconfig{border=5mm}
 
-\usepackage[]{neural-sketch}
+\usepackage[
+  dark-mode=true,
+]{neural-sketch}
 \nskUseModule{*}
-
 \begin{document}
 \begin{nskFigure}[]
 
 	\nskContainer[
 		border-type=dashed,
-		fill=nskMainAccent!40,
+		fill=nskMainAccent!40!nskBg,
     border-color=nskMainAccent,
 	]{
 		\foreach \t [count=\i] in {One cell, can be used over, and over, and over, again.} {
@@ -17,7 +18,7 @@
 					id=a\i,
 					text-center=A,
 					width=1.7cm, height=1.7cm,
-					fill=white,
+					% fill=white,
           % text-center-style={nskBg},
 					text-north=\t,
 					text-north-style={yshift=2mm},
@@ -40,8 +41,7 @@
 					\nskConnect[
 						to=a\i.east,
 						from=a\n.west,
-						arrow-style={ultra thick, stealth-},
-						shorten-from=1mm,
+						arrow-tip={stealth-},
 					]
 				}
 			\end{nskSwitch}
@@ -49,14 +49,13 @@
 			\nskConnect[
 				from=aif,
 				to=ait,
-				arrow-style={ultra thick, stealth-},
-				shorten-from=1mm,
+				arrow-tip={stealth-},
+        shorten-from=1.5mm,
 			]
 			\nskConnect[
 				from=aof,
 				to=aot,
-				arrow-style={ultra thick, -stealth},
-				shorten-from=-1.3mm,
+				arrow-tip={-stealth},
 			]
 
 			\node[below] at (ait) {$x_\i$};

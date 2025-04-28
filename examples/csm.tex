@@ -1,10 +1,13 @@
 \documentclass{standalone}
-\standaloneconfig{border=10mm}
+\standaloneconfig{border=5mm}
 
 \usepackage[
   block-border-radius=3mm,
-  container-fill=nskSecondaryAccent!60,
+  container-fill=nskSecondaryAccent!60!nskBg,
   container-border-color=nskBlue,
+  fillbetween-fill=nskStrongBlue!50!nskFg,
+  fillbetween-border-color=nskStrongBlue!80!nskFg,
+  dark-mode=true,
 ]{neural-sketch}
 \nskUseModule{*}
 
@@ -48,7 +51,7 @@
 			shorten-from={1mm}, shorten-to={1mm}
 		]
 	}
-	\nskFillBetween[from=a, to=\nskBlockIDLast{1}, edge=curved]
+	\nskFillBetween[from=a, to=\nskBlockIDLast{1}, edge=curved, corner-offset=4mm]
 	\nskBlock[
 		id=abt, fill=nskMainAccent,
 		text-center=\Large \textbf{Autoregressive Backbone Transformer},
@@ -112,7 +115,7 @@
 		arrow-tip={Circle[width=2mm, length=.8mm]-Straight Barb},
 		shorten-to={1mm}
 	]
-	\nskFillBetween[from=aa, to=\nskBlockIDLast{1}, edge=curved]
+	\nskFillBetween[from=aa, to=\nskBlockIDLast{1}, edge=curved, corner-offset=5mm]
 	\nskCoord[pos={right=.2cm of \nskBlockIDLast{2}}] % dummy coord
 	\foreach \b/\f in {dots, A/nskBlue, A/nskBlue, A/nskBlue, T/nskOrange} {
 			\begin{nskSwitch}[type=string]{\b}
@@ -155,14 +158,8 @@
 				}
 			\end{nskSwitch}
 		}
-	% left fade block ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\nskBlock[
-		pos={below right=-7cm and -2cm of \nskBlockIDLast{2}},
-		width=2cm, height=7cm, fade=right,
-	]
-	\nskBlock[
-		last-pos={left=13.3cm},
-		width=2cm, height=7cm, fade=left,
-	]
+	% edgefade block ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  \nskEdgeFade[edge=left, size=20mm]
+  \nskEdgeFade[edge=right, size=20mm]
 \end{nskFigure}
 \end{document}

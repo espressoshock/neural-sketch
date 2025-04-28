@@ -1,7 +1,10 @@
 \documentclass{standalone}
-\standaloneconfig{border=10mm}
+\standaloneconfig{border=5mm}
 
-\usepackage{neural-sketch}
+\usepackage[
+  block-distance=.5cm,
+  dark-mode=false,
+]{neural-sketch}
 \nskUseModule{*}
 
 \begin{document}
@@ -28,26 +31,13 @@
 	\foreach \c in {Green, Yellow, dots, skip} {
 			\begin{nskSwitch}[type=string]{\c}
 				\nskCase[skip]{
-					\nskBlock[
-						last-pos-s={right=.0cm},
-						border-type=dashed,
-						shadow=false,
-					]
+					\nskBlock[last-pos-s={right=0cm}, border-type=dashed, shadow=false,]
 				}
 				\nskCase[dots]{
-					\nskBlock[
-						last-pos-s={right=0cm},
-						text-center=$\cdots$,
-						border-type=none, fill=none,
-						shadow=false,
-					]
+					\nskBlock[type=text, last-pos-s={right=0cm}, text-center=$\cdots$, border-type=none, fill=none, shadow=false,]
 				}
 				\nskDefault{
-					\nskBlock[
-						last-pos-s={right=.5cm},
-						text-north=\c,
-						fill=nsk\c,
-					]
+					\nskBlock[last-pos-s=right, text-north=\c, fill=nsk\c]
 				}
 			\end{nskSwitch}
 		}

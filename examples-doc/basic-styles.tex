@@ -1,7 +1,10 @@
-\documentclass{standalone}
-% \standaloneconfig{border=10mm}
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
 
-\usepackage{neural-sketch}
+\usepackage[
+  container-border-type=dashed,
+  dark-mode=false,
+]{neural-sketch}
 \nskUseModule{*}
 
 \begin{document}
@@ -15,6 +18,7 @@
 		id=B,
 		text-north = {dashed},
 		border-type=dashed,
+    shadow=false,
 		pos={right=.5cm of A},
 	]
 	\nskBlock[
@@ -46,16 +50,26 @@
 			pos={right=1.5cm of E},
 			outer-border-type=solid,
 			outer-border-size=4mm,
-			outer-border-color=nskSecondaryAccent!70,
+			outer-border-color=nskSecondaryAccent!70!nskBg,
+      % fill=nskSecondaryAccent
 		]
 		\nskBlock[
 			id=G,
 			pos={right=.5cm of F},
 			outer-border-type=solid,
 			outer-border-size=4mm,
-			outer-border-color=nskMainAccent!70,
+			outer-border-color=nskMainAccent!70!nskBg,
+      % fill=nskMainAccent
 		]
-
 	}
+
+	\nskContainer[
+		border-type=dashed,
+		text-north=Specials,
+    last-pos={right=}
+    ]{
+      \nskBlock[type=text, text-center=Just\\Text]
+      \nskBlock[type=icon, text-center={\nskIcon[name=cpu]}, last-pos={right=}]
+    }
 \end{nskFigure}
 \end{document}

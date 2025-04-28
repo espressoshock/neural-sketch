@@ -1,7 +1,9 @@
 \documentclass{standalone}
-\standaloneconfig{border=10mm}
+\standaloneconfig{border=5mm}
 
-\usepackage{neural-sketch}
+\usepackage[
+  dark-mode=true,
+]{neural-sketch}
 \nskUseModule{*}
 
 \begin{document}
@@ -9,7 +11,7 @@
 	\foreach \s [count=\i] in {20, 40,...,100} {
 			\nskBlock[
 				last-pos-s={right=0.5cm},
-				fill={nskMainAccent!\s},
+				fill={nskMainAccent!\s!nskBg},
 				text-north={\s},
 			]
 		}

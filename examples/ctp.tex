@@ -10,24 +10,23 @@
   bridging-gap=4pt, bridging-style=gap,
   arrow-tip={-Straight Barb},
   arrow-style={line width=.8mm},
+  dark-mode=true,
 ]{neural-sketch}
 \nskUseModule{*}
-
 
 \definecolor{cyanarr}{HTML}{2792CF}
 \colorlet{carr}{cyanarr}
 
 % block styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \def\cyanC{color=nskStrongCyan!85!black}
-\def\cyan{fill=nskStrongCyan!20, border-color=nskStrongCyan}
+\def\cyan{fill=nskStrongCyan!20!nskBg, border-color=nskStrongCyan}
 
 \def\grapeC{color=nskStrongGrape}
-\def\grape{fill=nskStrongGrape!20, border-color=nskStrongGrape}
+\def\grape{fill=nskStrongGrape!20!nskBg, border-color=nskStrongGrape}
 
-\def\cyanL{fill=nskSecondaryAccent!40, border-color=nskBlue}
-\def\grapeL{fill=nskStrongGrape!12, border-color=nskStrongGrape}
-
-\def\mc{fill=nskMainAccent!40, border-color=nskMainAccent}
+\def\cyanL{fill=nskSecondaryAccent!40!nskBg, border-color=nskBlue}
+\def\grapeL{fill=nskStrongGrape!12!nskBg, border-color=nskStrongGrape}
+\def\mc{fill=nskMainAccent!40!nskBg, border-color=nskMainAccent}
 
 
 \begin{document}
@@ -41,7 +40,7 @@
 		]
 		\nskBlock[
 			type=text,
-			text-center={Early features \\ parse out the \\ structure of the \\ numbers},
+			text-center={Early features \\ parse out the \\ structure of the \\ numbers}, width=2cm,
 			text-size=\normalsize,
 			last-pos={below=5mm}
 		]
@@ -51,7 +50,7 @@
 		\nskBlock*[id=a5, text-center={number \\ ending in 9}, last-pos={below=3mm}, \grape]
 	}
 
-	\nskContainer*[id=cnt2, pos={right=0cm of cnt.north east}, anchor=north west,\cyanL]{
+	\nskContainer*[id=cnt2, pos={above left=-.5cm and -2cm of cnt.north east}, anchor=north west,\cyanL]{
 		\nskBlock*[id=b1, text-center={add 54-59}, \cyan]
 		\nskBlock*[id=b2, text-center={31-43 \\ + 55-64}, last-pos={right=1.5cm}, \cyan]
 		\nskBlock*[id=b3, text-center={sum 88-97}, last-pos={right=1.5cm}, \cyan]
@@ -60,9 +59,9 @@
 			pos={above=5mm of b2}, \cyan,
 		]
 
-		\nskCoord[id=b1l, at=b0.west, shift-y=2.8mm, shift-x=-1.8cm]
+		\nskCoord[id=b1l, at=b0.west, shift-y=2.75mm, shift-x=-1.8cm]
 		\nskBlock[
-			type=text, height=5mm,
+			type=text, height=5mm, width=2cm,
 			text-center={One path approximates the answer roughly},
 			pos={above=3mm of b0}
 		]
@@ -81,7 +80,7 @@
 		]
 	}
 
-	\nskContainer*[id=cnt3, pos={below=1cm of cnt2.south east}, \mc]{
+	\nskContainer*[id=cnt3, pos={above left=0cm and -2cm of cnt2.south east}, \mc]{
 		\nskBlock[id=c0, text-center={sum = 95}, pos={below=1.4cm of b3}]
 		\nskBlock[
 			id=c1, type=text, width=1.4cm,
@@ -93,13 +92,13 @@
 			\nskBlock[
 				type=text, height=12mm, width=\nskDistance,
 				text-center={The Two paths combine  at the \\end to produce the answer},
-				fill=nskMainAccent!40,
+				fill=nskMainAccent!40!nskBg,
 				last-pos={below=5mm}, tikz-opts={xshift=-20mm}
 			]
 		}
 		\nskConnect[from=c0.east, to=c1.west]
 	}
-	\nskContainer*[pos={right=0cm of cnt.south east}, anchor=south west, \grapeL]{
+	\nskContainer*[pos={above left=.5cm and -2cm of cnt.south east}, anchor=south west, \grapeL]{
 		\nskBlock*[id=d0, text-center={add number \\ ending in 9}, \grape]
 		\nskBlock*[id=d1, text-center={\# end in 6 \\ +\# end in 9},
 			last-pos={right=1.5cm}, \grape]
@@ -109,9 +108,9 @@
 		\nskConnect*[from=d1, to=d2, \grapeC]
 
 		\nskBlock[
-			type=text, height=0mm,
+			type=text, height=0mm, width=2cm,
 			text-center={One path determines the last digit of the sum precisely},
-			pos={below=5mm of \nskBlockIDLast{3}},
+			pos={below=5mm of \nskID{2}},
 		]
 	}
 
@@ -119,11 +118,11 @@
 	\nskGroup[pos={left=of cnt}]{
 		\nskBlock[type=text, text-center={\LARGE \textbf{What is 36 + 59 ?}}]
 		\nskOnbg{
-			\foreach \x[count=\i] in {12.6, 16.6} {
+			\foreach \x[count=\i] in {25.3, 16.5} {
 					\nskBlock[
 						id=t\i,
-						width=8.5mm,height=8.5mm,shadow=false,border-radius=1mm,
-						pos={right=\x mm of \nskBlockIDLast{2}.west}
+						width=8.5mm,height=8.5mm, shadow=false,border-radius=1mm,
+						pos={right=\x mm of \nskID{1}.west}
 					]
 				}
 		}

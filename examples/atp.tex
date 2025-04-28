@@ -5,16 +5,17 @@
   block-height=1.5cm,
   block-width=8mm,
   block-border-radius=3mm,
-  container-fill=nskSecondaryAccent!60,
+  container-fill=nskSecondaryAccent!60!nskBg,
   container-border-color=nskBlue,
+  dark-mode=true,
 ]{neural-sketch}
 \nskUseModule{*}
 
 \NewDocumentCommand{\batch}{t!t*m}{
 	\nskCoord[id=cx, #3] % dummy coord
-  \IfBooleanTF{#2}{\def\fc{nskLightGray}}{\def\fc{nskBlue}}
-  \IfBooleanTF{#2}{\nskContainer[padding=1mm, border-radius=4mm, fill=nskLightGray]}
-  {\nskContainer[padding=1mm, border-radius=4mm]}{
+  \IfBooleanTF{#2}{\def\fc{nskLightGray}}{\def\fc{nskRed}}
+  \IfBooleanTF{#2}{\nskContainer[padding=1.5mm, border-radius=4mm, fill=nskLightGray]}
+  {\nskContainer[padding=1.5mm, border-radius=4mm]}{
 		\foreach \c in {31,...,29} {
         \IfBooleanTF{#1}{
           \nskBlock[id=a, text-center=\c, last-pos-s={below=1mm}, width=2cm, fill=\fc]
@@ -72,8 +73,8 @@
 	\nskMeasure[from=rectangle3.north west, to=rectangle32.north east]
 
 	\batch{y=12, shift-x={\nskDistance/2 - 2cm}}
-	\batch{pos={right=of cx}}
-	\batch{pos={right=of cx}}
+	\batch{pos={right=1.2cm of cx}}
+	\batch{pos={right=1.2cm of cx}}
 
 	\foreach \f/\t in {35/3, 38/13, 41/29} {
 			\nskConnect[

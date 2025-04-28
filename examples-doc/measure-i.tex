@@ -8,8 +8,8 @@
   container-border-color=nskOrange,
   shorten-from=1mm,
   shorten-to=1mm,
-  block-distance=5mm,
-  dark-mode=false,
+  block-distance=1mm,
+  dark-mode=true,
 ]{neural-sketch}
 \nskUseModule{*}
 
@@ -17,18 +17,18 @@
 
 \begin{nskFigure}[]
 	\nskBlock[id=a, text-center=A, fill=nskGreen]
-  \nskBlock[id=b, text-center=B, last-pos={right=4cm}, fill=nskRed]
+	\nskBlock[id=b, text-center=B, last-pos={right=4cm}, fill=nskRed]
 
-  \nskMeasure[from=a.west, to=b.east, into=oab] % outer
-  \nskMeasure[from=a.east, to=b.west, into=iab] % inner
+	\nskMeasure[from=a.west, to=b.east, into=oab] % outer
+	\nskMeasure[from=a.east, to=b.west, into=iab] % inner
 
-  \nskWrapUnder[a]
-  \nskBlock[id=c, text-center=C, width=\oab, fill=nskSecondaryAccent]
+	\nskWrapUnder[a]
+  \nskBlock[id=c, text-center=C, width=\oab, fill=nskSecondaryAccent, pattern=hatchd]
 
-  \nskConnect[id=abc, from=a, to=b, arrow-tip=|<->|]
-  \nskConnect[id=aboc, from=a.north west, to=b.north east, arrow-tip=|-|, shift-y=5mm]
-  \nskMarkPath[at=.5]{abc}{\node[above]{\iab};}
-  \nskMarkPath[at=.5]{aboc}{\node[above]{\oab};}
+	\nskConnect[id=abc, from=a, to=b, arrow-tip=|<->|]
+	\nskConnect[id=aboc, from=a.north west, to=b.north east, arrow-tip=|-|, shift-y=5mm]
+	\nskMarkPath[at=.5]{abc}{\node[above]{\iab};}
+	\nskMarkPath[at=.5]{aboc}{\node[above]{\oab};}
 
 \end{nskFigure}
 \end{document}
