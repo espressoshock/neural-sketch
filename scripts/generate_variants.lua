@@ -114,7 +114,7 @@ file:close()
 
 -- Function to compile and optionally re-run pdflatex
 local function compile_job(job, texfile)
-	local cmd = "pdflatex -jobname=" .. job .. " -interaction=nonstopmode " .. texfile
+	local cmd = "pdflatex --shell-escape -jobname=" .. job .. " -interaction=nonstopmode " .. texfile
 	run_cmd(cmd)
 	if double_compile then
 		print("Double compile enabled: running second pass for " .. job)
