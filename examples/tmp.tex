@@ -1,0 +1,64 @@
+\documentclass{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage[
+  auto-increment-duplicates=true,
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+\begin{document}
+
+\begin{nskFigure}[]
+
+	%  \nskBlock[id=a]
+	%  \nskContainer[pos={right=of a.east}, anchor=west]{
+	% 	\nskBlock[]
+	% 	\nskBlock[last-pos={right=}]
+	% 	\nskBlock[last-pos={right=}]
+	% }
+  \nskContainer[text-north=\nskBlockID]
+  {
+    \nskBlock[]
+  }
+
+  \nskContainer[id=cnt, text-north=\nskBlockID, pos={right=2cm of \nskID{1}}]{
+		\nskBlock[id=a, text-north=\nskBlockID]
+		\nskBlock[id=a, last-pos={right=},  text-north=\nskBlockID]
+		\nskBlock[id=a, last-pos={right=},  text-north=\nskBlockID]
+	}
+
+  \nskContainer[last-pos={right=}, text-north=\nskBlockID]{
+		\nskBlock[id=a, text-north=\nskBlockID]
+		\nskBlock[id=a, last-pos={right=},  text-north=\nskBlockID]
+		\nskBlock[id=a, last-pos={right=},  text-north=\nskBlockID]
+	}
+	%
+	%  \nskContainer[pos={right= of cnt}]{
+	%  % \nskContainer[last-pos={below=}]{
+	% 	\nskBlock[id=a, text-north=\nskBlockID]
+	% 	\nskBlock[id=a, last-pos={right=},  text-north=\nskBlockID]
+	% 	\nskBlock[id=a, last-pos={right=},  text-north=\nskBlockID]
+	% 	\nskBlock[id=a, last-pos={right=},  text-north=\nskBlockID]
+	% }
+
+	% \nskBlock[id=a, width=100pt, height=50pt]
+	% \nskMeasure[
+	% 	axis=horizontal,
+	% 	from=a.east, to=a.west,
+	% 	into={a},
+	% ]
+	% \nskMeasure[
+	% 	axis=vertical,
+	% 	from=a.north, to=a.south,
+	% 	into={b},
+	% ]
+	%
+	% \nskBlock[
+	% 	width=\a,
+	% 	last-pos={below},
+	% 	text-south={\a},
+	% 	text-east={\b},
+	% ]
+
+\end{nskFigure}
+\end{document}

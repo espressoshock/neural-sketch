@@ -1,0 +1,46 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-width=2cm,
+  block-height=1.2cm,
+  block-distance=1cm and 1cm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+  % blocks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  \nskBlock[text-center=Say\\ Austin, fill=nskSecondaryAccent, border-type=dashed]
+  \nskBlock[text-center=, last-pos={below left=}, fill=nskRed, pattern=rhatch]
+  \nskBlock[text-center=Texas, last-pos={right=}]
+  \nskBlock[text-center=capital, pos={below left=of \nskID{2}}]
+  \nskBlock[text-center=state, last-pos={right=}]
+  \nskBlock[text-center=Dallas, last-pos={right=}]
+
+  % connections ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  \nskConnect[from=\nskID{1}, to=\nskID{4}, arrow-tip={-Straight Barb}]
+  \nskConnect[from=\nskID{2}, to=\nskID{5}, arrow-tip={-Straight Barb}]
+  \nskConnect[from=\nskID{4}, to=\nskID!{1}, arrow-tip={-Straight Barb}]
+
+  \nskConnect[
+    from=\nskID{3}.north, to=\nskID{5}.south,
+    arrow-tip={-Straight Barb},
+    bend-type=double, bend-direction=up, bend-distance=5mm,
+  ]
+
+  \nskConnect[
+    from=\nskID{2}.north, to=\nskID{4}.south,
+    arrow-tip={-Straight Barb},
+    bend-type=double, bend-direction=up, bend-distance=5mm,
+  ]
+
+  \nskConnect[
+    from=\nskID!{2}.north, to=\nskID!{1}.south,
+    arrow-tip={-Straight Barb},
+    bend-type=double, bend-direction=up, bend-distance=5mm,
+  ]
+
+\end{nskFigure}
+\end{document}

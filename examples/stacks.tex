@@ -1,0 +1,37 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-width=2cm,
+  container-padding=2mm,
+  container-border-type=dashed,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+\begin{document}
+
+
+\begin{nskFigure}[]
+	\nskBlock[text-center=errors, stack=true, stack-count=double, text-north=\nskID{}, fill=nskRed]
+	\nskBlock[text-center=warnings, stack=true, stack-count=double, last-pos={right=}, text-north=\nskID{}, fill=nskOrange]
+
+	\nskConnect[from=\nskID{1}.west, to=\nskID{2}.east]
+
+	\nskMark[at={5, 0}]
+	\nskConnect[from=\nskID{1}.west, to=\nskID{2}.east, arrow-style={ultra thick, dashed} ]
+
+	\nskContainer[last-pos={right=0cm}]{\nskBlock[fill=nskSecondaryAccent]}
+
+	\nskMark[at={-2, 0}]
+	\nskContainer[last-pos-s={left=0cm}]{\nskBlock[]}
+	\nskConnect[from=\nskID!{1}.west, to=\nskID{3}.east, arrow-style={ultra thick, dashed} ]
+	\nskZoom[
+	type=rectangle,magnification=6.0,size=2cm,
+	at={(\nskID!{1}.center)},to={(2.5, -2.25)},
+	]
+
+	% \nskEdgeFade[edge=left]
+	% \nskEdgeFade[edge=right]
+
+\end{nskFigure}
+\end{document}

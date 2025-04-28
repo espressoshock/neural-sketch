@@ -1,0 +1,22 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+
+	\nskContainer[]{
+
+		\nskBlock[id=cat, text-center=Dog, border-type=dashed]
+		\nskBlock[id=dog, text-center=Cat, fill=nskPink, last-pos=right]
+
+		\nskConnect[from=cat, to=dog]
+
+	}
+
+\end{nskFigure}
+\end{document}

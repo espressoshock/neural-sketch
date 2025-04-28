@@ -1,0 +1,47 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-border-radius=1.5mm,
+  container-padding=2mm,
+  container-border-type=dashed,
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\ln{type=circle}
+\NewDocumentCommand {\row}{m}{
+  \foreach \g in {1,...,3} {
+      \nskContainer[id=g\g, padding=3mm]{
+        \foreach \i in {1,...,4} {\nskBlock*[id=n\g\i, last-pos-s={right=3mm}, \ln]}
+      }
+      \begin{nskSwitch}[type=int]{\g}
+        \nskCase[3]{}
+        \nskDefault{\nskMark[last-pos={right=}, marker=x]}
+      \end{nskSwitch}
+    }
+    \nskWrap[under=g1, shift-x=-1mm, shift-y=-20mm]
+}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskMark[] % dummy origin
+	% \nskBlock[text-center=Austin, width=2cm, x=8, y=1]
+	\nskWrap[under=\nskID!{1}]
+	\row{1}
+	\row{2}
+  \nskMark[]
+	\nskConnect[id=a, from=g1.west, to=g3.east]
+	\nskMarkPath[at=.5]{a}{
+    \nskMark[id=prev]
+    \nskBlock[text-center=Austin, pos={below left=0mm of prev}]
+		% \node[above=.5] {$w_0$};
+		% \draw[black, thick] (0,0) -- (0,.5);
+	}
+
+
+\end{nskFigure}
+
+
+\end{document}
+

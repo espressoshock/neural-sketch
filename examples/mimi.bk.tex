@@ -1,0 +1,128 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\wave{type=icon, width=2cm, height=6cm, embed-border-size=0mm, embed-padding=-2mm,}
+\def\b{height=\h, text-center-style={rotate=90}}
+\def\elipsis{type=text, last-pos={below=2mm}, text-center={$\bullet\bullet\bullet$}, text-center-style={rotate=90}}
+\def\n{fill=nskOrange}
+\def\t{width=1.3cm}
+\def\sn{width=5mm, height=5mm, fill=nskOrange, border-radius=1.3mm}
+\def\add{width=6mm, height=6mm, fill=nskRed, type=circle, text-center=+}
+
+\def\intblocks{
+  \nskBlock*[pos={right=of \nskID{1}.north east}, anchor=north west, \n]
+  \nskBlock*[\elipsis]
+  \nskBlock*[pos={right=of \nskID{3}}, \n]
+  \nskBlock*[\elipsis]
+  \nskBlock*[pos={right=of \nskID{5}.south east}, anchor=south west, \n]
+}
+\def\intblockss{
+  \nskBlock*[id=ib3, pos={right=of \nskID{2}.north east}, anchor=north west, \n]
+  \nskBlock*[\elipsis]
+  \nskBlock*[id=ib4, pos={right=of \nskID{4}}, \n]
+  \nskBlock*[\elipsis]
+  \nskBlock*[id=ib5, pos={right=of \nskID{6}.south east}, anchor=south west, \n]
+}
+\def\intblocksss{
+  \nskBlock*[id=ib3, pos={right=of \nskID{1}.north east}, anchor=north west, \n]
+  \nskBlock*[\elipsis]
+  \nskBlock*[id=ib4, pos={right=of \nskID{3}}, \n]
+  \nskBlock*[\elipsis]
+  \nskBlock*[id=ib5, pos={right=of \nskID{5}.south east}, anchor=south west, \n]
+}
+
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskBlock*[id=audio, text-south=24kHz, embed-gfx={../assets/wave_24khz.pdf}, \wave]
+	\nskMeasure[from=\nskID{1}.south, to=\nskID{1}.north, axis=vertical, into=h]
+	\nskContainer[last-pos={right=},]{
+		\nskBlock*[id=cb, text-center=Convnet, \b]
+		\intblocks
+		\nskBlock*[id=tb, text-center=Transformer, pos={right=of \nskID{3}}, \b]
+	}
+	\intblockss
+	% conn ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\foreach \i in {3,5,...,7} {
+    \nskConnect[from=\nskID!{\i}, to={\nskID!{2}.east |- \nskID!{\i}}]
+    \nskConnect[from=\nskID!{\i}, to={\nskID!{8}.west |- \nskID!{\i}}]
+	}
+	\foreach \i in {10,12,...,14} {
+    \nskConnect[from=\nskID!{\i}, to={\nskID!{8}.east |- \nskID!{\i}}]
+	}
+
+  \nskContainer[pos={right=1cm of \nskID{3}.east}, anchor=west]{
+    \nskBlock*[id=sn0, \sn]
+  \foreach \i in {1,...,7} {\nskBlock*[id={sn\i}, last-pos={below=2mm}, \sn]}
+    % left --v ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+    \nskBlock*[id=vq, text-center=VQ, pos={left=2cm of \nskID{6}}, shift-y=-1mm, \t]
+    \nskBlock*[last-pos={left=.5cm}, \sn]
+    \nskConnect[from=\nskID{1}, to=\nskID{2}]
+    \nskBlock*[id=lin1, text-center=Lin., last-pos={left=.5cm}, \t]
+    \nskConnect[from=\nskID{1}, to=\nskID{2}]
+
+    \nskWrap[under=\nskID{1}]
+
+    \nskBlock*[id=lin2, text-center=Lin., \t]
+    \nskBlock*[last-pos={right=.5cm}, \sn]
+    \nskConnect[from=\nskID{1}, to=\nskID{2}]
+    \nskBlock*[id=rvq, text-center=RVQ, last-pos={right=.5cm}, \t]
+    \nskConnect[from=\nskID{1}, to=\nskID{2}]
+    % right --v  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+    \nskBlock*[\add, id=add1,  pos={right=1.8cm of sn4}]
+    \nskBlock*[id=lin3, text-center=Lin., pos={right=6cm of vq}, \t]
+    \nskBlock*[last-pos={right=}, \n]
+    \nskConnect[from=\nskID{1}, to=\nskID{2}]
+    \nskBlock*[id=lin4, text-center=Lin., pos={right=6cm of rvq}, \t]
+    \nskBlock*[last-pos={right=}, \n]
+    \nskConnect[from=\nskID{1}, to=\nskID{2}]
+    \nskBlock*[\add, id=add2,  last-pos={above right=.2cm and 1cm}]
+    \nskConnect[from=\nskID{2}.east, to=add2.west, bend-type=single, bend-direction=right, bend-distance=5mm]
+    \nskConnect[from=\nskID{4}.east, to=add2.west, bend-type=single, bend-direction=right, bend-distance=5mm]
+  }
+  % conn ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  \nskConnect[from=ib4.east, to=lin1.west, bend-type=single, bend-direction=right, bend-distance=5mm]
+  \nskConnect[from=ib4.east, to=lin2.west, bend-type=single, bend-direction=right, bend-distance=5mm]
+  \nskConnect[from=vq.east, to=sn0.west, bend-type=straight, bend-direction=left, bend-distance=-5mm, corner-radius=3mm]
+
+  % bend alt. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  % \nskConnect[from=vq.east, to=sn0.west, bend-type=single, bend-direction=right, bend-distance=5mm, corner-radius=5mm]
+  % \nskConnect[from=rvq.east, to=sn5.west]
+  % \foreach \i in {1,...,4} {\nskConnect[from=rvq.east, to=sn\i.west, bend-type=single, bend-direction=right]}
+  % \foreach \i in {6,...,7} {\nskConnect[from=rvq.east, to=sn\i.west, bend-type=single, bend-direction=right]}
+  % \foreach \i in {1,...,7} {\nskConnect[from=sn\i.east, to=add1.west, bend-type=single, bend-direction=right]}
+
+  \foreach \i in {1,...,7} {
+    \nskConnect[from=rvq.east, to=sn\i.west, bend-type=straight, bend-direction=left, bend-distance=-5mm, corner-radius=3mm]
+    \nskConnect[from=sn\i.east, to=add1.west, bend-type=straight, bend-direction=left, bend-distance=-5mm, corner-radius=3mm]
+  }
+  \nskConnect[from=sn0.east, to=lin3.west, bend-type=straight, bend-direction=left, bend-distance=-5mm, corner-radius=3mm]
+\nskConnect[from=add1.east, to=lin4.west, bend-type=straight, bend-direction=left, bend-distance=-3mm, corner-radius=2mm]
+
+  \intblocksss
+  \nskContainer[pos={right=4cm of \nskID{3}}]{
+		\nskBlock*[id=cb, text-center=Convnet, \b]
+		\intblocks
+		\nskBlock*[id=tb, text-center=Transformer, pos={right=of \nskID{3}}, \b]
+	}
+	% \intblockss
+	% conn ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	% \foreach \i in {3,5,...,7} {
+	%    \nskConnect[from=\nskID!{\i}, to={\nskID!{2}.east |- \nskID!{\i}}]
+	%    \nskConnect[from=\nskID!{\i}, to={\nskID!{8}.west |- \nskID!{\i}}]
+	% }
+	% \foreach \i in {10,12,...,14} {
+	%    \nskConnect[from=\nskID!{\i}, to={\nskID!{8}.east |- \nskID!{\i}}]
+	% }
+	%
+
+
+\end{nskFigure}
+\end{document}
+
+

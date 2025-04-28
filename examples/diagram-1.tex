@@ -1,0 +1,45 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-width=2.5cm,
+  block-height=1.2cm,
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	% blocks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\nskBlock[
+		text-center=Rhymes with "it", width=3.5cm,
+		fill=nskSecondaryAccent, stack=true, stack-count=double
+	]
+	\nskBlock[
+		text-center=rabbit,
+		stack=true, stack-count=double,
+		last-pos={above left=1cm and -1cm}
+	]
+	\nskBlock[
+	text-center=habit,
+	stack=true, stack-count=double,
+	pos={above right=1cm and -1cm of \nskID!{1}}
+	]
+
+	\nskMark[at={\nskID!{1}}.north, shift-x=3mm]
+	\nskMark[at={\nskID!{1}}.north, shift-x=-3mm]
+
+	% connections ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  \nskConnect[
+    from=\nskID{1},to=\nskID!{2},
+    arrow-tip={-Straight Barb},
+    bend-type=double, bend-direction=up, bend-distance=4mm,
+  ]
+  \nskConnect[
+    from=\nskID{2},to=\nskID!{3},
+    arrow-tip={-Straight Barb},
+    bend-type=double, bend-direction=up, bend-distance=4mm,
+  ]
+
+\end{nskFigure}
+\end{document}

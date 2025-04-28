@@ -1,0 +1,76 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-border-radius=1.5mm,
+  container-padding=2mm,
+  dark-mode=true
+]{neural-sketch}
+\nskUseModule{*}
+
+% styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\def\mlpc{fill=nskSecondaryAccent!60!nskBg, border-color=nskBlue}
+\def\cltc{fill=nskMainAccent!60!nskBg, border-color=nskStrongGrape}
+\def\al{color=nskStrongGrape}
+\def\ll{arrow-style={very thick, dotted}, color=nskMidGray!50!nskBg}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskBlock[id=a0, type=text, text-center={\Large Residual\\Stream}]
+	\foreach \i in {1,...,3} {
+			\nskBlock[id=a\i, type=circle, text-center=\textbf{+}, last-pos-s={above=3cm}]
+			\nskConnect[from=\nskID{1}, to=\nskID{2}]
+		}
+	% marks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\nskMark[id=top, last-pos={above=}]
+	\nskConnect[from=\nskID{2}, to=\nskID{1}, arrow-tip={-Straight Barb}]
+	% rows ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\foreach \i in {1,...,3} {
+			\nskContainer*[id=mlp\i, pos={below right=1.5cm and 3cm of a\i}, \mlpc]{
+				\nskBlock[width=.5cm, height=.5cm, text-west=\textbf{MLP~}]
+				\nskBlock[width=.5cm, height=.5cm, last-pos={right=2.5mm}]
+			}
+			\nskContainer*[id=clt\i, last-pos={right=2.5cm}, \cltc]{
+				\nskBlock[type=circle, width=.5cm, height=.5cm, text-west=\textbf{CLT~}]
+				\foreach \i in {1,...,5} {
+						\nskBlock[type=circle, width=.5cm, height=.5cm, last-pos={right=2.5mm}]
+					}
+			}
+			\nskBlock[id=l\i, type=text, text-center=Layer \i, pos={left=3cm of mlp\i}]
+			\nskConnect*[from=l\i, to=mlp\i, shorten-to=1mm, shorten-from=3mm, \ll]
+			\nskConnect*[from=mlp\i, to=clt\i, shorten-to=1mm, shorten-from=1mm, \ll]
+
+			\tikzmath{
+				int \prev, int \dprev;
+				\prev = \i - 1;
+				\dprev = \i - 2;
+			}
+
+      \nskConnect*[from=a\prev, to=clt\i, bend-type=double, arrow-tip={-Straight Barb}, \al]
+			\nskConnect[from=a\prev, to=mlp\i, bend-type=double]
+
+			\nskConnect*[id=p\i, from=clt\i, to=a\i, bend-type=double, \al]
+			\nskConnect[from=mlp\i, to=a\i, bend-type=double]
+
+			% marks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+			\nskMarkPath[at=.58]{p\i}{\nskMark[id=+\i]}
+			\nskMarkPath[at=.58]{p\i}{\nskMark[id=+m\i, shift-y=-1.3mm, shift-x=-1mm]}
+			\nskMarkPath[at=.25]{p\i}{\nskMark[id=c\i]}
+			% marks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+			\begin{nskSwitch}{\i}
+				\nskCase[1]{}
+				\nskCase[3]{
+					\nskBlock*[type=circle, text-center=+, pos={left=0cm of +\i}, width=.7cm, height=.7cm, \cltc]
+					\nskConnect*[from=c\prev, to=+m\i, bend-type=straight, bend-direction=left, \al]
+					\nskConnect*[from=c\dprev, to=\nskID{1}.south east, bend-type=straight, bend-direction=left, \al]
+				}
+				\nskDefault{
+					\nskBlock*[type=circle, text-center=+, pos={left=0cm of +\i}, width=.7cm, height=.7cm, \cltc]
+					\nskConnect*[from=c\prev, to=\nskID{1}.south east, bend-type=straight, bend-direction=left, \al]
+					\nskConnect*[from=c\prev, to=\nskID{1}.south east, bend-type=straight, bend-direction=left, \al]
+				}
+			\end{nskSwitch}
+		}
+
+\end{nskFigure}
+\end{document}
