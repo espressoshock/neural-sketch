@@ -296,7 +296,10 @@
 			draw=\l__nsk_annotate_border_color_tl,
 			fill=\l__nsk_annotate_fill_tl,
 			minimum~width=\dim_use:N \l__nsk_annotate_width_dim,
-			text~width=\dim_use:N \l__nsk_annotate_width_dim,
+			\dim_compare:nNnT {\l__nsk_annotate_width_dim} > {0pt}
+				{
+					text~width=\dim_use:N \l__nsk_annotate_width_dim,
+				}
 
 			align=\l__nsk_annotate_text_align_tl,
 			rounded~corners=\l__nsk_annotate_border_radius_dim,
