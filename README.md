@@ -12,17 +12,31 @@
 [![docs](https://img.shields.io/badge/documented%20with-l3doc-informational.svg)](https://ctan.org/pkg/l3doc)
 
 
-
 ## Overview
 
-Neural Sketch is a LaTeX package meticulously designed to simplify the creation of visually compelling diagrams primarily for AI and Machine Learning publications. It provides intuitive, robust defaults, while offering extensive customizability, enabling you to create diagrams tailored precisely to your requirements for top-tier conferences, journals, and presentations.
+**Neural Sketch** is a publication-oriented diagramming toolkit for LaTeX, designed for researchers who demand both speed and polish. With opinionated defaults, a key–value API for deep customization, and a portable design philosophy, Neural Sketch collapses the typical trade‑off between configuration overhead and figure aesthetics. 
 
----
+📚 **[Check the documentation](https://neural-sketch.app/)**
 
-![header-v08](https://github.com/user-attachments/assets/fac69bc8-ae89-450c-9f8a-537d878b1ffe)
+<br/><br/>
+
+![nsk_preview](https://github.com/user-attachments/assets/dbe29248-8106-43e1-8dba-bc3426e9cb57)
+
+
+## 🌟 Why Neural Sketch?
+
+> **Diagrams aren’t decoration—they’re the lens readers use to see your ideas.**
+
+- **Opinionated defaults**: Publication‑tuned styling out of the box.
+- **Key–value API**: Override only what you care about.
+- **Transportable**: Same source for papers, slides, and web demos.
+- **Layered architecture**: Core primitives + domain‑specific dialects + raw TikZ/pgf interop.
+
+Whether you’re mapping neural nets, flowcharts, or optimization pipelines, Neural Sketch keeps your focus on ideas, not boilerplate.
 
 
 ## Key Features
+
 
 ### ⚡ **Ease of Use**
 - Intuitive, minimal-boilerplate API
@@ -54,13 +68,31 @@ Neural Sketch is a LaTeX package meticulously designed to simplify the creation 
 
 ## Getting Started
 
-### 🚀 **Quick Installation**
-Include Neural Sketch directly in your document preamble:
+
+Pick your installation route:
+
+### 📦 Via CTAN
+
+```sh
+tlmgr install neural-sketch
+```
+
+### 🚀 From source
+
+```sh
+git clone https://github.com/your-org/neural-sketch.git
+cd neural-sketch
+l3build install
+```
+
+Then, in your LaTeX preamble:
 
 ```latex
 \usepackage{neural-sketch}
 \nskUseModule{*} % Load all modules (recommended for new users)
 ```
+
+
 
 ### 📝 **Your First Diagram**
 
@@ -68,8 +100,8 @@ Here's a quick example to create a simple diagram:
 
 ```latex
 \begin{nskFigure}[]
-  \nskBlock[text-center={First Block}]
-  \nskBlock[last-pos={right=1cm}, text-center={Second Block}]
+  \nskBlock[text-center=First Block]
+  \nskBlock[last-pos={right=}, text-center=Second Block]
 \end{nskFigure}
 ```
 
@@ -77,12 +109,14 @@ Here's a quick example to create a simple diagram:
 
 ## Documentation
 
+
+
 Extensive documentation, examples, and best practices can be found at:
 
 - 📚 **[Neural Sketch Documentation](https://neural-sketch.app/)**
 
 Key documentation sections:
-- [Getting Started Guide](https://neural-sketch-doc.vercel.app/docs/core)
+- [Getting Started Guide](https://neural-sketch.app/)
 - [Core Components Overview](https://neural-sketch.app/docs/core/what-is-nsk)
 - [Customization and Styling](https://neural-sketch.app/docs/core/palette)
 - [Automatic Dark Mode](https://neural-sketch.app/docs/core/dark-mode)

@@ -41,31 +41,70 @@
 \keys_define:nn { nsk / style }
 {
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% nsk / figure
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	block-distance .tl_gset:N = \g__nsk_style_figure_block_distance_tl,
+	block-distance .initial:n = {1cm},
+	block-distance .default:n = {1cm},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% nsk / Block
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	auto-increment-duplicates .bool_gset:N =  \g__nsk_style_block_auto_duplicates_bool,
+	auto-increment-duplicates .initial:n = {true},
+	auto-increment-duplicates .default:n = {true},
+
 	block-fill .tl_gset:N = \g__nsk_style_block_fill_tl,
 	block-fill .initial:n = { nskLightGray },
 	block-fill .default:n = { nskLightGray },
+
+	block-opacity .tl_gset:N = \g__nsk_style_block_opacity_tl,
+	block-opacity .initial:n = { 1.0 },
+	block-opacity .default:n = { 1.0 },
 
 	block-border-color .tl_gset:N = \g__nsk_style_block_border_color_tl,
 	block-border-color .initial:n = { nskDarkGray },
 	block-border-color .default:n = { nskDarkGray },
 
+	block-x .fp_gset:N = \g__nsk_style_block_x_fp,
+	block-x .initial:n = {0},
+	block-x .default:n = {0},
+
+	block-y .fp_gset:N = \g__nsk_style_block_y_fp,
+	block-y .initial:n = {0},
+	block-y .default:n = {0},
+
+	block-anchor .tl_gset:N = \g__nsk_style_block_anchor_tl,
+	block-anchor .initial:n = {},
+	block-anchor .default:n = {},
+
+	block-rotate .tl_gset:N = \g__nsk_style_block_rotate_tl,
+	block-rotate .initial:n = {0},
+	block-rotate .default:n = {0},
+
 	block-border-radius .dim_gset:N = \g__nsk_style_block_border_radius_dim,
-  block-border-radius .initial:n = {2.5mm},
-  block-border-radius .default:n = {2.5mm},
+	block-border-radius .initial:n = {2.5mm},
+	block-border-radius .default:n = {2.5mm},
 
 	block-embed-border-radius .dim_gset:N = \g__nsk_style_block_embed_border_radius_dim,
-  block-embed-border-radius.initial:n = {1.3mm},
-  block-embed-border-radius.default:n = {1.3mm},
+	block-embed-border-radius.initial:n = {1.3mm},
+	block-embed-border-radius.default:n = {1.3mm},
+
+	block-embed-border-size .dim_gset:N = \g__nsk_style_block_embed_border_size_dim,
+	block-embed-border-size .initial:n = {1pt},
+	block-embed-border-size .default:n = {1pt},
+
+	block-embed-border-color .tl_gset:N = \g__nsk_style_block_embed_border_color_tl,
+	block-embed-border-color .initial:n = {c__nsk_principal},
+	block-embed-border-color .default:n = {c__nsk_principal},
 
 	block-embed-padding .dim_gset:N = \g__nsk_style_block_embed_padding_dim,
-  block-embed-padding .initial:n = {1mm},
-  block-embed-padding .default:n = {1mm},
+	block-embed-padding .initial:n = {1mm},
+	block-embed-padding .default:n = {1mm},
 
 	block-border-size .dim_gset:N = \g__nsk_style_block_border_size_dim,
-  block-border-size .initial:n = {.4mm},
-  block-border-size .default:n = {.4mm},
+	block-border-size .initial:n = {.4mm},
+	block-border-size .default:n = {.4mm},
 
 	block-width  .dim_gset:N = \g__nsk_style_block_width_dim,
 	block-width  .initial:n = {1cm},
@@ -75,7 +114,17 @@
 	block-height .initial:n = {1cm},
 	block-height .default:n = {1cm},
 
-	shadow .bool_gset:N = \g__nsk_style_block_shadow_bool,
+	block-padding-x .dim_gset:N = \g__nsk_style_block_padding_x_dim,
+	block-padding-x .initial:n = 5mm,
+	block-padding-x .default:n = 5mm,
+
+	block-padding-y .dim_gset:N = \g__nsk_style_block_padding_y_dim,
+	block-padding-y .initial:n = 5mm,
+	block-padding-y .default:n = 5mm,
+
+	block-importance .fp_gset:N = \g__nsk_style_block_importance_fp,
+	block-importance .initial:n = {1.0},
+	block-importance .default:n = {1.0},
 
 	% text-anchoring ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	text-north-loc .tl_gset:N = \g__nsk_style_text_north_loc_tl,
@@ -98,11 +147,40 @@
 	text-center-loc .initial:n = {},
 	text-center-loc .default:n = {},
 
+	% text-style ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	text-north-style .tl_gset:N = \g__nsk_style_text_north_style_tl,
+	text-north-style .initial:n = {},
+	text-north-style .default:n = {},
+
+	text-center-style .tl_gset:N = \g__nsk_style_text_center_style_tl,
+	text-center-style .initial:n = {},
+	text-center-style .default:n = {},
+
+	text-east-style .tl_gset:N = \g__nsk_style_text_east_style_tl,
+	text-east-style .initial:n = {},
+	text-east-style .default:n = {},
+
+	text-south-style .tl_gset:N = \g__nsk_style_text_south_style_tl,
+	text-south-style .initial:n = {},
+	text-south-style .default:n = {},
+
+	text-west-style .tl_gset:N = \g__nsk_style_text_west_style_tl,
+	text-west-style .initial:n = {},
+	text-west-style .default:n = {},
+
+	text-size .tl_set:N = \g__nsk_style_text_size_tl,
+	text-size .initial:n = {\normalsize},
+	text-size .default:n = {\normalsize},
+
+
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% nsk / Container
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	container-border-color .tl_gset:N = \g__nsk_style_container_border_color_tl,
 	container-border-color .initial:n = { nskLighterGray },
+
+	container-border-type .tl_gset:N = \g__nsk_style_container_border_type_tl,
+	container-border-type .initial:n = { solid },
 
 	container-fill .tl_gset:N = \g__nsk_style_container_fill_tl,
 	container-fill .initial:n = { nskLightestGray },
@@ -128,6 +206,325 @@
 	container-scale .initial:n = { 1 },
 	container-scale .default:n = { 1 },
 
+	container-anchor .tl_gset:N = \g__nsk_style_container_anchor_tl,
+	container-anchor .initial:n = {},
+	container-anchor .default:n = {},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% bridging
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	bridging-style .tl_gset:N = \g__nsk_style_bridging_style_tl,
+	bridging-style .initial:n = {gap},
+	bridging-style .default:n = {gap},
+
+	bridging-span .dim_gset:N = \g__nsk_style_bridging_span_dim,
+	bridging-span .initial:n = {8pt},
+	bridging-span .default:n = {8pt},
+
+	bridging-gap .dim_gset:N = \g__nsk_style_bridging_gap_dim,
+	bridging-gap .initial:n = {4pt},
+	bridging-gap .default:n = {4pt},
+
+	arrow-tip .tl_gset:N = \g__nsk_style_arrow_tip_tl,
+	arrow-tip .initial:n = {-},
+	arrow-tip .default:n = {-},
+
+	arrow-style .tl_gset:N = \g__nsk_style_arrow_style_tl,
+	arrow-style .initial:n = {ultra~thick, line~cap=round},
+	arrow-style .default:n = {ultra~thick, line~cap=round},
+
+	arrow-color .tl_gset:N = \g__nsk_style_arrow_color_tl,
+	arrow-color .initial:n = { c__nsk_principal },
+	arrow-color .default:n = { c__nsk_principal },
+
+	arrow-type .tl_set:N = \g__nsk_style_arrow_type_tl,
+	arrow-type .initial:n = {solid},
+	arrow-type .default:n = {solid},
+
+	bend-distance .dim_gset:N = \g__nsk_style_connect_bend_distance_dim,
+	bend-distance .initial:n  = {1cm},
+	bend-distance .default:n  = {1cm},
+
+	shorten-from .dim_gset:N = \g__nsk_style_connect_shorten_from_dim,
+	shorten-from .initial:n  = {0pt},
+	shorten-from .default:n  = {0pt},
+
+	shorten-to .dim_gset:N = \g__nsk_style_connect_shorten_to_dim,
+	shorten-to .initial:n  = {0pt},
+	shorten-to .default:n  = {0pt},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% fillbetween
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	fillbetween-fill .tl_gset:N = \g__nsk_style_fillbetween_fill_tl,
+	fillbetween-fill .initial:n = {nskStrongBlue!50!nskBg},
+	fillbetween-fill .default:n = {nskStrongBlue!50!nskBg},
+
+	fillbetween-border-color .tl_gset:N = \g__nsk_style_fillbetween_draw_tl,
+	fillbetween-border-color .initial:n = {nskStrongBlue!80},
+	fillbetween-border-color .default:n = {nskStrongBlue!80},
+
+	fillbetween-opacity .fp_gset:N = \g__nsk_style_fillbetween_opacity_fp,
+	fillbetween-opacity .initial:n = {0.4},
+	fillbetween-opacity .default:n = {0.4},
+
+	fillbetween-edge .tl_gset:N = \g__nsk_style_fillbetween_edge_tl,
+	fillbetween-edge .initial:n = {straight},
+	fillbetween-edge .default:n = {straight},
+
+	fillbetween-orientation .tl_gset:N = \g__nsk_style_fillbetween_orient_tl,
+	fillbetween-orientation .initial:n = {vertical},
+	fillbetween-orientation .default:n = {vertical},
+
+	fillbetween-out .tl_gset:N = \g__nsk_style_fillbetween_out_tl,
+	fillbetween-out .initial:n = {},
+	fillbetween-out .default:n = {},
+
+	fillbetween-in .tl_gset:N = \g__nsk_style_fillbetween_in_tl,
+	fillbetween-in .initial:n = {},
+	fillbetween-in .default:n = {},
+
+	fillbetween-corner-offset .dim_gset:N = \g__nsk_style_fillbetween_corner_offset_dim,
+	% reference existing block border radius
+	fillbetween-corner-offset .initial:V = \g__nsk_style_block_border_radius_dim,
+	fillbetween-corner-offset .default:V = \g__nsk_style_block_border_radius_dim,
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Outer-border
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	block-outer-border-type .tl_gset:N = \g__nsk_style_block_outer_border_type_tl,
+	block-outer-border-type .initial:n = {none},
+	block-outer-border-type .default:n = {none},
+
+	block-outer-border-color .tl_gset:N = \g__nsk_style_block_outer_border_color_tl,
+	block-outer-border-color .initial:n = {nskMainAccent!50!nskBg},
+	block-outer-border-color .default:n = {nskMainAccent!50!nskBg},
+
+	block-outer-border-radius .dim_gset:N = \g__nsk_style_block_outer_border_radius_dim,
+	block-outer-border-radius .initial:n = {2.5mm},
+	block-outer-border-radius .default:n = {2.5mm},
+
+	block-outer-border-size .dim_gset:N = \g__nsk_style_block_outer_border_size_dim,
+	block-outer-border-size .initial:n = {5mm},
+	block-outer-border-size .default:n = {5mm},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Stacks
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	block-stack-opts .tl_gset:N = \g__nsk_style_block_stack_opts_tl,
+	block-stack-opts .initial:n = {opacity=.6},
+	block-stack-opts .default:n = {opacity=.6},
+
+	block-stack-xoffset .dim_gset:N = \g__nsk_style_block_stack_xoffset_dim,
+	block-stack-xoffset .initial:n  = {1mm},
+	block-stack-xoffset .default:n  = {1mm},
+
+	block-stack-yoffset .dim_gset:N = \g__nsk_style_block_stack_yoffset_dim,
+	block-stack-yoffset .initial:n  = {-.8mm},
+	block-stack-yoffset .default:n  = {-.8mm},
+
+	block-stack-count .tl_gset:N = \g__nsk_style_block_stack_count_tl,
+	block-stack-count .initial:n = {single},
+	block-stack-count .default:n = {single},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% nsk / Zoom
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	zoom-type .tl_gset:N = \g__nsk_style_zoom_type_tl,
+	zoom-type .initial:n = {circle},
+	zoom-type .default:n = {circle},
+
+	zoom-at .tl_gset:N = \g__nsk_style_zoom_at_tl,
+	zoom-at .initial:n = {},
+	zoom-at .default:n = {},
+
+	zoom-to .tl_gset:N = \g__nsk_style_zoom_to_tl,
+	zoom-to .initial:n = {},
+	zoom-to .default:n = {},
+
+	zoom-magnification .tl_gset:N = \g__nsk_style_zoom_magnification_tl,
+	zoom-magnification .initial:n = {4},
+	zoom-magnification .default:n = {4},
+
+	zoom-size .dim_gset:N = \g__nsk_style_zoom_size_dim,
+	zoom-size .initial:n = {2cm},
+	zoom-size .default:n = {2cm},
+
+	zoom-callout-style .tl_gset:N = \g__nsk_style_zoom_callout_style_tl,
+	zoom-callout-style .initial:n = {thick, densely~dashed},
+	zoom-callout-style .default:n = {thick, densely~dashed},
+
+	zoom-connecting-style .tl_gset:N = \g__nsk_style_zoom_connecting_style_tl,
+	zoom-connecting-style .initial:n = {\g__nsk_style_block_border_color_tl},
+	zoom-connecting-style .default:n = {\g__nsk_style_block_border_color_tl},
+
+	zoom-callout-border-color .tl_gset:N = \g__nsk_style_zoom_callout_border_color_tl,
+	zoom-callout-border-color .initial:n = {\g__nsk_style_block_border_color_tl},
+	zoom-callout-border-color .default:n = {\g__nsk_style_block_border_color_tl},
+
+	zoom-zoomed-style .tl_gset:N = \g__nsk_style_zoom_zoomed_style_tl,
+	zoom-zoomed-style .initial:n = {draw=\g__nsk_style_block_border_color_tl, ultra~thick},
+	zoom-zoomed-style .default:n = {draw=\g__nsk_style_block_border_color_tl, ultra~thick},
+
+	zoom-zoomed-fill .tl_gset:N = \g__nsk_style_zoom_zoomed_fill_tl,
+	zoom-zoomed-fill .initial:n = {none},
+	zoom-zoomed-fill .default:n = {none},
+
+	zoom-connecting-path .tl_gset:N = \g__nsk_style_zoom_connecting_path_tl,
+	zoom-connecting-path .initial:n = {\draw[\g__nsk_style_zoom_connecting_style_tl] (tikzspyonnode) -- (tikzspyinnode);},
+	zoom-connecting-path .default:n = {\draw[\g__nsk_style_zoom_connecting_style_tl] (tikzspyonnode) -- (tikzspyinnode);},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% nsk / Measure
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	measure-axis .tl_gset:N = \g__nsk_style_measure_axis_tl,
+	measure-axis .initial:n = {horizontal},
+	measure-axis .default:n = {horizontal},
+
+	measure-from .tl_gset:N = \g__nsk_style_measure_from_tl,
+	measure-from .initial:n = {},
+	measure-from .default:n = {},
+
+	measure-to .tl_gset:N = \g__nsk_style_measure_to_tl,
+	measure-to .initial:n = {},
+	measure-to .default:n = {},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Annotate
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	annotate-ref-tag .tl_gset:N = \g__nsk_style_annotate_ref_tag_tl,
+	annotate-ref-tag .initial:n = { },
+	annotate-ref-tag .default:n = { },
+
+	annotate-box-padding .dim_gset:N = \g__nsk_style_annotate_box_padding_dim,
+	annotate-box-padding .initial:n  = {3pt},
+	annotate-box-padding .default:n  = {3pt},
+
+	annotate-connect-opts .tl_gset:N = \g__nsk_style_annotate_connect_opts_tl,
+	annotate-connect-opts .initial:n = {arrow-style = {dotted, thick}, color = nskMidGray},
+	annotate-connect-opts .default:n = {arrow-style = {dotted, thick}, color = nskMidGray},
+
+	annotate-text-color .tl_gset:N = \g__nsk_style_annotate_text_color_tl,
+	annotate-text-color .initial:n = {c__nsk_principal},
+	annotate-text-color .default:n = {c__nsk_principal},
+
+	annotate-connect-to .tl_gset:N = \g__nsk_style_annotate_connect_to_tl,
+	annotate-connect-to .initial:n = { },
+	annotate-connect-to .default:n = { },
+
+	annotate-from-anchor .tl_gset:N = \g__nsk_style_annotate_from_anchor_tl,
+	annotate-from-anchor .initial:n = {east},
+	annotate-from-anchor .default:n = {east},
+
+	annotate-x .fp_gset:N = \g__nsk_style_annotate_x_fp,
+	annotate-x .initial:n  = {0},
+	annotate-x .default:n  = {0},
+
+	annotate-y .fp_gset:N = \g__nsk_style_annotate_y_fp,
+	annotate-y .initial:n  = {0},
+	annotate-y .default:n  = {0},
+
+	annotate-pos .tl_gset:N = \g__nsk_style_annotate_pos_tl,
+	annotate-pos .initial:n = { },
+	annotate-pos .default:n = { },
+
+	annotate-header .tl_gset:N = \g__nsk_style_annotate_header_tl,
+	annotate-header .initial:n = { },
+	annotate-header .default:n = { },
+
+	annotate-title .tl_gset:N = \g__nsk_style_annotate_title_tl,
+	annotate-title .initial:n = { },
+	annotate-title .default:n = { },
+
+	annotate-text .tl_gset:N = \g__nsk_style_annotate_text_tl,
+	annotate-text .initial:n = { },
+	annotate-text .default:n = { },
+
+	annotate-text-align .tl_gset:N = \g__nsk_style_annotate_text_align_tl,
+	annotate-text-align .initial:n = {left},
+	annotate-text-align .default:n = {left},
+
+	annotate-header-style .tl_gset:N = \g__nsk_style_annotate_header_style_tl,
+	annotate-header-style .initial:n = {\bfseries},
+	annotate-header-style .default:n = {\bfseries},
+
+	annotate-title-style .tl_gset:N = \g__nsk_style_annotate_title_style_tl,
+	annotate-title-style .initial:n = {\itshape},
+	annotate-title-style .default:n = {\itshape},
+
+	annotate-main-style .tl_gset:N = \g__nsk_style_annotate_main_style_tl,
+	annotate-main-style .initial:n = { },
+	annotate-main-style .default:n = { },
+
+	annotate-fill .tl_gset:N = \g__nsk_style_annotate_fill_tl,
+	annotate-fill .initial:n = {nskLightestGray},
+	annotate-fill .default:n = {nskLightestGray},
+
+	annotate-border-color .tl_gset:N = \g__nsk_style_annotate_border_color_tl,
+	annotate-border-color .initial:n = {nskMidGray},
+	annotate-border-color .default:n = {nskMidGray},
+
+	annotate-border-type .tl_gset:N = \g__nsk_style_annotate_border_type_tl,
+	annotate-border-type .initial:n = {solid},
+	annotate-border-type .default:n = {solid},
+
+	annotate-border-size .dim_gset:N = \g__nsk_style_annotate_border_size_dim,
+	annotate-border-size .initial:n = {.4mm},
+	annotate-border-size .default:n = {.4mm},
+
+	annotate-border-radius .dim_gset:N = \g__nsk_style_annotate_border_radius_dim,
+	annotate-border-radius .initial:n = {1mm},
+	annotate-border-radius .default:n = {1mm},
+
+	annotate-width .dim_gset:N = \g__nsk_style_annotate_width_dim,
+	annotate-width .initial:n  = {4.5cm},
+	annotate-width .default:n  = {4.5cm},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% nsk / icon
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+	icon-width .dim_gset:N = \g__nsk_style_icon_width_dim,
+	icon-width .initial:n  = 5mm,
+	icon-width .default:n  = 5mm,
+
+	icon-height .dim_gset:N = \g__nsk_style_icon_height_dim,
+	icon-height .initial:n  = 5mm,
+	icon-height .default:n  = 5mm,
+
+	icon-border-size .fp_gset:N = \g__nsk_style_icon_border_size_fp,
+	icon-border-size .initial:n  = 2,
+	icon-border-size .default:n  = 2,
+
+	icon-shift-y .dim_gset:N = \g__nsk_style_icon_shift_y_dim,
+	icon-shift-y .initial:n  = 0mm,
+	icon-shift-y .default:n  = 0mm,
+
+	icon-type .tl_set:N = \g__nsk_style_icon_type_tl,
+	icon-type .initial:n  = {lucide},
+	icon-type .default:n  = {lucide},
+
+	icon-outdir .tl_set:N = \g__nsk_style_icon_outdir_tl,
+	icon-outdir .initial:n  = {icons},
+	icon-outdir .default:n  = {icons},
+
+	icon-intdir .tl_set:N = \g__nsk_style_icon_intdir_tl,
+	icon-intdir .initial:n  = {out},
+	icon-intdir .default:n  = {out},
+
+	icon-style .tl_gset:N = \g__nsk_style_icon_style_tl,
+	icon-style .initial:n  = {},
+	icon-style .default:n  = {},
+
+	icon-color .tl_set:N = \g__nsk_style_icon_color_tl,
+	icon-color .initial:n  = {nskFg},
+	icon-color .default:n  = {nskFg},
+
+	icon-clean .bool_gset:N = \g__nsk_style_icon_clean_bool,
+	icon-clean .initial:n  = {true},
+	icon-clean .default:n  = {true},
+
+
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,10 +534,14 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \prop_new:N \g_nsk_pattern_aliases_prop
 
-\prop_put:Nnn \g_nsk_pattern_aliases_prop { hlines } { horizontal\space lines }
-\prop_put:Nnn \g_nsk_pattern_aliases_prop { vlines } { vertical\space lines }
-\prop_put:Nnn \g_nsk_pattern_aliases_prop { hatch } { north\space east\space lines }
-\prop_put:Nnn \g_nsk_pattern_aliases_prop { rhatch } { north\space west\space lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { hlines } { horizontal~lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { vlines } { vertical~lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { hatch } { north~east~lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { rhatch } { north~west~lines }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { hatchd } { crosshatch~dots}
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { check } { checkerboard }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { star5 } { fivepointed~stars }
+\prop_put:Nnn \g_nsk_pattern_aliases_prop { star6 } { sixpointed~stars }
 
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -152,12 +553,12 @@
 			drop shadow={
 					shadow xshift=-.1ex,
 					shadow yshift=-.6ex,
-					fill=nskLighterGray
+					fill=nskLighterGray!85!nskBg,
 				},
 		},
-	bridging path/.initial=arc,
-	bridging span/.initial=8pt,
-	bridging gap/.initial=4pt,
+	bridging path/.initial=\g__nsk_style_bridging_style_tl,
+	bridging span/.initial=\dim_use:N \g__nsk_style_bridging_span_dim,
+	bridging gap/.initial=\dim_use:N \g__nsk_style_bridging_gap_dim,
 	bridge/.style 2 args={
 			spath/split at intersections with={#1}{#2},
 			spath/insert gaps after components={#1}{\pgfkeysvalueof{/tikz/bridging span}},
@@ -167,6 +568,39 @@
 			spath/insert gaps after components={#2}{\pgfkeysvalueof{/tikz/bridging gap}},
 		}
 }
+
+\tikzfading[name=fade-left,
+	left color=white,
+	right color=transparent!100]
+\tikzfading[name=fade-right,
+	left color=transparent!100,
+	right color=white]
+\tikzfading[name=fade-up,
+	bottom color=transparent!100,
+	top color=white]
+\tikzfading[name=fade-down,
+	bottom color=white,
+	top color=transparent!100]
+
+\tikzset{
+	fade left/.style={
+			fill=white,
+			path fading=fade-left
+		},
+	fade right/.style={
+			fill=white,
+			path fading=fade-right
+		},
+	fade up/.style={
+			fill=white,
+			path fading=fade-up
+		},
+	fade down/.style={
+			% fill=white,
+			path fading=fade-down
+		}
+}
+
 \ExplSyntaxOn
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -179,9 +613,80 @@
 {
 	% #1 is the keyval list, e.g.  block-fill=yellow, block-border=blue
 	\keys_set:nn { nsk / style }{ #1 }
+
 }
 
-\ExplSyntaxOff
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Utils
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% expands and evaluates math op / works on int and float
+\NewExpandableDocumentCommand \e { r<> }
+  { \fp_to_decimal:n { \fp_eval:n {#1} } }
+
+% ─────────────────────────────────────────────────────────────────────────────
+% nskLerp: linear interpolation tool for drawing (supports [0–1] & [0–100])
+% ─────────────────────────────────────────────────────────────────────────────
+\keys_define:nn { nsk/lerp }
+{
+	from       .fp_set:N   = \l__nsk_lerp_min_fp,
+	from       .initial:n  = {0.0},
+	from       .default:n  = {0.0},
+
+	to       .fp_set:N   = \l__nsk_lerp_max_fp,
+	to       .initial:n  = {100.0},
+	to       .default:n  = {100.0},
+
+	n .int_set:N  = \l__nsk_lerp_nelements_int,
+	n .initial:n  = {1},
+	n .default:n  = {1},
+
+	into      .tl_set:N   = \l__nsk_lerp_into_tl,
+	into      .initial:n  = {},
+}
+
+\NewDocumentCommand \nskLerp { om }
+{
+	% #1 = optional key list, #2 = index
+	\keys_set:nn { nsk/lerp } { #1 }
+
+	% scale [0–1] → [0–100] if needed
+	\fp_set_eq:NN \l__nsk_lerp_min_scaled_fp \l__nsk_lerp_min_fp
+	\fp_set_eq:NN \l__nsk_lerp_max_scaled_fp \l__nsk_lerp_max_fp
+	\fp_compare:nNnTF { \l__nsk_lerp_max_scaled_fp } ? { 1 }
+	{
+		\fp_set:Nn \l__nsk_lerp_min_scaled_fp { \l__nsk_lerp_min_scaled_fp * 100 }
+		\fp_set:Nn \l__nsk_lerp_max_scaled_fp { \l__nsk_lerp_max_scaled_fp * 100 }
+	}
+	{}
+
+	% compute interpolation
+	\int_compare:nNnTF { #2 } = { 1 }
+	  {
+	    \fp_set_eq:NN \l__nsk_lerp_pct_fp \l__nsk_lerp_min_scaled_fp
+	  }
+	  {
+	    \fp_set:Nn \l__nsk_lerp_pct_fp
+	      {
+	        \l__nsk_lerp_min_scaled_fp
+	        +
+	        ( #2 - 1 )
+	        /
+	        ( \l__nsk_lerp_nelements_int - 1 )
+	        *
+	        ( \l__nsk_lerp_max_scaled_fp - \l__nsk_lerp_min_scaled_fp )
+	      }
+	  }
+
+	% store into user’s macro
+	\tl_if_empty:NF \l__nsk_lerp_into_tl
+	  {
+	    \expandafter
+	    \tl_set:Nx
+	      \csname \l__nsk_lerp_into_tl\endcsname
+	      { \fp_to_decimal:N \l__nsk_lerp_pct_fp }
+	  }
+}
+
 %\end{macrocode}
 %</package>
 

@@ -1,0 +1,55 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-width=1.5cm, block-height=1.5cm,
+  container-border-type=dashed,
+  container-padding=6mm,
+  container-fill=nskOrange!30!nskBg,
+  container-border-color=nskOrange,
+  % shorten-from=-2mm,
+  % shorten-to=1mm,
+  % arrow-tip={Circle[width=1.5mm, length=1.5mm]-Straight Barb},
+  block-distance=1cm,
+  text-east-style={rotate=-90, anchor=center, yshift=3mm},
+  text-north-style={fill=nskBg, fill opacity=.8, text opacity=1},
+  text-west-style={rotate=90, anchor=center, yshift=3mm},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[id=c0]{
+	\nskBlock[type=rectangle, fill=nskMainAccent]
+	\nskBlock[type=polygon[3], last-pos={right=}, fill=nskSecondaryAccent]
+	\nskBlock[type=circle, last-pos={right=}, fill=nskRed]
+	\nskBlock[type=diamond, last-pos={right=}, fill=nskBlue]
+	}
+
+	\nskContainer[
+    id=c1,last-pos={below=.5cm},
+	  fill=nskSecondaryAccent!30!nskBg,border-color=nskSecondaryAccent
+	]{
+	\nskBlock[type=polygon[3], fill=nskSecondaryAccent]
+	\nskBlock[type=rectangle, last-pos={right=}, fill=nskMainAccent]
+	\nskBlock[type=diamond, last-pos={right=}, fill=nskBlue]
+	\nskBlock[type=circle, last-pos={right=}, fill=nskRed]
+	}
+
+  \nskContainer[
+    id=c2,
+    pos={below right=.2cm and 8cm of c0},
+    fill=nskStrongGrape!30!nskBg,border-color=nskStrongGrape
+  ]{
+	\nskBlock[type=polygon[3], fill=nskSecondaryAccent, pattern=dots]
+	\nskBlock[type=rectangle, last-pos={right=}, fill=nskMainAccent, pattern=hatch]
+	\nskBlock[type=diamond, last-pos={right=}, fill=nskBlue, pattern=hatchd]
+	\nskBlock[type=circle, last-pos={right=}, fill=nskRed, pattern=hlines]
+	}
+
+  \nskConnect[from=c0.east, to=c2.west, bend-type=single, bend-direction=right]
+  \nskConnect[from=c1.east, to=c2.west, bend-type=single, bend-direction=right]
+
+\end{nskFigure}
+\end{document}

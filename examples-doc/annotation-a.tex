@@ -1,0 +1,37 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-distance=2cm and 4cm,
+  annotate-border-type=dashed,
+  annotate-width=3.5cm,
+  block-outer-border-type=solid,
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+\begin{document}
+
+\def\a{outer-border-color=nskMainAccent!70!nskBg}
+\def\b{outer-border-color=nskSecondaryAccent!70!nskBg}
+\def\c{outer-border-color=nskPink!70!nskBg}
+\def\d{outer-border-color=nskOrange!70!nskBg}
+
+\begin{nskFigure}[]
+
+	\nskBlock*[id=a, text-center=A, \a]
+	\nskBlock*[id=b, text-center=B, last-pos=right, \b]
+	\nskBlock*[id=c, text-center=C, last-pos=right, \c]
+	\nskBlock*[id=d, text-center=C, last-pos=right, \d]
+
+	\foreach \e/\al in {a/left, b/center, c/right, d/justify} {
+			\nskAnnotate*[
+				connect-to=\e.north, anchor-from=south, pos={above=of \e},
+				header=Explanation, title=Alignment: \al,
+				text={This is an important portion, and should be clearly explained},
+				text-align=\al
+			]
+		}
+
+
+\end{nskFigure}
+\end{document}

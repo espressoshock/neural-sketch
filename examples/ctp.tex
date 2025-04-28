@@ -1,0 +1,246 @@
+\documentclass[11pt]{standalone}
+\standaloneconfig{border=10mm}
+
+\usepackage[
+  block-width=3cm,
+  block-border-size=.6mm,
+  block-height=1.5cm,
+  block-border-radius=3mm,
+  container-border-type=dashed,
+  bridging-gap=4pt, bridging-style=gap,
+  arrow-tip={-Straight Barb},
+  arrow-style={line width=.8mm},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\definecolor{cyanarr}{HTML}{2792CF}
+\colorlet{carr}{cyanarr}
+
+% block styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\def\cyanC{color=nskStrongCyan!85!black}
+\def\cyan{fill=nskStrongCyan!20!nskBg, border-color=nskStrongCyan}
+
+\def\grapeC{color=nskStrongGrape}
+\def\grape{fill=nskStrongGrape!20!nskBg, border-color=nskStrongGrape}
+
+\def\cyanL{fill=nskSecondaryAccent!40!nskBg, border-color=nskBlue}
+\def\grapeL{fill=nskStrongGrape!12!nskBg, border-color=nskStrongGrape}
+\def\mc{fill=nskMainAccent!40!nskBg, border-color=nskMainAccent}
+
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[id=cnt]{
+		\nskBlock*[id=a0, text-center=22-38, \cyan]
+		\nskBlock[id=a1, text-center=36, last-pos={below=3mm}]
+		\nskBlock*[
+			id=a2, last-pos={below=3mm}, \grape,
+			text-center={number \\ ending in 6},
+		]
+		\nskBlock[
+			type=text,
+			text-center={Early features \\ parse out the \\ structure of the \\ numbers}, width=2cm,
+			text-size=\normalsize,
+			last-pos={below=5mm}
+		]
+
+		\nskBlock*[id=a3, text-center=50-59, last-pos={below=5mm}, \cyan]
+		\nskBlock[id=a4, text-center=59, last-pos={below=3mm}]
+		\nskBlock*[id=a5, text-center={number \\ ending in 9}, last-pos={below=3mm}, \grape]
+	}
+
+	\nskContainer*[id=cnt2, pos={above left=-.5cm and -2cm of cnt.north east}, anchor=north west,\cyanL]{
+		\nskBlock*[id=b1, text-center={add 54-59}, \cyan]
+		\nskBlock*[id=b2, text-center={31-43 \\ + 55-64}, last-pos={right=1.5cm}, \cyan]
+		\nskBlock*[id=b3, text-center={sum 88-97}, last-pos={right=1.5cm}, \cyan]
+		\nskBlock*[
+			id=b0, text-center={30-70 \\ + 30-80},
+			pos={above=5mm of b2}, \cyan,
+		]
+
+		\nskCoord[id=b1l, at=b0.west, shift-y=2.75mm, shift-x=-1.8cm]
+		\nskBlock[
+			type=text, height=5mm, width=2cm,
+			text-center={One path approximates the answer roughly},
+			pos={above=3mm of b0}
+		]
+
+		\nskConnect*[from=b1, to=b2, \cyanC]
+		\nskConnect*[from=b2, to=b3, \cyanC]
+
+		% skips
+		\nskConnect*[
+			from=b1l,to=b2.west,\cyanC,
+			bridging=true, bend-type=single,bend-direction=right,
+		]
+		\nskConnect*[
+			from=b0.east,to=b3.west,\cyanC,
+			bend-type=single,bend-direction=right, bend-distance=4mm,
+		]
+	}
+
+	\nskContainer*[id=cnt3, pos={above left=0cm and -2cm of cnt2.south east}, \mc]{
+		\nskBlock[id=c0, text-center={sum = 95}, pos={below=1.4cm of b3}]
+		\nskBlock[
+			id=c1, type=text, width=1.4cm,
+			text-center={\Huge \textbf{95}},
+			last-pos={right=1.5cm}
+		]
+		\nskMeasure[from=c0.south west, to=c1.south east ]
+		\nskOnfg{
+			\nskBlock[
+				type=text, height=12mm, width=\nskDistance,
+				text-center={The Two paths combine  at the \\end to produce the answer},
+				fill=nskMainAccent!40!nskBg,
+				last-pos={below=5mm}, tikz-opts={xshift=-20mm}
+			]
+		}
+		\nskConnect[from=c0.east, to=c1.west]
+	}
+	\nskContainer*[pos={above left=.5cm and -2cm of cnt.south east}, anchor=south west, \grapeL]{
+		\nskBlock*[id=d0, text-center={add number \\ ending in 9}, \grape]
+		\nskBlock*[id=d1, text-center={\# end in 6 \\ +\# end in 9},
+			last-pos={right=1.5cm}, \grape]
+		\nskBlock*[id=d2, text-center={sum ends in 5}, last-pos={right=1.5cm}, \grape]
+
+		\nskConnect*[from=d0, to=d1, \grapeC]
+		\nskConnect*[from=d1, to=d2, \grapeC]
+
+		\nskBlock[
+			type=text, height=0mm, width=2cm,
+			text-center={One path determines the last digit of the sum precisely},
+			pos={below=5mm of \nskID{2}},
+		]
+	}
+
+
+	\nskGroup[pos={left=of cnt}]{
+		\nskBlock[type=text, text-center={\LARGE \textbf{What is 36 + 59 ?}}]
+		\nskOnbg{
+			\foreach \x[count=\i] in {25.3, 16.5} {
+					\nskBlock[
+						id=t\i,
+						width=8.5mm,height=8.5mm, shadow=false,border-radius=1mm,
+						pos={right=\x mm of \nskID{1}.west}
+					]
+				}
+		}
+	}
+
+	% inter-connections (outer) ~~~~~~~~~~~~~~~~~~ <<<
+	\foreach \id in {a0, a1, a2, a3, a4} {
+			\nskCoord[id={\id-ne}, at=\id.east, shift-y=2.5mm]
+			\nskCoord[id={\id-se}, at=\id.east, shift-y=-2.5mm]
+		}
+
+	\foreach \id in {c0, c1} {
+			\nskCoord[id={\id-nw}, at=\id.west, shift-y=2.5mm]
+			\nskCoord[id={\id-sw}, at=\id.west, shift-y=-2.5mm]
+		}
+
+	\nskCoord[id=b0-nw, at=b0.west, shift-y=2.5mm]
+	\nskCoord[id=b0-sw, at=b0.west, shift-y=-2.5mm]
+
+	% ---
+
+	\nskConnect*[from=a0-ne, to=b0-nw, bend-type=single, bend-direction=right, \cyanC]
+	\nskConnect*[from=a1-ne, to=b0-nw, bend-type=single, bend-direction=right, \cyanC]
+
+	\nskConnect*[
+		from=a1-se,to=d1.north, \grapeC,
+		route={-- ++(\nskBendDistance, 0) -- ++(0, -4cm) -|},
+	]
+	\nskConnect*[
+		from=a2.east,to=d1.north, \grapeC,
+		route={-- ++(\nskBendDistance, 0) -- ++(0, -2.4cm) -|},
+	]
+
+	\nskConnect*[
+		from=a3.east,to=b0-sw, \cyanC,
+		bend-type=single, bend-direction=right, bend-distance=1.4cm,
+		bridging=true, bridging-type=over,
+	]
+	\nskConnect*[
+		from=a4-ne,to=b0-sw, \cyanC,
+		bend-type=single, bend-direction=right, bend-distance=1.4cm,
+		bridging=true,
+	]
+
+	\nskConnect*[
+		from=a4-se,to=d0.west, \grapeC,
+		bend-type=single, bend-direction=right,
+	]
+	\nskConnect*[
+		from=a5.east,to=d0.west, \grapeC,
+		bend-type=single, bend-direction=right,
+	]
+
+
+	\nskConnect*[from=b3.south,to=c0.north, \cyanC]
+	\nskConnect*[
+		from=b3.east,to=c1.north, \cyanC,
+		bend-type=single, bend-direction=down,
+	]
+
+	\nskConnect*[
+		from=b2.east,to=c0-nw, \cyanC,
+		bend-type=single, bend-direction=right, bend-distance=10mm,
+	]
+
+	\nskConnect*[
+		from=d1.east,to=c0-sw, \grapeC,
+		bend-type=single, bend-direction=right, bend-distance=5mm,
+	]
+
+	\nskConnect*[from=d2.north,to=c0.south, \grapeC]
+	\nskConnect*[
+		from=d2.east,to=c1.south, \grapeC,
+		bend-type=single, bend-direction=down
+	]
+
+	% t1 -> ...
+	\nskConnect[
+		id=t1-a1,
+		from=t1.north,to=a1.west,
+		bend-type=single, bend-direction=up,
+	]
+
+	\nskMarkPath[
+		at=.7,
+	]{t1-a1}{
+		\nskCoord[id=t1-mid, at={0, 0}]
+		\nskConnect[
+			from=t1-mid, to=a0.west,
+			bend-type=single, bend-direction=right,
+		]
+		\nskConnect[
+			from=t1-mid, to=a2.west,
+			bend-type=single, bend-direction=right,
+		]
+	}
+	% t2 -> ...
+	\nskConnect[
+		id=t2-a4,
+		from=t2.south,to=a4.west,
+		bend-type=single, bend-direction=up,
+	]
+
+	\nskMarkPath[
+		at=.7,
+	]{t2-a4}{
+		\nskCoord[id=t2-mid, at={0, 0}]
+		\nskConnect[
+			from=t2-mid, to=a3.west,
+			bend-type=single, bend-direction=right,
+		]
+		\nskConnect[
+			from=t2-mid, to=a5.west,
+			bend-type=single, bend-direction=right,
+		]
+	}
+
+
+	\nskDoBridging
+\end{nskFigure}
+\end{document}

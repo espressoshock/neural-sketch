@@ -1,0 +1,53 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  icon-clean=true,
+  arrow-type=dashed, shorten-from=1mm, shorten-to=1mm,
+  arrow-color=nskFg!50!nskBg,
+  block-distance=3cm,
+  block-width=1.2cm, block-height=1.2cm,
+  text-south-style={yshift=-1mm},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\s{type=diamond, text-south-style={yshift=-.5mm}, fill=nskSecondaryAccent, pattern=hatchd,}
+\def\guide{color=nskStrongCyan, shorten-from=-5mm, shorten-to=-5mm}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskBlock*[
+		text-center={\nskIcon[name=fold-vertical]},
+		\s
+	]
+	\nskMark[pos={right=2cm}] %dummy
+	\foreach \cmd/\name [count=\i from 1] in {
+			\! / Neg. thin space,
+			\, / Thin space,
+			\: / Medium space,
+			\; / Thick space,
+			\quad / Quad,
+			\qquad / Double quad
+		}{
+			\tikzmath{
+				real \pct;
+				% linearly map i=1..6 onto 0..100
+				\pct = (\i - 1) / (6 - 1) * 100;
+        \pcti = (6 - \i) / (6 - 1) * 100;
+			}
+			\nskBlock[
+				last-pos={right=5mm}, width=0cm,
+				text-center={\nskIcon[name=arrow-right-to-line]{\cmd}Text},
+				text-south={\name},
+				fill={nskRed!\pct!nskBg},
+			]
+		}
+
+	\nskOnbg{
+	\nskConnect*[from=\nskID!{1}.north, to=\nskID!{1}.south, \guide]
+	\nskConnect[from=\nskID!{1}, to=\nskID!{3}]
+	}
+\end{nskFigure}
+
+\end{document}

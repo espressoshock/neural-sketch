@@ -31,6 +31,9 @@
 % implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 %<*package>
 %    \begin{macrocode}
+
+\usetikzlibrary{intersections, spath3,}
+
 \ExplSyntaxOn
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,7 +64,7 @@
 
 	% Insert #1..#7 by expansion (x), forming a comma list:
 	\exp_args:NNx \tl_put_right:Nn \l__nsk_storeitem_tl
-	{ #1, #2, { #3 }, #4, #5, #6, #7, #8 }
+	{ #1, { #2 }, { #3 }, { #4 }, #5, #6, #7, #8 }
 
 	% Now append that item to the bridging sequence:
 	\seq_gput_right:No \g__nsk_bridging_info_seq \l__nsk_storeitem_tl
@@ -104,31 +107,35 @@
 	bridging / false .code:n = { \bool_set_false:N \l__nsk_connect_bridging_bool },
 	bridging .initial:n      = { false },
 
-	bridging-style .choice:,
-	bridging-style / over  .code:n  = { \tl_set:Nn \l_nsk_connect_bridging_style_tl { over } },
-	bridging-style / under .code:n  = { \tl_set:Nn \l_nsk_connect_bridging_style_tl { under } },
-	bridging-style .initial:n       = { under },
-	bridging-style .default:n       = { under },
+	bridging-type .choice:,
+	bridging-type / over  .code:n  = { \tl_set:Nn \l_nsk_connect_bridging_type_tl { over } },
+	bridging-type / under .code:n  = { \tl_set:Nn \l_nsk_connect_bridging_type_tl { under } },
+	bridging-type .initial:n       = { under },
+	bridging-type .default:n       = { under },
 
-	bridging-path .tl_set:N         = \l_nsk_connect_bridging_path_tl,
-	bridging-path .initial:n        = { arc },
-	bridging-path .default:n        = { arc },
+	bridging-style .tl_set:N         = \l_nsk_connect_bridging_style_tl,
+	bridging-style .initial:V        = \g__nsk_style_bridging_style_tl,
+	bridging-style .default:V        = \g__nsk_style_bridging_style_tl,
 
 	bridging-span .tl_set:N         = \l_nsk_connect_bridging_span_tl,
-	bridging-span .initial:n        = { 8pt },
-	bridging-span .default:n        = { 8pt },
+	bridging-span .initial:V        = \g__nsk_style_bridging_span_dim,
+	bridging-span .default:V        = \g__nsk_style_bridging_span_dim,
 
 	bridging-gap .tl_set:N          = \l_nsk_connect_bridging_gap_tl,
-	bridging-gap .initial:n         = { 4pt },
-	bridging-gap .default:n         = { 4pt },
+	bridging-gap .initial:V         = \g__nsk_style_bridging_gap_dim,
+	bridging-gap .default:V         = \g__nsk_style_bridging_gap_dim,
 
 	arrow-style .tl_set:N = \l_nsk_connect_arrow_style_tl,
-	arrow-style .initial:n = {ultra~thick, line~cap=round},
-	arrow-style .default:n = {ultra~thick, line~cap=round},
+	arrow-style .initial:V = \g__nsk_style_arrow_style_tl,
+	arrow-style .default:V = \g__nsk_style_arrow_style_tl,
+
+	arrow-type .tl_set:N = \l_nsk_connect_arrow_type_tl,
+	arrow-type .initial:V = \g__nsk_style_arrow_type_tl,
+	arrow-type .default:V = \g__nsk_style_arrow_type_tl,
 
 	arrow-tip .tl_set:N = \l_nsk_connect_arrow_tip_tl,
-	arrow-tip .initial:n = {-},
-	arrow-tip .default:n = {-},
+	arrow-tip .initial:V = \g__nsk_style_arrow_tip_tl,
+	arrow-tip .default:V = \g__nsk_style_arrow_tip_tl,
 
 	shift-x .dim_set:N = \l_nsk_connect_shift_x_dim,
 	shift-x .initial:n = {0mm},
@@ -138,9 +145,9 @@
 	shift-y .initial:n = {0mm},
 	shift-y .default:n = {0mm},
 
-	color .tl_set:N                 = \l_nsk_connect_color_tl,
-	color .initial:n                = { c__nsk_principal },
-	color .default:n                = { c__nsk_principal },
+	color .tl_set:N  = \l_nsk_connect_color_tl,
+  color .initial:V = \g__nsk_style_arrow_color_tl,
+  color .default:V = \g__nsk_style_arrow_color_tl,
 
 	% corner-radius ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	corner-radius .dim_set:N = \l__nsk_connect_corner_radius_dim,
@@ -152,6 +159,7 @@
 	bend-type / none   .code:n = { \tl_set:Nn \l__nsk_connect_bend_type_tl {none} },
 	bend-type / single .code:n = { \tl_set:Nn \l__nsk_connect_bend_type_tl {single} },
 	bend-type / double  .code:n = { \tl_set:Nn \l__nsk_connect_bend_type_tl {double} },
+	bend-type / straight  .code:n = { \tl_set:Nn \l__nsk_connect_bend_type_tl {straight} },
 	bend-type .initial:n = { none },
 
 	% bend direction ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -164,17 +172,17 @@
 
 	% bend distance ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	bend-distance .dim_set:N = \l__nsk_connect_bend_amount_dim,
-	bend-distance .initial:n  = {1cm},
-	bend-distance .default:n  = {1cm},
+	bend-distance .initial:V = \g__nsk_style_connect_bend_distance_dim,
+	bend-distance .default:V = \g__nsk_style_connect_bend_distance_dim,
 
 	% shorten ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	shorten-from .dim_set:N = \l__nsk_connect_shorten_from_dim,
-	shorten-from .initial:n = {0pt},
-	shorten-from .default:n = {0pt},
+	shorten-from .initial:V = \g__nsk_style_connect_shorten_from_dim,
+	shorten-from .default:V = \g__nsk_style_connect_shorten_from_dim,
 
 	shorten-to .dim_set:N = \l__nsk_connect_shorten_to_dim,
-	shorten-to .initial:n = {0pt},
-	shorten-to .default:n = {0pt},
+	shorten-to .initial:V = \g__nsk_style_connect_shorten_to_dim,
+	shorten-to .default:V = \g__nsk_style_connect_shorten_to_dim,
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Bend route
@@ -219,7 +227,7 @@
 		shorten~<=\l__nsk_connect_shorten_from_dim,
 		shorten~>=\l__nsk_connect_shorten_to_dim,
 	]
-  ([xshift=\l_nsk_connect_shift_x_dim, yshift=\l_nsk_connect_shift_y_dim]\l_nsk_connect_from_tl)
+	([xshift=\l_nsk_connect_shift_x_dim, yshift=\l_nsk_connect_shift_y_dim]\l_nsk_connect_from_tl)
 	\l_nsk_connect_route_tl
 	([xshift=\l_nsk_connect_shift_x_dim, yshift=\l_nsk_connect_shift_y_dim]\l_nsk_connect_to_tl);
 }
@@ -247,11 +255,27 @@
 	(\tl_use:N \l_nsk_connect_to_tl);
 }
 
+
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand \nskConnect { O{} }
+\pgfmathsetlengthmacro{\nskBendDistance}{\l__nsk_connect_bend_amount_dim}
+
+\NewDocumentCommand \nskConnect { sO{} }
+{
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskConnectR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskConnectR[#2]
+	}
+}
+
+\NewDocumentCommand \nskConnectR { O{} }
 {
 	\group_begin:
 
@@ -262,24 +286,43 @@
 	\int_gincr:N \g__nsk_connect_counter_int
 
 	% (c) build a default path name e.g. "path1"
-	\tl_set:Nx \l_tmpa_tl { path\int_use:N \g__nsk_connect_counter_int }
+
+	\cs_if_exist:NF \l_tmpp_tl { \tl_new:N \l_tmpp_tl }
+	\tl_set:Nx \l_tmpp_tl { path\int_use:N \g__nsk_connect_counter_int }
+
+	% compose arrow style
+	\tl_put_left:No \l_nsk_connect_arrow_style_tl {
+		\l_nsk_connect_arrow_type_tl,
+	}
 
 	% (d) bridging check
 	\bool_if:NTF \l__nsk_connect_bridging_bool
 	{
+		% If a bend is specified, generate the bent route before saving the path.
+		\tl_if_eq:NnF \l__nsk_connect_bend_type_tl {none}
+		{
+			\__nsk_connect_generate_bend_route:
+		}
+
+		% corner-radius ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+		\tl_put_left:No \l_nsk_connect_route_tl
+		{[rounded~corners=\l__nsk_connect_corner_radius_dim]}
+
+		\tl_show:N \l_tmpp_tl
+
 		% bridging == true => store path with spath
-		\nsk__spath_save:V \l_tmpa_tl
+		\nsk__spath_save:V \l_tmpp_tl
 
 		% then store bridging data for later
 		\__nsk_connect_store_item:nnnnnnnn
 		{
-			\tl_use:N \l_tmpa_tl
+			\tl_use:N \l_tmpp_tl
 		}
 		{ \l_nsk_connect_arrow_style_tl      }
 		{ \l_nsk_connect_arrow_tip_tl      }
 		{ \l_nsk_connect_color_tl            }
-		{ \l_nsk_connect_bridging_style_tl   }
-		{ \l_nsk_connect_bridging_path_tl    }
+		{ \l_nsk_connect_bridging_type_tl   }
+		{ \l_nsk_connect_bridging_style_tl    }
 		{ \l_nsk_connect_bridging_span_tl    }
 		{ \l_nsk_connect_bridging_gap_tl     }
 	}
@@ -311,7 +354,7 @@
 	{
 		\iow_term:x {
 			=inner => (#1, ##1)
-			=style => \l_nsk_connect_bridging_style_tl
+			=style => \l_nsk_connect_bridging_type_tl
 		}
 
 		% local to each iteration
@@ -326,14 +369,14 @@
 		\tl_if_eq:NNF \a_tl \b_tl
 		{
 			\iow_term:x {
-				difpaths: (\tl_use:N \a_tl, \tl_use:N \b_tl)
+				=difpaths: (\tl_use:N \a_tl, \tl_use:N \b_tl)
 			}
 
 			% bridging style => over or under
-			\tl_if_eq:NNF \l_nsk_connect_bridging_style_tl \b_bridging_style_tl
+			\tl_if_eq:NNF \l_nsk_connect_bridging_type_tl \b_bridging_style_tl
 			{
 
-				\tl_if_eq:NnTF \l_nsk_connect_bridging_style_tl {over}
+				\tl_if_eq:NnTF \l_nsk_connect_bridging_type_tl {over}
 				{
 					\exp_args:NNx \tl_set:Nn \brd_tl
 					{ bridge={\tl_use:N \a_tl}{\tl_use:N \b_tl} }
@@ -379,8 +422,12 @@ arc[
 		start\space angle=180,
 		delta\space angle=-180
 	];
-}
 
+\path[
+	spath/save\space global=gap
+]
+(0,0) -- (1, 0);
+}
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Public Interface
@@ -394,7 +441,7 @@ arc[
 	\nsk__init_bridging_code:
 
 	% For storing all path names
-	\seq_new:N \l__nsk_tmp_paths_seq
+	\seq_clear_new:N \l__nsk_tmp_paths_seq
 
 	% Collect path names from bridging info
 	\seq_map_inline:Nn \g__nsk_bridging_info_seq
@@ -408,7 +455,6 @@ arc[
 	% Copy bridging info into a local seq, for iteration
 	\seq_set_eq:NN \l__nsk_tmp_seq \g__nsk_bridging_info_seq
 
-
 	% For each bridging path, set bridging keys, do bridging with others,
 	% then finally draw its path.
 	\seq_map_inline:Nn \l__nsk_tmp_seq
@@ -417,20 +463,25 @@ arc[
 
 		\tl_set:Nx \l__nsk_pathname_tl
 		{ \clist_item:Nn \l_tmpa_clist {1} }
+
 		\tl_set:Nx \l__nsk_arrowstyle_tl
 		{ \clist_item:Nn \l_tmpa_clist {2} }
-		\tl_set:Nx \l__nsk_color_tl
+
+		\tl_set:Nx \l__nsk_arrowtip_tl
 		{ \clist_item:Nn \l_tmpa_clist {3} }
 
-		\tl_set:Nx \l_nsk_connect_bridging_style_tl
+		\tl_set:Nx \l__nsk_color_tl
 		{ \clist_item:Nn \l_tmpa_clist {4} }
 
-		\tl_set:Nx \l__nsk_bridgingpath_tl
+		\tl_set:Nx \l_nsk_connect_bridging_type_tl
 		{ \clist_item:Nn \l_tmpa_clist {5} }
-		\tl_set:Nx \l__nsk_bridgingspan_tl
+
+		\tl_set:Nx \l__nsk_bridgingpath_tl
 		{ \clist_item:Nn \l_tmpa_clist {6} }
-		\tl_set:Nx \l__nsk_bridginggap_tl
+		\tl_set:Nx \l__nsk_bridgingspan_tl
 		{ \clist_item:Nn \l_tmpa_clist {7} }
+		\tl_set:Nx \l__nsk_bridginggap_tl
+		{ \clist_item:Nn \l_tmpa_clist {8} }
 
 		% Set bridging path, span, gap
 		\tikzset{
@@ -448,6 +499,7 @@ arc[
 		\use:x {
 			\exp_not:N \draw[
 				\l__nsk_arrowstyle_tl,
+				\l__nsk_arrowtip_tl,
 				spath/save~global=\l_nsk_connect_id_tl,
 				draw=\l__nsk_color_tl,
 				spath/use=\l__nsk_pathname_tl
@@ -535,75 +587,125 @@ arc[
 	\pgfextractx{\l_cx_to_dim}{\pgfpointanchor{to_pt}{center}}
 	\pgfextracty{\l_cy_to_dim}{\pgfpointanchor{to_pt}{center}}
 
-
-	\str_case:Vn { \l__nsk_connect_bend_type_tl }
+	\bool_set_false:N \l_tmpskip_bool
+	\ifdim\l_cy_from_dim=\l_cy_to_dim
+		\bool_set_true:N \l_tmpskip_bool
+	\else
+		\ifdim\l_cx_from_dim=\l_cx_to_dim
+			\bool_set_true:N \l_tmpskip_bool
+		\fi
+		%
+	\fi
+	\bool_if:NTF \l_tmpskip_bool
 	{
-
-		{single} {
-				\str_case:Vn { \l_tmpa_tl }
-				{
-					{up}
-						{
-							% (ax, by)
-							\tl_set:Nx \midpoint {
-								(\dim_use:N \l_cx_from_dim,\dim_use:N \l_cy_to_dim)
-							}
-
-							\tl_set:Nx \l_nsk_connect_route_tl
-							{ -- \midpoint -- }
-						}
-						{down}
-						{
-							% (bx, ay)
-							\tl_set:Nx \midpoint {
-								(\dim_use:N \l_cx_to_dim,\dim_use:N \l_cy_from_dim)
-							}
-							\tl_set:Nx \l_nsk_connect_route_tl
-							{ -- \midpoint -- }
-						}
-					% left and right don't make sense for single
-				}
-			}
-			{double}
-			{
-				% Now do a case on \l_tmpa_tl rather than raw \l__nsk_connect_bend_direction_tl
-				\str_case:Vn { \l_tmpa_tl }
-				{
-					{up}
-						{ \tl_put_right:No \l_nsk_connect_route_tl
-							{ \dim_use:N \l__nsk_connect_bend_amount_dim )}
-							\tl_put_right:No \l_nsk_connect_route_tl {
-								-|
-							}
-						}
-						{down}
-						{ \tl_put_right:No \l_nsk_connect_route_tl
-							{ -\dim_use:N \l__nsk_connect_bend_amount_dim ) -| } }
-						{left}
-						{
-							\tl_set:Nn \l_nsk_connect_route_tl { -- ++( }
-							\tl_put_right:No \l_nsk_connect_route_tl
-							{ -\dim_use:N \l__nsk_connect_bend_amount_dim , 0 )  }
-							\tl_put_right:No \l_nsk_connect_route_tl {
-								[rounded~corners=\l__nsk_connect_corner_radius_dim]
-								|-
-							}
-						}
-						{right}
-						{
-							\tl_set:Nn \l_nsk_connect_route_tl { -- ++( }
-							\tl_put_right:No \l_nsk_connect_route_tl
-							{ \dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) |- }
-						}
-				}
-				{
-					% fallback => treat as "up"
-					\tl_put_right:No \l_nsk_connect_route_tl
-					{ \dim_use:N \l__nsk_connect_bend_amount_dim ) -| }
-				}
-			}
+		\tl_set:Nx \l_nsk_connect_route_tl
+		{ -- }
 	}
+	{
+		\str_case:Vn { \l__nsk_connect_bend_type_tl }
+		{
 
+			{single} {
+					\str_case:Vn { \l_tmpa_tl }
+					{
+						{up}
+							{
+								% (ax, by)
+								\tl_set:Nx \midpoint {
+									(\dim_use:N \l_cx_from_dim,\dim_use:N \l_cy_to_dim)
+								}
+
+								\tl_set:Nx \l_nsk_connect_route_tl
+								{ -- \midpoint -- }
+							}
+							{down}
+							{
+								% (bx, ay)
+								\tl_set:Nx \midpoint {
+									(\dim_use:N \l_cx_to_dim,\dim_use:N \l_cy_from_dim)
+								}
+								\tl_set:Nx \l_nsk_connect_route_tl
+								{ -- \midpoint -- }
+							}
+							{right}
+							{
+								% (ax, ay)
+								\tl_set:Nx \l_nsk_connect_route_tl {
+									-- ++(\l__nsk_connect_bend_amount_dim, 0)
+									-- (\l_cx_from_dim + \l__nsk_connect_bend_amount_dim, \l_cy_to_dim) -- }
+
+							}
+					}
+				}
+				{double}
+				{
+					% Now do a case on \l_tmpa_tl rather than raw \l__nsk_connect_bend_direction_tl
+					\str_case:Vn { \l_tmpa_tl }
+					{
+						{up}
+							{ \tl_put_right:No \l_nsk_connect_route_tl
+								{ \dim_use:N \l__nsk_connect_bend_amount_dim )}
+								\tl_put_right:No \l_nsk_connect_route_tl {
+									-|
+								}
+							}
+							{down}
+							{ \tl_put_right:No \l_nsk_connect_route_tl
+								{ -\dim_use:N \l__nsk_connect_bend_amount_dim ) -| } }
+							{left}
+							{
+								\tl_set:Nn \l_nsk_connect_route_tl { -- ++( }
+								\tl_put_right:No \l_nsk_connect_route_tl
+								{ -\dim_use:N \l__nsk_connect_bend_amount_dim , 0 )  }
+								\tl_put_right:No \l_nsk_connect_route_tl {
+									[rounded~corners=\l__nsk_connect_corner_radius_dim]
+									|-
+								}
+							}
+							{right}
+							{
+								\tl_set:Nn \l_nsk_connect_route_tl { -- ++( }
+								\tl_put_right:No \l_nsk_connect_route_tl
+								{ \dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) |- }
+							}
+					}
+					{
+						% fallback => treat as "up"
+						\tl_put_right:No \l_nsk_connect_route_tl
+						{ \dim_use:N \l__nsk_connect_bend_amount_dim ) -| }
+					}
+				}
+				{straight}
+				{
+					\str_case:Vn { \l_tmpa_tl }
+					{
+						{left}
+							{
+								\tl_set:Nx \l_nsk_connect_route_tl
+								{ -- ++(-\dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) -- (\dim_use:N \l_cx_to_dim + \dim_use:N \l__nsk_connect_bend_amount_dim, \dim_use:N \l_cy_to_dim) -- }
+							}
+							{right}
+							{
+								\tl_set:Nx \l_nsk_connect_route_tl
+								{ -- ++(\dim_use:N \l__nsk_connect_bend_amount_dim , 0 ) -- (\dim_use:N \l_cx_to_dim - \dim_use:N \l__nsk_connect_bend_amount_dim, \dim_use:N \l_cy_to_dim) -- }
+							}
+
+							{down}
+							{
+								\tl_set:Nx \l_nsk_connect_route_tl
+								{ -- ++(0, -\dim_use:N \l__nsk_connect_bend_amount_dim) -- (\dim_use:N \l_cx_to_dim,  \dim_use:N \l__nsk_connect_bend_amount_dim + \dim_use:N \l_cy_to_dim) -- }
+							}
+
+							{up}
+							{
+								\tl_set:Nx \l_nsk_connect_route_tl
+								{ -- ++(0, \dim_use:N \l__nsk_connect_bend_amount_dim) -- (\dim_use:N \l_cx_to_dim, \dim_use:N \l_cy_to_dim - \dim_use:N \l__nsk_connect_bend_amount_dim ) -- }
+							}
+					}
+
+				}
+		}
+	}
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -620,38 +722,45 @@ arc[
 
 	% styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	fill .tl_set:N = \l_nsk_fillbetween_fill_tl,
-	fill .initial:n = {nskStrongBlue!20},
+	fill .initial:V = \g__nsk_style_fillbetween_fill_tl,
+	fill .default:V = \g__nsk_style_fillbetween_fill_tl,
 
-	draw .tl_set:N = \l_nsk_fillbetween_draw_tl,
-	draw .initial:n = {nskStrongBlue!50},
+	border-color .tl_set:N = \l_nsk_fillbetween_draw_tl,
+	border-color .initial:V = \g__nsk_style_fillbetween_draw_tl,
+	border-color .default:V = \g__nsk_style_fillbetween_draw_tl,
 
 	opacity .fp_set:N = \l_nsk_fillbetween_opacity_fp,
-	opacity .initial:n = {0.4},
+	opacity .initial:V = \g__nsk_style_fillbetween_opacity_fp,
+	opacity .default:V = \g__nsk_style_fillbetween_opacity_fp,
 
 	% edge-types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	edge .choice:,
 	edge / straight .code:n = { \tl_set:Nn \l_nsk_fillbetween_edge_tl { straight } },
 	edge / curved  .code:n  = { \tl_set:Nn \l_nsk_fillbetween_edge_tl { curved } },
-	edge .initial:n = {straight},
+	edge .initial:V = \g__nsk_style_fillbetween_edge_tl,
+	edge .default:V = \g__nsk_style_fillbetween_edge_tl,
 
 	% orientation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	orientation .choice:,
 	orientation / vertical   .code:n = { \tl_set:Nn \l_nsk_fillbetween_orient_tl { vertical } },
 	orientation / horizontal .code:n = { \tl_set:Nn \l_nsk_fillbetween_orient_tl { horizontal } },
-	orientation .initial:n   = { vertical },
+	orientation .initial:V   = \g__nsk_style_fillbetween_orient_tl,
+	orientation .default:V   = \g__nsk_style_fillbetween_orient_tl,
 
 	% overrides ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	% If you want an explicit “out=xx, in=yy” override, you could add:
+	% If you want an explicit "out=xx, in=yy" override, you could add:
 	out .tl_set:N = \l_nsk_fillbetween_out_tl,
-	out .initial:n = {},
+	out .initial:V = \g__nsk_style_fillbetween_out_tl,
+	out .default:V = \g__nsk_style_fillbetween_out_tl,
 
 	in .tl_set:N  = \l_nsk_fillbetween_in_tl,
-	in .initial:n = {},
+	in .initial:V = \g__nsk_style_fillbetween_in_tl,
+	in .default:V = \g__nsk_style_fillbetween_in_tl,
 
 	% corner-offsets ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	corner-offset .dim_set:N = \l_nsk_fillbetween_corner_offset_dim,
-	corner-offset .initial:V = \g__nsk_style_block_border_radius_dim,
-	corner-offset .default:V = \g__nsk_style_block_border_radius_dim,
+	corner-offset .initial:V = \g__nsk_style_fillbetween_corner_offset_dim,
+	corner-offset .default:V = \g__nsk_style_fillbetween_corner_offset_dim,
 
 }
 
@@ -715,7 +824,7 @@ arc[
 		}
 	}
 	% draw ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\begin{pgfonlayer}{interim}
+	\begin{pgfonlayer}{fills}
 		\draw[
 			spath/save~global=\tl_use:N \l_nsk_connect_id_tl,
 			fill=\l_nsk_fillbetween_fill_tl,
@@ -723,7 +832,7 @@ arc[
 			opacity=\fp_use:N \l_nsk_fillbetween_opacity_fp
 		]
 		let
-		% -- “From” corners --
+		% -- "From" corners --
 		\p{TL_a} = ($(\l_nsk_fillbetween_from_tl.north\space west)
 			+ (\dim_use:N \l__nsk_offset_west_dim,
 			\dim_use:N \l__nsk_offset_north_dim)$),
@@ -740,7 +849,7 @@ arc[
 			+ (\dim_use:N \l__nsk_offset_east_dim,
 			\dim_use:N \l__nsk_offset_south_dim)$),
 
-		% -- “To” corners --
+		% -- "To" corners --
 		\p{TL_b} = ($(\l_nsk_fillbetween_to_tl.north\space west)
 			+ (\dim_use:N \l__nsk_offset_west_dim,
 			\dim_use:N \l__nsk_offset_north_dim)$),
@@ -800,7 +909,20 @@ arc[
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand \nskFillBetween { O{} }
+\NewDocumentCommand \nskFillBetween { sO{} }
+{
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskFillBetweenR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskFillBetweenR[#2]
+	}
+}
+
+\NewDocumentCommand \nskFillBetweenR { O{} }
 {
 	\group_begin:
 	% 1. Parse the keys

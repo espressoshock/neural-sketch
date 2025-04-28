@@ -1,0 +1,105 @@
+\documentclass[12pt]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  auto-increment-duplicates=true,
+  block-width=1.3cm, block-height=1.3cm,
+  block-distance=5mm,
+  text-south-style={yshift=-5mm},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\add{
+  type=circle,
+  text-center={\noexpand \textbf{+}},
+  text-size={\noexpand \huge},
+  fill=nskRed,
+}
+\def\s{width=8mm, height=8mm, text-size={\noexpand \normalsize}}
+\def\acc{nskSecondaryAccent}
+\def\d{border-type=dashed, pattern=hatchd}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer![]{
+	\foreach \i in {1,...,4} {
+			\nskLerp[from=100, to=30, n=4, into=p]{\i}
+			\nskBlock*[id=eb\i, last-pos-s={right=2mm}, fill=\acc!\p!nskBg, \d]
+		}
+	\nskWrap[under=\nskID{4}, shift-y=-5mm]
+	\foreach \i in {1,...,4} {
+			\nskLerp[from=100, to=30, n=4, into=p]{\i}
+      \nskBlock[id=vs\i, last-pos-s={right=2mm}, text-center={$V_{s {\scriptscriptstyle -} 1, \i}$}, fill=\acc!\p!nskBg]
+			\nskConnect[from=\nskID{1}.north, to=\nskID{\e<1+4+1>}.south] % nskwrap
+		}
+	}
+	\nskBlock*[id=add, \add, last-pos={above=2.7cm}]
+	\foreach \o[count=\i] in {2, .6, -.6, -2} {
+			\nskMarkPath[at=\e<-0.25-(.1*\o)>]{add}{\nskMark[shift-y=-1.5mm]}
+			\nskConnect[from=eb\i.north, to=\nskID{1},
+				bend-type=straight, bend-distance=4mm,
+				arrow-tip={-Straight Barb[]},
+			]
+		}
+	\nskBlock[id=tt, text-center=Temporal Transformer, height=9.7cm, text-center-style={rotate=90}, pos={right=of vs4}, align=bottom]
+	\nskConnect[from=add, to={\nskID{1}.west |- add}]
+	\nskMark[at={\nskID{1}.east |- add}]
+
+	% rx ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\nskBlock*[id=zs, text-center=$z_s$, last-pos={right}, text-size={\noexpand\Large}, \d]
+	\nskConnect[from={tt.east |- \nskID{1}}, to=\nskID{1}, arrow-tip={-Straight Barb[]}]
+	\nskBlock[id=zs0, last-pos={right}]
+	\foreach \i in {1,...,3} {
+			\nskLerp[from=100, to=30, n=3, into=p]{\i}
+			\nskBlock*[id=zs\i, last-pos-s={right=2mm}, fill=\acc!\p!nskBg, \d]
+		}
+	\nskWrap[over=\nskID{3}]
+	\foreach \i in {1,...,3} {
+			\nskLerp[from=100, to=30, n=3, into=p]{\i}
+			\nskBlock[text-center=$V_{s,\i}$, last-pos-s={right=2mm}, fill=\acc!\p!nskBg]
+			\nskConnect[from=\nskID{1}, to=\nskID{\e<1+4>}, arrow-tip={-Straight Barb[]}]
+		}
+	\nskContainer![]{
+	\foreach \i in {0,...,3} {
+			\nskBlock*[id=add\e<\i+1>, \add\s, pos={below=1.8cm of zs\i},]
+			\nskConnect[to=\nskID{1}, from=zs\i]
+			% arrow-tip={-Straight Barb[]}]
+		}
+	}
+	\nskMeasure[from=zs0.west, to=zs3.east]
+	\nskBlock[id=dt, text-center=Depth Transformer, last-pos={below=}, width=\nskDistance]
+
+	\foreach \i in {1,...,4} {
+			% \nskConnect[
+			% 	from=add\i,
+			% 	to=dt.north,
+			% ]
+			\nskConnect[
+			  from=add\i.south,
+			     to={add\i.south |- dt.north},
+			     arrow-tip={-Straight Barb},
+			]
+		}
+	\nskWrap[under=dt]
+	\foreach \i in {1,...,4} {
+			\nskLerp[from=100, to=30, n=3, into=p]{\i}
+      \nskBlock[text-center={$V_{s,\i}$}, last-pos-s={right=2mm}, fill=\acc!\p!nskBg]
+			\nskConnect[from=add\i |- dt.south, to=\nskID{1}.north, arrow-tip={-Straight Barb}]
+
+		}
+	% zs -> add..
+	\nskOnbg{
+		\foreach \i in {1,...,4} {
+				\nskConnect[
+					from=zs.south,to=add\i.north,
+					bend-type=straight, bend-direction=down,
+					bend-distance=\e<6-(1*\i)>mm,
+					corner-radius=3mm, color=nskLighterGray,
+				]
+			}
+	}
+\end{nskFigure}
+\end{document}
+
+

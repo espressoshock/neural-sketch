@@ -32,7 +32,7 @@
 \RequirePackage{tikz}
 \RequirePackage{expl3}
 \usetikzlibrary{
-	calc, fit, intersections, spath3,
+	calc, fit,
 	shapes.geometric,
 	shapes.symbols,
 	shapes.misc,
@@ -42,7 +42,6 @@
 	shadows,
 	shadings,
 	patterns,
-	decorations.markings,
 	backgrounds,
 	tikzmark,
 	math,
@@ -84,7 +83,7 @@
 {
 	\tl_put_right:Nx \l__nsk_pkgopts_opts_tl
 	{
-		#1 = #2,
+		#1 = {#2},
 	}
 }
 
@@ -133,6 +132,12 @@ every~node/.append~style={text=c__nsk_principal},
 % to track block-id reference counters
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \seq_new:N \g_nsk_block_id_history_seq
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Global flag -
+% to track wrapping
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\bool_new:N \g_nsk_wrap_right_bool
+\bool_new:N \g_nsk_wrap_left_bool
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Main nsk / Block Primitive
@@ -140,9 +145,35 @@ every~node/.append~style={text=c__nsk_principal},
 \keys_define:nn {nsk / block}
 {
 	% block type ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	type .tl_set:N = \l_nsk_block_type_tl,
+	type .code:n =
+		{
+			\bool_lazy_or:nnTF
+			{ \str_if_eq_p:nn {#1}{text} }
+			{ \str_if_eq_p:nn {#1}{icon} }
+			{
+				\tl_set:Nn \l_nsk_block_type_tl {rectangle}
+				\tl_set:Nn \l_nsk_block_border_type_tl {draw=none}
+				\bool_set_false:N \l_nsk_block_shadow_bool
+				\tl_set:Nn \l_nsk_block_fill_tl {none}
+				% auto width
+				\dim_set:Nn \l_nsk_block_width_dim {0cm}
+				\dim_set:Nn \l_nsk_block_padding_x_dim {0mm}
+			}
+			{
+				\tl_set:Nn \l_nsk_block_type_tl {#1}
+			} % false branch (do nothing)
+		},
 	type .initial:n = {rectangle},
 	type .default:n = {rectangle},
+
+	% padding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	padding-x .dim_set:N = \l_nsk_block_padding_x_dim,
+	padding-x .initial:V = \g__nsk_style_block_padding_x_dim,
+	padding-x .default:V = \g__nsk_style_block_padding_x_dim,
+
+	padding-y .dim_set:N = \l_nsk_block_padding_y_dim,
+	padding-y .initial:V = \g__nsk_style_block_padding_y_dim,
+	padding-y .default:V = \g__nsk_style_block_padding_y_dim,
 
 	% ref-id ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	id .tl_set:N = \l_nsk_block_id_tl,
@@ -150,15 +181,32 @@ every~node/.append~style={text=c__nsk_principal},
 
 	% coords ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	x .fp_set:N = \l_nsk_block_x_fp,
-	x .initial:n = {0},
-	x .default:n = {0},
+	x .initial:V = \g__nsk_style_block_x_fp,
+	x .default:V = \g__nsk_style_block_x_fp,
+
 	y .fp_set:N = \l_nsk_block_y_fp,
-	y .initial:n  = {0},
-	y .default:n = {0},
+	y .initial:V = \g__nsk_style_block_y_fp,
+	y .default:V = \g__nsk_style_block_y_fp,
+
+	shift-x .tl_set:N = \l_nsk_block_shiftx_tl,
+	shift-x .initial:n = {0},
+	shift-x .default:n = {0},
+
+	shift-y .tl_set:N = \l_nsk_block_shifty_tl,
+	shift-y .initial:n = {0},
+	shift-y .default:n = {0},
 
 	anchor .tl_set:N = \l_nsk_block_anchor_tl,
-	anchor .default:n = {},
-	anchor .initial:n = {},
+	anchor .initial:V = \g__nsk_style_block_anchor_tl,
+	anchor .default:V = \g__nsk_style_block_anchor_tl,
+
+  rotate .tl_set:N = \l_nsk_block_rotate_tl,
+  rotate .initial:V = \g__nsk_style_block_rotate_tl,
+  rotate .default:V = \g__nsk_style_block_rotate_tl,
+
+  opacity .tl_set:N = \l_nsk_block_opacity_tl,
+  opacity .initial:V = \g__nsk_style_block_opacity_tl,
+  opacity .default:V = \g__nsk_style_block_opacity_tl,
 
 	% natural positioning using positioning library
 	pos .tl_set:N = \l_nsk_block_pos_tl,
@@ -174,6 +222,18 @@ every~node/.append~style={text=c__nsk_principal},
 	last-pos-s .initial:n = { },
 	last-pos-s .default:n = { },
 
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Alignment (flush.)
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	align .choice:,
+	align / top .code:n = { \tl_set:Nn \l_nsk_block_align_tl { top } },
+	align / bottom .code:n = { \tl_set:Nn \l_nsk_block_align_tl { bottom } },
+	align / center .code:n = { \tl_set:Nn \l_nsk_block_align_tl { center } },
+	align / none .code:n = { \tl_set:Nn \l_nsk_block_align_tl { none } },
+	align .initial:n = {none},
+	align .default:n = {none},
+
+
 	% dimensions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	width .dim_set:N =  \l_nsk_block_width_dim,
 	width .initial:V = \g__nsk_style_block_width_dim,
@@ -182,6 +242,11 @@ every~node/.append~style={text=c__nsk_principal},
 	height .dim_set:N = \l_nsk_block_height_dim,
 	height .default:V = \g__nsk_style_block_height_dim,
 	height .initial:V = \g__nsk_style_block_height_dim,
+
+  size .code:n = {
+    \dim_set:Nn \l_nsk_block_width_dim {#1}
+    \dim_set:Nn \l_nsk_block_height_dim {#1}
+  },
 
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -230,20 +295,20 @@ every~node/.append~style={text=c__nsk_principal},
 
 		},
 
-	outer-border-type .initial:n = {none},
-	outer-border-type .default:n = {none},
+	outer-border-type .initial:V = \g__nsk_style_block_outer_border_type_tl,
+	outer-border-type .default:V = \g__nsk_style_block_outer_border_type_tl,
 
 	outer-border-color .tl_set:N = \l_nsk_block_outer_border_color_tl,
-	outer-border-color .initial:n = { nskMainAccent!50!nskBg },
-	outer-border-color .default:n = { nskMainAccent!50!nskBg },
+	outer-border-color .initial:V = \g__nsk_style_block_outer_border_color_tl,
+	outer-border-color .default:V = \g__nsk_style_block_outer_border_color_tl,
 
 	outer-border-radius .dim_set:N = \l_nsk_block_outer_border_radius_dim,
-	outer-border-radius .initial:V = \g__nsk_style_block_border_radius_dim,
-	outer-border-radius .default:V = \g__nsk_style_block_border_radius_dim,
+	outer-border-radius .initial:V = \g__nsk_style_block_outer_border_radius_dim,
+	outer-border-radius .default:V = \g__nsk_style_block_outer_border_radius_dim,
 
 	outer-border-size .dim_set:N = \l_nsk_block_outer_border_size_dim,
-	outer-border-size .initial:n = {5mm},
-	outer-border-size .default:n = {5mm},
+	outer-border-size .initial:V = \g__nsk_style_block_outer_border_size_dim,
+	outer-border-size .default:V = \g__nsk_style_block_outer_border_size_dim,
 
 	% styles ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	fill .tl_set:N = \l_nsk_block_fill_tl,
@@ -257,8 +322,8 @@ every~node/.append~style={text=c__nsk_principal},
 
 	% importance ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	importance .fp_set:N = \l_nsk_block_importance_fp,
-	importance .initial:n = {1.0},
-	importance .default:n = {1.0},
+	importance .initial:V = \g__nsk_style_block_importance_fp,
+	importance .default:V = \g__nsk_style_block_importance_fp,
 
 	% -- The special pass-through key for arbitrary TikZ options.
 	tikz-opts  .code:n =
@@ -269,6 +334,10 @@ every~node/.append~style={text=c__nsk_principal},
 		},
 	tikz-opts  .initial:n = {},
 	tikz-opts  .default:n = {},
+
+	text-size .tl_set:N = \l_nsk_block_text_size_tl,
+	text-size .initial:V = \g__nsk_style_text_size_tl,
+	text-size .default:V = \g__nsk_style_text_size_tl,
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Text Anchoring
@@ -283,7 +352,7 @@ every~node/.append~style={text=c__nsk_principal},
 	text-north-loc .initial:V = \g__nsk_style_text_north_loc_tl,
 
 	text-north-style .tl_set:N = \l_nsk_text_north_style_tl,
-	text-north-style .initial:n = { },
+	text-north-style .initial:V = \g__nsk_style_text_north_style_tl,
 
 	%---------------------------
 	% text-south
@@ -295,7 +364,7 @@ every~node/.append~style={text=c__nsk_principal},
 	text-south-loc .initial:V = \g__nsk_style_text_south_loc_tl,
 
 	text-south-style .tl_set:N = \l_nsk_text_south_style_tl,
-	text-south-style .initial:n = { },
+	text-south-style .initial:V = \g__nsk_style_text_south_style_tl,
 
 	%---------------------------
 	% text-east
@@ -307,7 +376,7 @@ every~node/.append~style={text=c__nsk_principal},
 	text-east-loc .initial:V = \g__nsk_style_text_east_loc_tl,
 
 	text-east-style .tl_set:N = \l_nsk_text_east_style_tl,
-	text-east-style .initial:n = { },
+	text-east-style .initial:V = \g__nsk_style_text_east_style_tl,
 
 	%---------------------------
 	% text-west
@@ -319,7 +388,7 @@ every~node/.append~style={text=c__nsk_principal},
 	text-west-loc .initial:V = \g__nsk_style_text_west_loc_tl,
 
 	text-west-style .tl_set:N = \l_nsk_text_west_style_tl,
-	text-west-style .initial:n = { },
+	text-west-style .initial:V = \g__nsk_style_text_west_style_tl,
 
 	%---------------------------
 	% text-center
@@ -331,7 +400,7 @@ every~node/.append~style={text=c__nsk_principal},
 	text-center-loc .initial:V = \g__nsk_style_text_center_loc_tl,
 
 	text-center-style .tl_set:N = \l_nsk_text_center_style_tl,
-	text-center-style .initial:n = { },
+	text-center-style .initial:V = \g__nsk_style_text_center_style_tl,
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Embedding
@@ -352,6 +421,14 @@ every~node/.append~style={text=c__nsk_principal},
 	embed-border-radius .initial:V = \g__nsk_style_block_embed_border_radius_dim,
 	embed-border-radius .default:V = \g__nsk_style_block_embed_border_radius_dim,
 
+	embed-border-size .dim_set:N = \l_nsk_block_embed_border_size_dim,
+	embed-border-size .initial:V = \g__nsk_style_block_embed_border_size_dim,
+	embed-border-size .default:V = \g__nsk_style_block_embed_border_size_dim,
+
+	embed-border-color .tl_set:N = \l_nsk_block_embed_border_color_tl,
+	embed-border-color .initial:V = \g__nsk_style_block_embed_border_color_tl,
+	embed-border-color .default:V = \g__nsk_style_block_embed_border_color_tl,
+
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Patterns
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -360,8 +437,50 @@ every~node/.append~style={text=c__nsk_principal},
 	pattern .default:n = { },
 
 	pattern-color .tl_set:N = \l_nsk_block_pattern_color_tl,
-	pattern-color .initial:n = { },
-	pattern-color .default:n = { },
+	pattern-color .initial:n = {nskFg},
+	pattern-color .default:n = {nskFg},
+
+	pattern-opacity .tl_set:N = \l_nsk_block_pattern_opacity_tl,
+	pattern-opacity .initial:n = {.2},
+	pattern-opacity .default:n = {.2},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Fade
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	fade .choice:,
+	fade / none .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { none } },
+	fade / left .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { left } },
+	fade / right .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { right } },
+	fade / up .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { up } },
+	fade / down .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { down } },
+	fade .initial:n = { none },
+	fade .default:n = { none },
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Stacks
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	stack .bool_set:N            = \l_nsk_block_stack_bool,
+	stack .initial:n             = {false},
+	stack .default:n             = {false},
+
+	stack-opts .tl_set:N         = \l_nsk_block_stack_opts_tl,
+	stack-opts .initial:V        = \g__nsk_style_block_stack_opts_tl,
+	stack-opts .default:V        = \g__nsk_style_block_stack_opts_tl,
+
+	stack-xoffset .dim_set:N     = \l_nsk_block_stack_xoffset_dim,
+	stack-xoffset .initial:V     = \g__nsk_style_block_stack_xoffset_dim,
+	stack-xoffset .default:V     = \g__nsk_style_block_stack_xoffset_dim,
+
+	stack-yoffset .dim_set:N     = \l_nsk_block_stack_yoffset_dim,
+	stack-yoffset .initial:V     = \g__nsk_style_block_stack_yoffset_dim,
+	stack-yoffset .default:V     = \g__nsk_style_block_stack_yoffset_dim,
+
+	stack-count .choice:,
+	stack-count / single .code:n = { \tl_set:Nn \l_nsk_block_stack_count_tl {single} },
+	stack-count / double .code:n = { \tl_set:Nn \l_nsk_block_stack_count_tl {double} },
+	stack-count .initial:V       = \g__nsk_style_block_stack_count_tl,
+	stack-count .default:V       = \g__nsk_style_block_stack_count_tl,
+
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -371,7 +490,52 @@ every~node/.append~style={text=c__nsk_principal},
 {
 	\tl_if_blank:VTF \l_nsk_block_id_tl
 	{ \nsk__assign_autogenerated_id: }
-	{ }
+	{
+    \bool_if:NTF \g__nsk_style_block_auto_duplicates_bool
+    {\nsk__check_and_handle_duplicate_id:}
+    {}
+	}
+}
+
+% Check if the ID already exists in the block history and increment if needed
+\cs_new_protected_nopar:Npn \nsk__check_and_handle_duplicate_id:
+{
+	% First check if the ID exists in the history sequence
+	\bool_set_false:N \l_tmpa_bool
+  \seq_show:N \g_nsk_block_id_history_seq
+	\seq_map_inline:Nn \g_nsk_block_id_history_seq
+	{
+		\tl_if_eq:nVT {##1} \l_nsk_block_id_tl
+		{
+			\bool_set_true:N \l_tmpa_bool
+		}
+	}
+
+	% If the ID exists, we need to increment it
+	\bool_if:NT \l_tmpa_bool
+	{
+		% Check if the ID already has a number suffix
+		\regex_match:nVTF {^(.+)(\d+)$} \l_nsk_block_id_tl
+		{
+			% Extract the base and the number using regex
+			\regex_extract_once:nVN {^(.+)(\d+)$} \l_nsk_block_id_tl \l_tmpa_seq
+			\tl_set:Nx \l_tmpb_tl {\seq_item:Nn \l_tmpa_seq {2}} % base
+			\tl_set:Nx \l_tmpc_tl {\seq_item:Nn \l_tmpa_seq {3}} % number
+
+			% Increment the number
+			\int_set:Nn \l_tmpa_int {\l_tmpc_tl + 1}
+
+			% Construct new ID: base + incremented number
+			\tl_set:Nx \l_nsk_block_id_tl {\l_tmpb_tl\int_use:N \l_tmpa_int}
+		}
+		{
+			% No number suffix yet, append "2"
+			\tl_put_right:Nn \l_nsk_block_id_tl {2}
+		}
+
+		% Recursively check if this new ID also exists
+		\nsk__check_and_handle_duplicate_id:
+	}
 }
 
 \cs_new_protected_nopar:Npn \nsk__assign_autogenerated_id:
@@ -379,7 +543,7 @@ every~node/.append~style={text=c__nsk_principal},
 	% If shape key not in the counters prop yet, init to 0
 	\prop_if_in:NVF \g_nsk_block_counters_prop \l_nsk_block_type_tl
 	{
-		% (★) Use \prop_gput to store globally:
+		% (*) Use \prop_gput to store globally:
 		\prop_gput:NVn \g_nsk_block_counters_prop \l_nsk_block_type_tl { 0 }
 	}
 
@@ -446,29 +610,28 @@ every~node/.append~style={text=c__nsk_principal},
 	% Compute the node anchor based on the block's side (#1)
 	% and the extra alignment provided (#3)
 	\tl_set:Nx \l_tmpa_tl { \nsk_compute_text_node_anchor:nn {#1} {#3} }
-	\tl_show:N \l_tmpa_tl
 	% Draw the node at the block's anchor coordinate (e.g. (blockID.north))
 	% but with the computed node anchor.
 	\tl_if_blank:nTF {#3}
 	{
 		\draw[shift=(\l_nsk_block_id_tl.#1)]
-		node[anchor=\l_tmpa_tl, #4] {#2};
+		node[font=\l_nsk_block_text_size_tl, align=center, anchor=\l_tmpa_tl, #4]  {#2};
 	}{
 		% If extra alignment (#3) is "north" or "south", swap the order.
 		\str_if_eq:nnTF {#3}{north}
 		{
 			\draw[shift=(\l_nsk_block_id_tl.#3~#1)]
-			node[anchor=\l_tmpa_tl, #4] {#2};
+			node[align=center, anchor=\l_tmpa_tl, #4] {#2};
 		}
 		{
 			\str_if_eq:nnTF {#3}{south}
 			{
 				\draw[shift=(\l_nsk_block_id_tl.#3~#1)]
-				node[anchor=\l_tmpa_tl, #4] {#2};
+				node[align=center, anchor=\l_tmpa_tl, #4] {#2};
 			}
 			{
 				\draw[shift=(\l_nsk_block_id_tl.#1~#3)]
-				node[anchor=\l_tmpa_tl, #4] {#2};
+				node[align=center, anchor=\l_tmpa_tl, #4] {#2};
 			}
 		}
 	}
@@ -546,7 +709,7 @@ every~node/.append~style={text=c__nsk_principal},
 		{
 			% exec last block id retrieval ~~~~~~~~~~~~~~~ <<<
 			% block is already registered, so get prev
-			\nsk__internal_get_nth_block_id:n{2}
+			\nsk__internal_get_nth_block_id:n{1}
 			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
 
 			\str_if_in:NnTF \l_nsk_block_last_pos_tl {=}
@@ -563,7 +726,7 @@ every~node/.append~style={text=c__nsk_principal},
 			}
 			{
 				% case (b) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-				% There's NO '=' in the user’s string
+				% There's NO '=' in the user's string
 				% e.g. "below right"
 				% => produce "below right=of <blockID>"
 				\tl_set:Nx \l_nsk_block_pos_tl
@@ -577,39 +740,43 @@ every~node/.append~style={text=c__nsk_principal},
 
 \cs_new_protected_nopar:Npn \nsk__process_last_pos_s:
 {
-	% Only proceed if the user gave a nonblank last-pos-x value:
+	% Only proceed if the user gave 'last-pos'
 	\tl_if_blank:VF \l_nsk_block_last_pos_s_tl
 	{
-		% Check that there is more than one block in the history.
-		\int_compare:nNnTF {\seq_count:N \g_nsk_block_id_history_seq} > {1}
+		\seq_if_empty:NTF \g_nsk_block_id_history_seq
+		{}
+		{
+			% exec last block id retrieval ~~~~~~~~~~~~~~~ <<<
+			% block is already registered, so get prev
+			\nsk__internal_get_nth_block_id:n{1}
+			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
+
+			\str_if_in:NnTF \l_nsk_block_last_pos_s_tl {=}
 			{
-				% There is a previous block. Retrieve it without calling the error‐triggering routine.
-				\int_set:Nn \l_tmpa_int { \seq_count:N \g_nsk_block_id_history_seq }
-				\tl_set:No \l_tmpa_tl
+				% case (a) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+				% There's at least one '='
+				% Next see if "of" is in there
+				% e.g. "below=0cm"
+				% => add " of <blockID>"
+				\tl_set:Nx \l_nsk_block_pos_tl
 				{
-					\seq_item:Nn \g_nsk_block_id_history_seq
-					{ \int_eval:n { \l_tmpa_int - 1 } }
-				}
-				% Process the key’s value as in the original routine:
-				\str_if_in:NnTF \l_nsk_block_last_pos_s_tl {=}
-				{
-					\tl_set:Nx \l_nsk_block_pos_tl
-					{
-						\exp_not:V \l_nsk_block_last_pos_s_tl\space of~\exp_not:V \l_tmpa_tl
-					}
-				}
-				{
-					\tl_set:Nx \l_nsk_block_pos_tl
-					{
-						\exp_not:V \l_nsk_block_last_pos_s_tl =of~\exp_not:V \l_tmpa_tl
-					}
+					\exp_not:V \l_nsk_block_last_pos_s_tl\space of~\exp_not:V \l_tmpa_tl
 				}
 			}
 			{
-				% There is no previous block: do nothing silently.
+				% case (b) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+				% There's NO '=' in the user's string
+				% e.g. "below right"
+				% => produce "below right=of <blockID>"
+				\tl_set:Nx \l_nsk_block_pos_tl
+				{
+					\exp_not:V \l_nsk_block_last_pos_s_tl =of~\exp_not:V \l_tmpa_tl
+				}
 			}
+		}
 	}
 }
+
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Block drawing [Aux]
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -617,6 +784,7 @@ every~node/.append~style={text=c__nsk_principal},
 {
 
 	\node [
+		spath/save~global=\l_nsk_block_id_tl,
 		#1,
 	] {};
 
@@ -630,8 +798,17 @@ every~node/.append~style={text=c__nsk_principal},
 			\pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
 			\pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
 			\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
+			\dim_compare:nNnTF {\l_nsk_block_embed_border_size_dim} = {0pt}
+			{
+			% Ember border size is 0, so do not draw a border.
+			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{clip}}
+			}
+			{
+			% Ember border size is nonzero; set the linewidth and draw border.
+			\pgfsetlinewidth{\l_nsk_block_embed_border_size_dim}
+			\pgfsetstrokecolor{\l_nsk_block_embed_border_color_tl}
 			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
-
+			}
 			% raw embedding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 			\tl_use:N \l_nsk_embed_tl
 		\end{scope}
@@ -645,13 +822,24 @@ every~node/.append~style={text=c__nsk_principal},
 
 		\begin{scope}
 			\pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
-			\pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
+			\pgfset{minimum~width=\l_tmpa_dim, minimum~height=\l_tmpb_dim}
 			\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
+
+			\dim_compare:nNnTF {\l_nsk_block_embed_border_size_dim} = {0pt}
+			{
+			% Ember border size is 0, so do not draw a border.
+			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{clip}}
+			}
+			{
+			% Ember border size is nonzero; set the linewidth and draw border.
+			\pgfsetlinewidth{\l_nsk_block_embed_border_size_dim}
+			\pgfsetstrokecolor{\l_nsk_block_embed_border_color_tl}
 			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
+			}
 
 			% gfx node ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 			\node[]
-			{\includegraphics[width=\l_nsk_block_width_dim, height=\l_nsk_block_height_dim]{\tl_use:N \l_nsk_embed_gfx_tl};};
+			{\includegraphics[width=\l_nsk_block_width_dim, height=\l_nsk_block_height_dim]{\tl_use:N \l_nsk_embed_gfx_tl}};
 		\end{scope}
 
 	}
@@ -668,7 +856,7 @@ every~node/.append~style={text=c__nsk_principal},
 	\tl_if_blank:VTF \l_nsk_block_pattern_tl
 	{ }
 	{
-		% Check if the user’s pattern key is in the alias property
+		% Check if the user's pattern key is in the alias property
 		\prop_if_in:NVTF \g_nsk_pattern_aliases_prop \l_nsk_block_pattern_tl
 		{
 			% It's an alias => retrieve the real pattern
@@ -684,99 +872,204 @@ every~node/.append~style={text=c__nsk_principal},
 
 \cs_new_protected_nopar:Npn \nsk__build_block_style:
 {
-	% Build the style token list incrementally:
-	\tl_clear_new:N \l_tmps_tl
+% Build the style token list incrementally:
+\tl_clear_new:N \l_tmps_tl
 
-	\tl_set:Nn \l_tmp_pre_acts {}
-	\tl_set:Nn \l_tmp_post_acts {}
+\tl_set:Nn \l_tmp_pre_acts {}
+\tl_set:Nn \l_tmp_post_acts {}
 
-	% extras ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\nsk__resolve_pattern_alias:
+% extras ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\nsk__resolve_pattern_alias:
 
-	% Possibly scale border-size according to importance:
-	\nsk__maybe_scale_border_by_importance:
+% If fade is not "none", then override some keys and add a fade style.
+\tl_if_eq:NnF \l_nsk_block_fade_tl { none }
+{
+	% Disable shadow
+	\bool_set_false:N \l_nsk_block_shadow_bool
+	\tl_put_right:Nx \l_tmps_tl {fade~\l_nsk_block_fade_tl ,}
 
-	% id-ref ---------------------------------------------------
-	\tl_put_right:No \l_tmps_tl { name=\l_nsk_block_id_tl,}
-
-	% {x,y} pos ------------------------------------------------
-	\tl_if_blank:VTF \l_nsk_block_pos_tl
+	\bool_if:NTF \g__nsk_dark_mode_bool
+	{}
 	{
-		% -- pos is blank => place the node using x,y
-		\tl_put_right:Nx \l_tmps_tl
-		{ at={(\fp_use:N \l_nsk_block_x_fp,\fp_use:N \l_nsk_block_y_fp)}, }
-	}
-	{
-		% -- pos is given => place the node by raw TikZ positioning
-		% i.e., [right=2cm of otherNode]
-		\tl_put_right:No \l_tmps_tl { \l_nsk_block_pos_tl, }
-	}
-
-	\tl_if_blank:VF \l_nsk_block_anchor_tl
-	{
-		\tl_put_right:No \l_tmps_tl {anchor=\l_nsk_block_anchor_tl,}
-	}
-
-	% shape-type ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_put_right:No \l_tmps_tl {shape=\l_nsk_block_type_tl,}
-	% dims ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_put_right:No \l_tmps_tl {minimum\space width=\l_nsk_block_width_dim,}
-	\tl_put_right:No \l_tmps_tl {minimum\space height=\l_nsk_block_height_dim,}
-	% borders ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}
-	\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
-	\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}
-	\tl_put_right:No \l_tmps_tl {line\space width=\l_nsk_block_border_size_dim,}
-	% outer border ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_put_right:No \l_tmp_pre_acts {draw=\l_nsk_block_outer_border_color_tl,}
-	\tl_put_right:No \l_tmp_pre_acts {\l_nsk_block_outer_border_type_tl,}
-	\tl_put_right:No \l_tmp_pre_acts {rounded\space corners=\l_nsk_block_outer_border_radius_dim,}
-	\tl_put_right:No \l_tmp_pre_acts {line\space width=\l_nsk_block_outer_border_size_dim,}
-
-	% fill ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}
-
-	% shadow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\bool_if:NT \l_nsk_block_shadow_bool
-	{
-		\tl_put_right:No \l_tmps_tl {nskShadow, }
-	}
-	% patterns ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_if_blank:VTF \l_nsk_block_pattern_tl
-	{ }
-	{
-		% something like:
-		%   postaction={pattern=..., pattern color=...}
-		\tl_clear_new:N \l_tmpb_tl
-		\tl_put_right:Nx \l_tmpb_tl { pattern=\l_nsk_block_pattern_tl, }
-		\tl_if_blank:VTF \l_nsk_block_pattern_color_tl
-		{ }
+		\str_case:Vn \l_nsk_block_fade_tl
 		{
-			\tl_put_right:Nx \l_tmpb_tl { pattern\space color=\l_nsk_block_pattern_color_tl, }
+			{down} {\tl_put_right:Nn \l_tmps_tl {top~color=transparent!0, bottom~color=nskBg,}}
+				{up} {\tl_put_right:Nn \l_tmps_tl {bottom~color=transparent!0, top~color=nskBg,}}
+				{left} {\tl_put_right:Nn \l_tmps_tl {right~color=transparent!0, left~color=nskBg,}}
+				{right} {\tl_put_right:Nn \l_tmps_tl {left~color=transparent!0, right~color=nskBg,}}
 		}
-
-		% append to post-actions
-		\tl_put_right:Nx \l_tmp_post_acts {\l_tmpb_tl}
 	}
+}
+
+% Possibly scale border-size according to importance:
+\nsk__maybe_scale_border_by_importance:
+
+% id-ref ---------------------------------------------------
+\tl_put_right:No \l_tmps_tl { name=\l_nsk_block_id_tl,}
+
+% wrapping --
+\bool_if:NTF \g_nsk_wrap_left_bool
+{
+	\tl_set:Nn \l_nsk_block_anchor_tl {\l__nsk_wrap_anchor_tl\space west}
+	\tl_set:Nn \l_nsk_block_pos_tl {\l__nsk_wrap_direction_tl\space left=0mm~and~-.5mm~of~\nskID{1}}
+
+	\bool_gset_false:N \g_nsk_wrap_left_bool
+}{
+	\bool_if:NTF \g_nsk_wrap_right_bool
+	{
+		\tl_set:Nn \l_nsk_block_anchor_tl {\l__nsk_wrap_anchor_tl\space east}
+		\tl_set:Nn \l_nsk_block_pos_tl {\l__nsk_wrap_direction_tl~right=0mm~and~.5mm~of~\nskID{1}}
+
+		\bool_gset_false:N \g_nsk_wrap_right_bool
+	}{}
+}
+
+% {x,y} pos ------------------------------------------------
+\tl_if_blank:VTF \l_nsk_block_pos_tl
+{
+	% -- pos is blank => place the node using x,y
+	\tl_put_right:Nx \l_tmps_tl
+	{ at={(\fp_use:N \l_nsk_block_x_fp,\fp_use:N \l_nsk_block_y_fp)}, }
+}
+{
+	% -- pos is given => place the node by raw TikZ positioning
+	% i.e., [right=2cm of otherNode]
+	\tl_put_right:No \l_tmps_tl { \l_nsk_block_pos_tl, }
+}
+% rotate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_put_right:Nx \l_tmps_tl
+{ rotate=\l_nsk_block_rotate_tl, }
+% opacity ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_put_right:Nx \l_tmps_tl
+{ opacity=\l_nsk_block_opacity_tl, }
+
+% additional shift ~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_put_right:No \l_tmps_tl { xshift=\l_nsk_block_shiftx_tl,}
+\tl_put_right:No \l_tmps_tl { yshift=\l_nsk_block_shifty_tl,}
 
 
-	% pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+\tl_if_blank:VF \l_nsk_block_anchor_tl
+{
+	\tl_put_right:No \l_tmps_tl {anchor=\l_nsk_block_anchor_tl,}
+}
+
+% shape-type ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_if_eq:NnF \l_nsk_block_type_tl {text}{
+	\tl_if_eq:NnF \l_nsk_block_type_tl {icon}
+	{\tl_put_right:No \l_tmps_tl {shape=\l_nsk_block_type_tl,}}
+}
+% dims ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_put_right:No \l_tmps_tl {minimum\space width=\l_nsk_block_width_dim,}
+\tl_put_right:No \l_tmps_tl {minimum\space height=\l_nsk_block_height_dim,}
+% borders ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_if_eq:NnT \l_nsk_block_fade_tl { none }
+{\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}}
+\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
+
+
+\tl_if_in:nVTF {cylinder~cloud~signal~tape} \l_nsk_block_type_tl
+{\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
+{
+	\tl_if_eq:NnTF \l_nsk_block_type_tl {rounded~rectangle}
+	{\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
+	{\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}}
+}
+
+
+\tl_put_right:No \l_tmps_tl {line\space width=\l_nsk_block_border_size_dim,}
+% outer border ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_put_right:No \l_tmp_pre_acts {draw=\l_nsk_block_outer_border_color_tl,}
+\tl_put_right:No \l_tmp_pre_acts {\l_nsk_block_outer_border_type_tl,}
+\tl_put_right:No \l_tmp_pre_acts {rounded\space corners=\l_nsk_block_outer_border_radius_dim,}
+\tl_put_right:No \l_tmp_pre_acts {line\space width=\l_nsk_block_outer_border_size_dim,}
+
+% fill ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_if_eq:NnTF \l_nsk_block_fade_tl { none }
+{\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}}
+{\tl_put_right:No \l_tmps_tl {fill=nskBg,}}
+
+
+% stacks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\bool_if:NT \l_nsk_block_stack_bool
+{
+\str_case:Vn \l_nsk_block_stack_count_tl
+{
+{single}{\tl_put_right:Nx \l_tmps_tl {
+copy~shadow={
+shadow~xshift=\l_nsk_block_stack_xoffset_dim,
+shadow~yshift=\l_nsk_block_stack_yoffset_dim,
+\l_nsk_block_stack_opts_tl
+},
+}}
+{double}{\tl_put_right:Nx \l_tmps_tl {
+double~copy~shadow={
+shadow~xshift=\l_nsk_block_stack_xoffset_dim,
+shadow~yshift=\l_nsk_block_stack_yoffset_dim,
+\l_nsk_block_stack_opts_tl,
+},
+}},
+}
+\bool_set_false:N \l_nsk_block_shadow_bool
+}
+
+% shadow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\bool_if:NT \l_nsk_block_shadow_bool
+{
+	\tl_put_right:No \l_tmps_tl {nskShadow, }
+  % add additional yshift to south-text to account for shadow
+  \tl_put_left:Nn \l_nsk_text_south_style_tl {yshift=-1mm, }
+}
+
+% patterns ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_if_blank:VTF \l_nsk_block_pattern_tl
+{ }
+{
+
+	\tl_if_blank:VTF \l_nsk_text_center_style_tl
+	{
+		% add default 
+		\tl_put_right:No \l_nsk_text_center_style_tl {
+			fill=\l_nsk_block_fill_tl, fill~opacity=.7, text~opacity=1, rounded~corners,
+			inner~sep=.5mm,
+		}
+	}
+	{}
+
+	% something like:
+	%   postaction={pattern=..., pattern color=...}
+	\tl_clear_new:N \l_tmpb_tl
+	\tl_put_right:Nx \l_tmpb_tl { pattern=\l_nsk_block_pattern_tl, }
+	\tl_if_blank:VTF \l_nsk_block_pattern_color_tl
 	{ }
 	{
-		\tl_put_right:NV \l_tmps_tl {\l_nsk_block_extra_style_tl,}
+		\tl_put_right:Nx \l_tmpb_tl { pattern~color=\l_nsk_block_pattern_color_tl, }
 	}
 
+	% pattern-opacity
+	\tl_put_right:Nx \l_tmpb_tl {opacity=\l_nsk_block_pattern_opacity_tl, }
 
-	% add any pre-actions ~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_put_right:Nx \l_tmps_tl { preaction={\tl_use:N \l_tmp_pre_acts}, }
-	% add any post-actions ~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_put_right:Nx \l_tmps_tl { postaction={\tl_use:N \l_tmp_post_acts}, }
+	% append to post-actions
+	\tl_put_right:Nx \l_tmp_post_acts {\l_tmpb_tl}
+}
 
-	% Now call function which takes
-	% params by value: --
-	\nsk__draw_block_aux:V
-	\l_tmps_tl
+
+% pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+{ }
+{
+	\tl_put_right:NV \l_tmps_tl {\l_nsk_block_extra_style_tl,}
+}
+
+
+% add any pre-actions ~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_put_right:Nx \l_tmps_tl { preaction={\tl_use:N \l_tmp_pre_acts}, }
+% add any post-actions ~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_put_right:Nx \l_tmps_tl { postaction={\tl_use:N \l_tmp_post_acts}, }
+
+% Now call function which takes
+% params by value: --
+\nsk__draw_block_aux:V
+\l_tmps_tl
 }
 
 
@@ -811,7 +1104,7 @@ every~node/.append~style={text=c__nsk_principal},
 				}
 			}
 			{
-				% We want the item at “(total - n + 1).”
+				% We want the item at "(total - n + 1)."
 				\tl_set:No \l_tmpa_tl
 				{
 					\seq_item:Nn
@@ -832,10 +1125,95 @@ every~node/.append~style={text=c__nsk_principal},
 
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Text measurement and block resizing
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__maybe_resize_block_to_text:
+{
+	% If text-center is not empty, calculate natural dimensions
+	\tl_if_blank:VF \l_nsk_text_center_tl
+	{
+		% Create a phantom node to measure text dimensions
+		\node[
+			inner~sep=0pt,outer~sep=0,draw=none,fill=none,text~opacity=0, opacity=0
+		] (temp) {\l_nsk_text_center_tl};
+
+		% Get natural dimensions
+		\pgfextractx{\l_tmpa_dim}{\pgfpointdiff{\pgfpointanchor{temp}{west}}{\pgfpointanchor{temp}{east}}}
+		\pgfextracty{\l_tmpb_dim}{\pgfpointdiff{\pgfpointanchor{temp}{south}}{\pgfpointanchor{temp}{north}}}
+		% Set block dimensions to text size plus padding
+		\dim_set:Nn \l_nsk_block_width_dim {\l_tmpa_dim + 2\l_nsk_block_padding_x_dim}
+		\dim_set:Nn \l_nsk_block_height_dim {\l_tmpb_dim + 2\l_nsk_block_padding_y_dim}
+	}
+}
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Alignent (flush)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__process_align:
+{
+
+	% parse the horizontal and vertical direction
+	\seq_set_split:Nnx \l_tmpa_seq {=}{\l_nsk_block_pos_tl}
+	\seq_show:N \l_tmpa_seq
+
+	% h-dir
+	\tl_clear_new:N \l_tmp_hdirc_tl
+	\tl_clear_new:N \l_tmp_hdira_tl
+
+	% If there's at least two items, we can inspect the first part
+	%    (the directions) to pick a multi‐word anchor.
+	\int_compare:nNnT { \seq_count:N \l_tmpa_seq } > {1}
+		{
+			% \l_tmpa_tl := "below right" (for example)
+			\tl_set:Nx \l_tmpa_lx_tl { \seq_item:Nn \l_tmpa_seq {1} }
+			% 0cm and 0cm of basics.<..>
+			\tl_set:Nx \l_tmpa_rx_tl { \seq_item:Nn \l_tmpa_seq {2} }
+
+			\tl_if_in:nVT {right} \l_tmpa_lx_tl
+			{
+				\tl_set:Nn \l_tmp_hdirc_tl {east}
+				\tl_set:Nn \l_tmp_hdira_tl {west}
+			}
+			\tl_if_in:nVT {left} \l_tmpa_lx_tl
+			{
+				\tl_set:Nn \l_tmp_hdirc_tl {west}
+				\tl_set:Nn \l_tmp_hdira_tl {east}
+			}
+		}
+
+	\str_case:Vn \l_nsk_block_align_tl
+	{
+		{top}
+			{
+				\tl_put_right:No \l_nsk_block_pos_tl {.north~\l_tmp_hdirc_tl}
+				\tl_set:No \l_nsk_block_anchor_tl {north~\l_tmp_hdira_tl}
+			}
+			{bottom}
+			{
+				\tl_put_right:No \l_nsk_block_pos_tl {.south~\l_tmp_hdirc_tl}
+				\tl_set:No \l_nsk_block_anchor_tl {south~\l_tmp_hdira_tl}
+			}
+			{center}
+			{
+				\tl_put_right:No \l_nsk_block_pos_tl {.\l_tmp_hdirc_tl}
+				\tl_set:No \l_nsk_block_anchor_tl {\l_tmp_hdira_tl}
+			}
+			{none}{}
+	}
+}
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Main block draw
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__draw_block:
 {
+	\dim_compare:nNnT {\l_nsk_block_width_dim} = {0pt}
+		{
+			\nsk__maybe_resize_block_to_text:
+		}
+
 	% 1. draw the main block shape
 	\nsk__build_block_style:
 
@@ -853,10 +1231,19 @@ every~node/.append~style={text=c__nsk_principal},
 	center .initial:n  = { false },
 	center .default:n  = { true },
 
+
+	block-distance .tl_set:N = \l_nsk_figure_block_distance_tl,
+	block-distance .initial:V = \g__nsk_style_figure_block_distance_tl,
+	block-distance .default:V = \g__nsk_style_figure_block_distance_tl,
+
+
 	% pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	unknown .code:n =
 		{
-			\prop_put:NVn \l_nsk_figure_unknown_prop { \l_keys_key_tl } { #1 }
+			% Store unknown key in the property list, using the content of \l_keys_key_tl as a string
+			\prop_put:Nxx \l_nsk_figure_unknown_prop
+			{ \tl_use:N \l_keys_key_tl }
+			{ #1 }
 		},
 }
 
@@ -864,60 +1251,107 @@ every~node/.append~style={text=c__nsk_principal},
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand \nskBlock { O{} }
+\NewDocumentCommand \nskBlock { sO{} }
+{
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskBlockR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskBlockR[#2]
+	}
+}
+
+\NewDocumentCommand \nskBlockR { O{} }
 {
 	\group_begin:
 
 	% # 1 -> k=v list
 	\keys_set:nn {nsk / block } {#1}
 
+	% check if type is ...[n]
+	\nsk__check_polygon_type:
+	\nsk__check_star_type:
+	\nsk__check_rrect_type:
+	\nsk__check_crect_type:
+
 	% possibly autogenerate the id
 	\nsk__maybe_set_id:
 
-	% store id in history
-	\nsk__store_block_in_history:
-
-
 	% process last-pos -> set cpos if neeeded
 	% if last-pos-s is given, use it (without error); otherwise use last-pos
+
+
 	\tl_if_blank:VTF \l_nsk_block_last_pos_s_tl
 	{ \nsk__process_last_pos: }
 	{ \nsk__process_last_pos_s: }
+
+	% process alignment (flushing) / only works if pos is set
+	\tl_if_blank:VF \l_nsk_block_pos_tl
+	{ \nsk__process_align: }
 
 	\nsk__block_debug:
 
 	% actually draw the block
 	\nsk__draw_block:
 
+	% store id in history
+	\nsk__store_block_in_history:
+
+
 	\group_end:
 }
 
 \NewDocumentEnvironment{nskFigure}{O{}}
 {
+
+% clear globals
 \prop_gclear:N \g_nsk_block_counters_prop
-% (b) Clear the unknown-props container
 \prop_clear:N \l_nsk_figure_unknown_prop
 
-% (c) Parse the user-provided options
+% Parse the user-provided options
 \keys_set:nn { nsk / figure } { #1 }
 
-% (d) Convert the unknown key=value pairs into a comma list
+\prop_show:N \l_nsk_figure_unknown_prop
+
+% reset all keys (bridging)
+\seq_clear:N \g__nsk_bridging_info_seq
+\int_gset:Nn \g__nsk_connect_counter_int {0}
+
+
+% Convert the unknown key=value pairs into a comma list
 \tl_clear_new:N \l_nsk_figure_opts_tl
 \prop_map_inline:Nn \l_nsk_figure_unknown_prop
 {
-	\tl_put_right:Nx \l_nsk_figure_opts_tl { ##1 = { ##2 }, }
+	\tl_put_right:Nn \l_nsk_figure_opts_tl
+	{
+		##1 = ##2,
+	}
 }
+
+% build styles, later refactor in own fn
+\tl_put_right:Nx \l_nsk_figure_opts_tl {node~distance=\l_nsk_figure_block_distance_tl}
 
 % (e) If center=true, wrap the tikzpicture in a center environment
 \bool_if:NTF \l_nsk_figure_center_bool
 {
 	\begin{center}
-	\begin{tikzpicture}[\tl_use:N \l_nsk_figure_opts_tl]
+	\nsk__render_figure:V \l_nsk_figure_opts_tl
+	\begin{scope}[spy~using~outlines]
 }
 {
-	\begin{tikzpicture}[\tl_use:N \l_nsk_figure_opts_tl]
+	\nsk__render_figure:V \l_nsk_figure_opts_tl
+	\begin{scope}[spy~using~outlines]
 		}
 		}{
+	\end{scope}
+	% auto clean icons
+	\bool_if:NTF \g__nsk_style_icon_clean_bool
+	{
+		\nskCleanUnusedIcons
+	}{}
 	\end{tikzpicture}
 	\bool_if:NT \l_nsk_figure_center_bool
 	{
@@ -925,28 +1359,336 @@ every~node/.append~style={text=c__nsk_principal},
 	}
 }
 
+\cs_new_protected_nopar:Npn \nsk__render_figure:n #1
+{
+	\begin{tikzpicture}[#1]
+
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Variant Generation :V
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_generate_variant:Nn \nsk__render_figure:n { V }
+
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Miscs Utils
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+% robust ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% reference counting ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% \nskBlockIDLast[1] -> "the nth last block ID"
 \NewDocumentCommand \nskBlockID {}
 {
 	\tl_use:N \l_nsk_block_id_tl
 }
 
-% reference counting ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-% \nskBlockIDLast[1] -> "the nth last block ID"
-\NewDocumentCommand \nskBlockIDLast { O{1} }
+\NewDocumentCommand \nskRBlockIDLast { O{1} }
 {
 	\nsk__internal_get_nth_block_id:n {#1}
 	\tl_use:N \g_nsk_block_last_requested_block_id
 }
 
-\NewDocumentCommand \nskLastBlockID {} {
+\NewDocumentCommand \nskRLastBlockID {} {
 	% "Alias" for the single last block (i.e., \nskBlockIDLast[])
 	% block is already registered, so get prev ->2
-	\nskBlockIDLast[2]
+	\nskRBlockIDLast[2]
 }
 
+% expandable ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\NewExpandableDocumentCommand {\nskID} { t!m }
+{
+	\IfBooleanTF{#1}
+	{
+		\tl_if_blank:nTF {#2} {
+			\seq_item:Nn \g_nsk_block_id_history_seq
+			{ \int_eval:n { 1 } }
+		}
+		{
+			\seq_item:Nn \g_nsk_block_id_history_seq
+			{ \int_eval:n { #2 } }
+		}
+	}
+	{
+		\tl_if_blank:nTF {#2} {
+			\seq_item:Nn \g_nsk_block_id_history_seq
+			{ \int_eval:n { \seq_count:N \g_nsk_block_id_history_seq - 0 } }
+		}
+		{
+			\seq_item:Nn \g_nsk_block_id_history_seq
+			{ \int_eval:n { \seq_count:N \g_nsk_block_id_history_seq - #2 + 1 } }
+		}
+	}
+}
+
+\NewExpandableDocumentCommand {\nskBlockIDLast} { m }
+{
+	\seq_item:Nn \g_nsk_block_id_history_seq
+	{ \int_eval:n { \seq_count:N \g_nsk_block_id_history_seq - #1 + 1 } }
+}
+
+\NewExpandableDocumentCommand {\nskLastBlockID} { m }
+{
+	\nskBlockIDLast{2}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Diagram Fadings / Shadings
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+\keys_define:nn { nsk / efadings }
+{
+	edge .tl_set:N = \l_nsk_efadings_type_tl,
+	edge .initial:n   = {down},
+	edge .default:n   = {down},
+
+	size .dim_set:N = \l_nsk_efadings_size_dim,
+	size .initial:n   = {10mm},
+	size .default:n   = {10mm},
+
+	offset .dim_set:N = \l_nsk_efadings_offset_dim,
+	offset .initial:n   = {1mm},
+	offset .default:n   = {1mm},
+
+}
+
+\NewDocumentCommand {\nskEdgeFade} { O{} }{
+
+	% parse
+	\keys_set:nn { nsk / efadings } { #1 }
+
+	% match pos
+	\tl_clear_new:N \l_tmpefpos_tl
+	\str_case:Vn \l_nsk_efadings_type_tl
+	{
+		{down}{\tl_set:Nx \l_tmpefpos_tl {above~right=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.south~west}}
+			{up}{\tl_set:Nx \l_tmpefpos_tl {below~right=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.north~west}}
+			{left}{\tl_set:Nx \l_tmpefpos_tl {above~right=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.south~west}}
+			{right}{\tl_set:Nx \l_tmpefpos_tl {above~left=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.south~east}}
+	}
+	\tl_show:N \l_tmpefpos_tl
+
+
+	% sizings
+	\tl_clear_new:N \l_tmpw_tl
+	\tl_clear_new:N \l_tmph_tl
+	\str_case:Vn \l_nsk_efadings_type_tl
+	{
+		{down}{
+				% measure
+				\nskMeasure[from=current~bounding~box.south~west, to=current~bounding~box.south~east]
+				\tl_set:Nx \l_tmpw_tl {\nskDistance + \l_nsk_efadings_offset_dim}
+				\tl_set:Nx \l_tmph_tl {\l_nsk_efadings_size_dim}
+			}
+			{up}{
+				% measure
+				\nskMeasure[from=current~bounding~box.south~west, to=current~bounding~box.south~east]
+				\tl_set:Nx \l_tmpw_tl {\nskDistance + \l_nsk_efadings_offset_dim}
+				\tl_set:Nx \l_tmph_tl {\l_nsk_efadings_size_dim}
+			}
+			{left}{
+				% measure
+				\nskMeasure[
+					from=current~bounding~box.south~west, to=current~bounding~box.north~west,
+					axis=vertical
+				]
+				\tl_set:Nx \l_tmph_tl {\nskDistance + \l_nsk_efadings_offset_dim}
+				\tl_set:Nx \l_tmpw_tl {\l_nsk_efadings_size_dim}
+			}
+			{right}{
+				% measure
+				\nskMeasure[
+					from=current~bounding~box.south~east, to=current~bounding~box.north~east,
+					axis=vertical
+				]
+				\tl_set:Nx \l_tmph_tl {\nskDistance + \l_nsk_efadings_offset_dim}
+				\tl_set:Nx \l_tmpw_tl {\l_nsk_efadings_size_dim}
+			}
+
+	}
+
+	\nsk__render_edge_fading:VVVV
+	\l_tmpefpos_tl
+	\l_tmpw_tl
+	\l_tmph_tl
+	\l_nsk_efadings_type_tl
+
+}
+\cs_new_protected_nopar:Npn \nsk__render_edge_fading:nnnn #1 #2 #3 #4
+{
+	\nskBlock[
+		pos={#1},
+		width=#2, height=#3,
+		fade=#4,
+	]
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Variant Generation :V
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_generate_variant:Nn \nsk__render_edge_fading:nnnn { VVVV }
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Wraps (resets)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% Keys for wrap under options
+\keys_define:nn { nsk / wrap }
+{
+  under .code:n  = {
+    \tl_set:Nn \l__nsk_wrap_ref_tl {#1}
+    \tl_set:Nn \l__nsk_wrap_direction_tl {below}
+    \tl_set:Nn \l__nsk_wrap_anchor_tl {north}
+  },
+	under .initial:n = {},
+
+  over .code:n  = {
+    \tl_set:Nn \l__nsk_wrap_ref_tl {#1}
+    \tl_set:Nn \l__nsk_wrap_direction_tl {above}
+    \tl_set:Nn \l__nsk_wrap_anchor_tl {south}
+  },
+	over .initial:n = {},
+
+  target .tl_set:N = \l__nsk_wrap_ref_tl,
+  target .initial:n = {},
+
+  direction .tl_set:N = \l__nsk_wrap_direction_tl,
+  direction .initial:n = {},
+
+  anchor .tl_set:N = \l__nsk_wrap_anchor_tl,
+  anchor .initial:n = {},
+
+
+	shift-x .dim_set:N = \l__nsk_wrap_shift_x_dim,
+	shift-x .initial:n = 0cm,
+	shift-x .default:n = 0cm,
+	shift-y .dim_set:N = \l__nsk_wrap_shift_y_dim,
+	shift-y .initial:n = 0cm,
+	shift-y .default:n = 0cm,
+}
+
+% TODO: add support for x and y block-distance
+\NewDocumentCommand {\nskWrap} { t! O{} } {
+	% Process keys
+	\keys_set:nn { nsk / wrap } {#2}
+
+	\IfBooleanTF{#1}{
+		\nskMark[pos={
+					\l__nsk_wrap_direction_tl\space right=\tl_use:N \g__nsk_style_figure_block_distance_tl~and~0cm~of~\tl_use:N \l__nsk_wrap_ref_tl,
+				}, shift-x=\dim_use:N \l__nsk_wrap_shift_x_dim,
+			, shift-y=\dim_use:N \l__nsk_wrap_shift_y_dim
+		]
+
+		% set wrap flag
+		\bool_gset_true:N \g_nsk_wrap_right_bool
+	}{
+		\nskMark[pos={\l__nsk_wrap_direction_tl\space left=\tl_use:N \g__nsk_style_figure_block_distance_tl~and~0cm~of~\tl_use:N \l__nsk_wrap_ref_tl,
+				}, shift-x=\dim_use:N \l__nsk_wrap_shift_x_dim,
+			, shift-y=\dim_use:N \l__nsk_wrap_shift_y_dim
+		]
+
+
+		% set wrap flag
+		\bool_gset_true:N \g_nsk_wrap_left_bool
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Check if type is polygon[n] and process accordingly
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__check_polygon_type:
+{
+	% Check if type matches polygon[n] pattern
+	\regex_match:nVTF {polygon\[[0-9]+\]} \l_nsk_block_type_tl
+	{
+		% Extract the number of sides using regex
+		\regex_extract_once:nVN {polygon\[([0-9]+)\]} \l_nsk_block_type_tl \l_tmpa_seq
+		\tl_set:Nx \l_poly_n_tl {\seq_item:Nn \l_tmpa_seq {2}}
+
+		% Set the type to "regular polygon"
+		\tl_set:Nn \l_nsk_block_type_tl {regular~polygon}
+
+		% Append "regular polygon sides=n" to tikz-opts
+		\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+		{
+			\tl_set:Nx \l_nsk_block_extra_style_tl {regular~polygon~sides=\l_poly_n_tl}
+		}
+		{
+			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, regular~polygon~sides=\l_poly_n_tl}
+		}
+	}
+	{ }
+}
+
+\cs_new_protected_nopar:Npn \nsk__check_star_type:
+{
+	% Check if type matches polygon[n] pattern
+	\regex_match:nVTF {star\[[0-9]+\]} \l_nsk_block_type_tl
+	{
+		% Extract the number of sides using regex
+		\regex_extract_once:nVN {star\[([0-9]+)\]} \l_nsk_block_type_tl \l_tmpa_seq
+		\tl_set:Nx \l_poly_n_tl {\seq_item:Nn \l_tmpa_seq {2}}
+
+		% strip the []
+		\tl_set:Nn \l_nsk_block_type_tl {star}
+
+		% Append "star points=n" to tikz-opts
+		\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+		{
+			\tl_set:Nx \l_nsk_block_extra_style_tl {star~points=\l_poly_n_tl}
+		}
+		{
+			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, star~points=\l_poly_n_tl}
+		}
+	}
+	{ }
+}
+
+\cs_new_protected_nopar:Npn \nsk__check_rrect_type:
+{
+	% Check if type matches polygon[n] pattern
+	\regex_match:nVTF {rrect\[[0-9]+\]} \l_nsk_block_type_tl
+	{
+		% Extract the number of sides using regex
+		\regex_extract_once:nVN {rrect\[([0-9]+)\]} \l_nsk_block_type_tl \l_tmpa_seq
+		\tl_set:Nx \l_poly_n_tl {\seq_item:Nn \l_tmpa_seq {2}}
+
+		% strip the []
+		\tl_set:Nn \l_nsk_block_type_tl {rounded~rectangle}
+
+		% Append to tikz-opts
+		\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+		{
+			\tl_set:Nx \l_nsk_block_extra_style_tl {rounded~rectangle~arc~length=\l_poly_n_tl}
+		}
+		{
+			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, rounded~rectangle~arc~length=\l_poly_n_tl}
+		}
+	}
+	{ }
+}
+
+\cs_new_protected_nopar:Npn \nsk__check_crect_type:
+{
+	% Check if type matches polygon[n] pattern
+	\regex_match:nVTF {crect\[[0-9]+\]} \l_nsk_block_type_tl
+	{
+		% Extract the number of sides using regex
+		\regex_extract_once:nVN {crect\[([0-9]+)\]} \l_nsk_block_type_tl \l_tmpa_seq
+		\tl_set:Nx \l_poly_n_tl {\seq_item:Nn \l_tmpa_seq {2}}
+
+		% strip the []
+		\tl_set:Nn \l_nsk_block_type_tl {chamfered~rectangle}
+
+		% Append to tikz-opts
+		\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+		{
+			\tl_set:Nx \l_nsk_block_extra_style_tl {rounded~rectangle~arc~length=\l_poly_n_tl}
+		}
+		{
+			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, rounded~rectangle~arc~length=\l_poly_n_tl}
+		}
+	}
+	{ }
+}
 
 \ExplSyntaxOff
 

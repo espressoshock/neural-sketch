@@ -1,0 +1,35 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  container-padding=6mm,
+  container-fill=nskOrange!30!nskBg,
+  container-border-color=nskOrange,
+  shorten-from=-1mm,
+  shorten-to=1mm,
+  arrow-tip={Circle[width=1.5mm, length=1.5mm]-Straight Barb},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\l{arrow-type=dashed, color=nskStrongCyan, arrow-tip={}, shorten-from=-10mm, shorten-to=-10mm}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskBlock[id=x, fill=nskRed, pattern=hatch]
+  \nskBlock[id=A, type=circle, text-center=A, last-pos={right=3cm}, shift-y=10mm]
+	\nskBlock[id=B, text-center=B, last-pos={below}, fill=nskBlue]
+
+  \nskMark[id=xtop, at=x.east, shift-y=2mm]
+  \nskMark[id=xbot, at=x.east, shift-y=-2mm]
+
+  \nskConnect[from=xtop, to=A, bend-type=single, bend-direction=right, arrow-style={very thick, dashed}]
+  \nskConnect[from=xbot, to=B, bend-type=single, bend-direction=right]
+
+	\nskOnbg{
+    \nskConnect*[from=\nskID!{2}.north, to=\nskID!{3}.south, \l]
+	}
+\end{nskFigure}
+\end{document}

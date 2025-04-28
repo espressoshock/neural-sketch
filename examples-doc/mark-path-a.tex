@@ -1,0 +1,61 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  container-padding=6mm,
+  container-fill=nskOrange!30!nskBg,
+  container-border-color=nskOrange,
+  annotate-width=0cm,
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskContainer[fill=nskSecondaryAccent!30!nskBg, border-color=nskSecondaryAccent,]{
+		\nskBlock[
+			type=circle, text-center=A, importance=1.2,
+			outer-border-type=solid, outer-border-color=nskSecondaryAccent, outer-border-size=3mm,
+		]
+		\nskBlock[last-pos={right=3cm}, text-center=B,]
+		\nskConnect[id=acn, from=\nskID{2}, to=\nskID{1},]
+		\nskMarkPath[at=.25,]{acn}{\nskMark[id=p25]}
+		\nskAnnotate[
+			connect-to=p25, anchor-from=south, pos={above=of p25},
+			text=$w_0$~, disable-tag=true, rounded-box=true, fill=nskYellow,
+		]
+	}
+
+  \nskContainer[fill=nskMainAccent!30!nskBg, border-color=nskMainAccent, last-pos={right=}]{
+		\nskBlock[
+			type=circle, text-center=A, importance=1.2,
+			outer-border-type=solid, outer-border-color=nskMainAccent, outer-border-size=3mm,
+		]
+		\nskBlock[last-pos={right=3cm}, text-center=B,]
+		\nskConnect[id=acn, from=\nskID{2}, to=\nskID{1},]
+		\nskMarkPath[at=.5,]{acn}{\nskMark[id=p50]}
+		\nskAnnotate[
+			connect-to=p50, anchor-from=south, pos={above=of p50},
+			text=$w_1$~, disable-tag=true, rounded-box=true, fill=nskOrange,
+		]
+	}
+
+  \nskContainer[fill=nskPink!30!nskBg, border-color=nskPink, last-pos={right=}]{
+		\nskBlock[
+			type=circle, text-center=A, importance=1.2,
+			outer-border-type=solid, outer-border-color=nskPink, outer-border-size=3mm,
+		]
+		\nskBlock[last-pos={right=3cm}, text-center=B,]
+		\nskConnect[id=acn, from=\nskID{2}, to=\nskID{1},]
+		\nskMarkPath[at=.75,]{acn}{\nskMark[id=p75]}
+		\nskAnnotate[
+			connect-to=p75, anchor-from=south, pos={above=of p75},
+			text=$w_2$~, disable-tag=true, rounded-box=true, fill=nskRed,
+		]
+	}
+
+
+\end{nskFigure}
+\end{document}

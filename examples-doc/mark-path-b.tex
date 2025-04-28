@@ -1,0 +1,79 @@
+\documentclass[11pt]{standalone}
+\standaloneconfig{border=5mm}
+\usepackage[
+  auto-increment-duplicates=false,
+  block-width=1.5cm, block-height=1.5cm,
+  block-distance=1cm,
+  container-border-type=dashed,
+  container-fill=nskRed!30!nskBg,
+  container-border-color=nskRed,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\c{type=circle, fill=nskMainAccent}
+\def\r{type=rounded rectangle, border-radius=0mm, width=3cm, fill=nskBlue}
+\def\p{type=polygon[5], fill=nskMainAccent}
+\def\t{type=polygon[3], height=2cm, shift-y=-2mm, shift-x=1mm, fill=nskMainAccent}
+
+\def\cp{fill=nskSecondaryAccent!30!nskBg, border-color=nskSecondaryAccent}
+\def\x{fill=none, pattern=hatch, border-type=dashed}
+\def\o{type=circle, size=5mm, fill=nskRed, shift-x=.5mm}
+
+\def\ph{
+  type=rectangle,
+  width=1cm,
+  height=1cm,
+  fill=nskRed,
+  border-radius=2mm,
+  rotate=0,
+  fill=none,
+  shadow=false,
+  opacity=.5,
+  border-type=dashed,
+}
+
+\def\guide{color=nskStrongCyan!85!black, arrow-type=dashed}
+
+\begin{document}
+\begin{nskFigure}[]
+  \foreach \s/\l in {rectangle/1cm, circle/1.5cm, diamond/1.5cm} {
+    \nskContainer![last-pos-s={right=1.5cm}]{
+      \nskBlock*[\x, type=\s, id=ref, size=2cm]
+      \foreach \p[count=\i] in {0,.1,...,1} {
+          \nskMarkPath[at=\p]{ref}{\nskMark[ marker=x]}
+        }
+
+      \nskMarkPath[at=0]{ref}{\nskMark[id=p0]}
+      \nskMarkPath[at=.3]{ref}{\nskMark[id=p3]}
+      \nskMarkPath[at=.5]{ref}{\nskMark[id=p05]}
+      \nskMarkPath[at=.8]{ref}{\nskMark[id=p8]}
+      \nskMarkPath[at=1]{ref}{\nskMark[id=p1]}
+
+      \nskAnnotate[
+        connect-to=p0, anchor-from=south, pos={above=\l of p0},
+        text={$p=0$~},
+        width=0cm, disable-tag=true, border-color=nskRed, fill=nskRed!70!nskBg,
+      ]
+
+      \nskAnnotate[
+        connect-to=p05, anchor-from=north, pos={below=\l of p05},
+        text={$p=0.5$~},
+        width=0cm, disable-tag=true, border-color=nskRed, fill=nskRed!70!nskBg,
+      ]
+
+      \nskAnnotate[
+        connect-to=p3, anchor-from=east, pos={left=\l of p3},
+        text={$p=0.30$~},
+        width=0cm, disable-tag=true, border-color=nskRed, fill=nskRed!70!nskBg,
+      ]
+
+      \nskAnnotate[
+        connect-to=p8, anchor-from=west, pos={right=\l of p8},
+        text={$p=0.80$~},
+        width=0cm, disable-tag=true, border-color=nskRed, fill=nskRed!70!nskBg,
+      ]
+    }
+  }
+\end{nskFigure}
+\end{document}

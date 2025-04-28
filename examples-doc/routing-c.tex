@@ -1,0 +1,32 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  shorten-from=2mm, shorten-to=2mm,
+  block-distance=3cm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\s{color=nskFg!100!nskBg}
+
+\begin{document}
+\begin{nskFigure}[]
+	\foreach \t [count=\c from 1] in {
+			Stealth, Latex, Arc Barb, Bar, Bracket, Hooks, Parenthesis, Straight Barb,
+			Tee Barb, To, Circle, Diamond, Ellipse, Kite, Rectangle, Square, Triangle,
+			Turned Square, Rays, Rays[n=8]
+		}{
+			\nskMark[id=ms, y=0, x=.7*\c, marker=x]
+			\nskMark[id=me, y=2, x=.7*\c, marker=o]
+			\nskConnect[from=ms, to=me, arrow-tip=-\t]
+      \nskBlock[type=text, text-center=\c, pos={above=0cm of me}]
+		}
+
+	\nskEdgeFade[edge=up, size=8mm]
+	\nskEdgeFade[edge=down, size=20mm]
+
+
+\end{nskFigure}
+\end{document}

@@ -1,0 +1,54 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+\usepackage[
+  block-width=1.5cm, block-height=1.5cm,
+  block-distance=7mm,
+  container-border-type=dashed,
+  % container-padding=6mm,
+  container-fill=nskRed!30!nskBg,
+  container-border-color=nskRed,
+  % shorten-from=-1mm,shorten-to=1mm,arrow-tip={Circle[width=1.5mm, length=1.5mm]-Straight Barb},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\c{type=circle, fill=nskRed}
+\def\r{type=rounded rectangle, border-radius=0mm, width=3cm, fill=nskBlue}
+\def\p{type=polygon[5], fill=nskSecondaryAccent}
+\def\t{type=polygon[3], height=1.6cm, shift-y=-1mm, shift-x=1mm, fill=nskMainAccent}
+
+\def\cp{fill=nskSecondaryAccent!30!nskBg, border-color=nskSecondaryAccent}
+
+\def\x{fill=none, pattern=hatch}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer*[id=c0, \cp]{
+		\foreach \s in {c, r, p, t} {\nskBlock*[last-pos-s={right=}, \csname\s\endcsname]}
+	}
+
+	\nskContainer[id=c1, pos={right=2cm of c0.east}, anchor=west]{
+		\nskBlock*[\c, \x] % local transformation inside
+		\foreach \s in {r, p, t} {\nskBlock*[last-pos={right=}, \csname\s\endcsname, \x]}
+	}
+
+	\nskContainer[id=c2, pos={below=2cm of c0}]{
+		\nskBlock*[\c, \x] % local transformation inside
+		\foreach \s in {r, p, t} {\nskBlock*[last-pos={right=}, \csname\s\endcsname, \x]}
+	}
+
+	\nskContainer[id=c3, pos={below=2cm of c1}]{
+		\nskBlock*[\c, \x] % local transformation inside
+		\foreach \s in {r, p, t} {\nskBlock*[last-pos={right=}, \csname\s\endcsname, \x]}
+	}
+
+	\foreach \a/\b in {0/1, 2/3} {
+			\nskConnect[
+				from=c\a.west, to=c\b.east,
+				shorten-from=-10mm, shorten-to=-10mm, arrow-type=dashed,
+        color=nskStrongCyan,
+			]
+		}
+
+\end{nskFigure}
+\end{document}

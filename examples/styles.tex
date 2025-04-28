@@ -34,11 +34,11 @@
 	%    \nskConnect[from=ms, to=me, arrow-tip={\t}, color=nskMidGray]
 	%  }
 
-  % \foreach \t [count=\c from 1] in { Stealth, Latex, Arc Barb, Bar, Bracket, Hooks, Parenthesis, Straight Barb, Tee Barb, To, Circle, Diamond, Ellipse, Kite, Rectangle, Square, Stealth, Triangle, Turned Square, Rays, Rays[n=8]}{
-  %   \nskCoord[id=ms, y=0, x=.7*\c, marker=x]
-  %   \nskCoord[id=me, y=1.5, x=.7*\c, marker=o]
-  %   \nskConnect[from=ms, to=me, arrow-tip=-\t]
-  % }
+  \foreach \t [count=\c from 1] in { Stealth, Latex, Arc Barb, Bar, Bracket, Hooks, Parenthesis, Straight Barb, Tee Barb, To, Circle, Diamond, Ellipse, Kite, Rectangle, Square, Stealth, Triangle, Turned Square, Rays, Rays[n=8]}{
+    \nskCoord[id=ms, y=0, x=.7*\c, marker=x]
+    \nskCoord[id=me, y=1.5, x=.7*\c, marker=o]
+    \nskConnect[from=ms, to=me, arrow-tip=-\t]
+  }
 
   \foreach \t [count=\c from 1] in {-Butt Cap[], -Round Cap[], -Round Cap[].Fast Round[].Fast Round[], -Triangle Cap, -Triangle Cap[].Fast Triangle[].Fast Triangle[]}{
     \nskCoord[id=ms, y=0, x=.7*\c, marker=x]

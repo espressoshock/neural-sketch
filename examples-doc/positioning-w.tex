@@ -1,0 +1,49 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+\usepackage[
+  block-width=1.5cm, block-height=1.5cm,
+  block-distance=1.5cm,
+  container-border-type=dashed,
+  % container-padding=6mm,
+  container-fill=nskRed!30!nskBg,
+  container-border-color=nskRed,
+  shorten-from=0mm, shorten-to=4mm, arrow-tip={Circle[width=1.5mm, length=1.5mm]-Straight Barb},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\c{type=circle, fill=nskMainAccent}
+\def\r{type=rounded rectangle, border-radius=0mm, width=3cm, fill=nskBlue}
+\def\p{type=polygon[5], fill=nskMainAccent}
+\def\t{type=polygon[3], height=1.6cm, shift-y=-1mm, shift-x=1mm, fill=nskMainAccent}
+
+\def\cp{fill=nskSecondaryAccent!30!nskBg, border-color=nskSecondaryAccent}
+\def\x{fill=none, pattern=hatch}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskOnbg{
+		\nskBlock*[id=a, \p, \x]
+		\nskBlock*[last-pos={right=7mm}, \r, \x]
+		\nskBlock*[last-pos={right=7mm}, \c, \x]
+		\nskBlock*[last-pos={right=7mm}, \t]
+	}
+
+	\nskWrapUnder[a]
+	\nskBlock*[id=b, \t,]
+	\nskBlock*[last-pos={right=7mm}, \c, \x]
+	\nskBlock*[last-pos={right=7mm}, \r, \x]
+	\nskBlock*[last-pos={right=7mm}, \p, \x]
+
+	\nskWrapUnder[b]
+	\nskBlock*[\p, \x]
+	\nskBlock*[last-pos={right=7mm}, \r, \x]
+	\nskBlock*[last-pos={right=7mm}, \c, ]
+	\nskBlock*[last-pos={right=7mm}, \t, \x]
+
+	\nskMark[id=af, pos={right=3mm of \nskID!{4}}, shift-y=2mm]
+	\nskMark[id=bf, pos={right=2mm of \nskID!{9}}, shift-y=1mm]
+	\nskConnect[from=af, to=\nskID!{9}.east, route={to[bend left=60]}, color={nskFg!15!nskBg}]
+	\nskConnect[from=bf, to=\nskID!{14}.east, route={to[bend left=60]}, color={nskFg!15!nskBg}]
+\end{nskFigure}
+\end{document}

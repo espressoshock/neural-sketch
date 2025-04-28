@@ -1,0 +1,222 @@
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%  neural-sketch-icons.dtx
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% \iffalse
+%<*driver>
+\documentclass{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+
+\begin{document}
+\DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+
+\ProvidesFile{neural-sketch-icons.dtx}%
+[2025/01/22 v0.2 neural-sketch-icons – Icon system for neural-sketch]
+
+% <*package>
+%    \begin{macrocode}
+
+
+\ExplSyntaxOn
+
+% imports ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\exp_args:Nx \PassOptionsToPackage
+{ inkscapepath={./\g__nsk_style_icon_outdir_tl/\g__nsk_style_icon_intdir_tl/} }
+{ svg }
+\RequirePackage{svg}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Message definitions
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\msg_new:nnn {nsk-icon} {no-name} {No~icon~name~provided.~Please~specify~a~name.}
+\msg_new:nnn {nsk-icon} {unsupported-type} {Icon~type~'#1'~is~not~yet~supported~for~display.}
+\msg_new:nnn {nsk-icon} {unrecognized-key} {Unrecognized~key~'#1'~will~be~ignored.}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Global variables for tracking icons
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\prop_new:N \g__nsk_used_icons_prop  % Property list to store icons by type
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Key definitions for icon options with simplified interface
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\keys_define:nn { nsk/icon }
+{
+	type .choice:,
+	type / lucide .code:n = { \tl_set:Nn \l__nsk_icon_type_tl {lucide} },
+	type .initial:V = \g__nsk_style_icon_type_tl,
+	type .default:V = \g__nsk_style_icon_type_tl,
+
+	name .tl_set:N = \l__nsk_icon_name_tl,
+	name .value_required:n = true,
+	name .initial:n = {},
+	name .default:n = {},
+
+	color .tl_set:N = \l__nsk_icon_color_tl,
+	color .initial:V = \g__nsk_style_icon_color_tl,
+	color .default:V = \g__nsk_style_icon_color_tl,
+
+  border-size .fp_set:N = \l_nsk_icon_border_size_fp,
+  border-size .initial:V = \g__nsk_style_icon_border_size_fp,
+  border-size .default:V = \g__nsk_style_icon_border_size_fp,
+
+	width .dim_set:N = \l__nsk_icon_width_dim,
+	width .initial:V = \g__nsk_style_icon_width_dim,
+	width .default:V = \g__nsk_style_icon_width_dim,
+
+	height .dim_set:N = \l__nsk_icon_height_dim,
+	height .initial:V = \g__nsk_style_icon_height_dim,
+	height .default:V = \g__nsk_style_icon_height_dim,
+
+	size .code:n = {
+			\dim_set:Nn \l__nsk_icon_width_dim {#1}
+			\dim_set:Nn \l__nsk_icon_height_dim {#1}
+		},
+
+	style .tl_set:N = \l__nsk_icon_style_tl,
+	style .initial:V = \g__nsk_style_icon_style_tl,
+	style .default:V = \g__nsk_style_icon_style_tl,
+
+	shift-y .dim_set:N = \l__nsk_icon_shift_y_dim,
+	shift-y .initial:V = \g__nsk_style_icon_shift_y_dim,
+	shift-y .default:V = \g__nsk_style_icon_shift_y_dim,
+
+
+	unknown .code:n =
+		{
+			\msg_warning:nnx {nsk-icon}{unrecognized-key}{\l_keys_key_tl}
+		},
+}
+
+\NewDocumentCommand \nskIcon { sO{} }
+{
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskIconR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskIconR[#2]
+	}
+}
+
+\NewDocumentCommand{\nskIconR}{ o }
+{
+
+	\group_begin:
+
+	% key=val,
+	\keys_set:nn { nsk/icon } {#1}
+
+	% Check if name is provided
+	\tl_if_blank:VTF \l__nsk_icon_name_tl
+	{
+		% If no name is provided, show an error
+		\msg_error:nn {nsk-icon}{no-name}
+	}
+	{
+		% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+		\prop_get:NVNTF \g__nsk_used_icons_prop \l__nsk_icon_type_tl \l_tmpk_tl
+		{
+			\tl_show:N \l_tmpk_tl
+			\tl_if_in:NVTF \l_tmpk_tl \l__nsk_icon_name_tl
+			{}
+			{
+				% Add the icon name to the list
+				\prop_gput:NVe \g__nsk_used_icons_prop \l__nsk_icon_type_tl
+				{\l_tmpk_tl \l__nsk_icon_name_tl,}
+			}
+		}{
+			\prop_gput:NVn \g__nsk_used_icons_prop \l__nsk_icon_type_tl {}
+		}
+
+		\prop_show:N \g__nsk_used_icons_prop
+		% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+		% Check if the icon file already exists
+		\file_if_exist:nF {\tl_use:N \g__nsk_style_icon_outdir_tl/\l__nsk_icon_name_tl.svg}
+		{
+			% Execute the appropriate command based on the type
+			\sys_shell_now:x {python3~../scripts/neural-sketch/pyfetch.py~fetch-\l__nsk_icon_type_tl\space\l__nsk_icon_name_tl\space--dest=\g__nsk_style_icon_outdir_tl}
+		}
+
+		% update color ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+		\convertcolorspec{named}{\tl_use:N \l__nsk_icon_color_tl}{HTML}{\l__nsk_color_hex_tl}
+		% always update - the check is on the py-side
+		\sys_shell_now:x {python3~../scripts/neural-sketch/pyfetch.py~update-color~\#\l__nsk_color_hex_tl\space\l__nsk_icon_name_tl\space--dest=\g__nsk_style_icon_outdir_tl}
+
+    % update border size ~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+		\sys_shell_now:x {python3~../scripts/neural-sketch/pyfetch.py~update-stroke~\fp_to_tl:N \l_nsk_icon_border_size_fp\space\l__nsk_icon_name_tl\space--dest=\g__nsk_style_icon_outdir_tl}
+
+		% Determine the file path based on type
+		\tl_if_eq:NnTF \l__nsk_icon_type_tl {lucide}
+		{
+			% Include the SVG file with the specified dimensions
+			\nsk__render_icon:VVVVV
+			{ \l__nsk_icon_width_dim }
+			{ \l__nsk_icon_height_dim }
+			{ \g__nsk_style_icon_outdir_tl }
+			{ \l__nsk_icon_name_tl }
+      { \l__nsk_icon_style_tl }
+
+		}
+		{
+			% For other types, display a warning message
+			\msg_warning:nx {nsk-icon}{unsupported-type}{\l__nsk_icon_type_tl}
+		}
+	}
+
+	\group_end:
+}
+
+\cs_new_protected:Nn \nsk__render_icon:nnnnn
+{
+  % baseline
+  \dim_set:Nn \l_tmpa_dim {\dim_eval:n { -\l__nsk_icon_height_dim / 4 }}
+	\tikz[
+		baseline={(0mm, \l_tmpa_dim)},
+		local~bounding~box=__inner_node__,
+		inner~sep=0mm, outer~sep=0mm
+	]{
+    \node[transform~shape, yshift=\l__nsk_icon_shift_y_dim, #5] {\includesvg[width=#1, height=#2]{#3/#4.svg}};
+	}
+}
+
+\cs_generate_variant:Nn \nsk__render_icon:nnnnn { VVVVV }
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Helper function to process each icon type for cleanup
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\cs_new_protected:Nn \__nsk_process_icon_type_cleanup:nn
+{
+	% #1 = icon type (key), #2 = comma-separated list of icon names (value)
+	\tl_set:Nn \l_tmpa_tl {#2}
+	\tl_if_empty:NF \l_tmpa_tl
+	{
+		% Remove trailing comma if present
+		\regex_replace_once:nnN {,\s*$} {} \l_tmpa_tl
+
+		% Call the appropriate clean command based on the icon type
+		\sys_shell_now:x {python3~../scripts/neural-sketch/pyfetch.py~clean-#1~\l_tmpa_tl\space--dest=\g__nsk_style_icon_outdir_tl\space--intdir=\g__nsk_style_icon_outdir_tl/\g__nsk_style_icon_intdir_tl}
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Clean unused icons
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\NewDocumentCommand{\nskCleanUnusedIcons}{ }
+{
+	% Process each icon type in the property list
+	\prop_map_function:NN \g__nsk_used_icons_prop \__nsk_process_icon_type_cleanup:nn
+}
+
+\ExplSyntaxOff
+%    \end{macrocode}
+% </*package>
+\endinput

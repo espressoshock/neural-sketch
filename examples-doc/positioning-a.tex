@@ -1,0 +1,48 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-width=1.5cm, block-height=1.5cm,
+  container-border-type=dashed,
+  container-padding=6mm,
+  container-fill=nskOrange!30!nskBg,
+  container-border-color=nskOrange,
+  % shorten-from=-2mm,
+  % shorten-to=1mm,
+  % arrow-tip={Circle[width=1.5mm, length=1.5mm]-Straight Barb},
+  block-distance=1cm,
+  text-east-style={rotate=-90, anchor=center, yshift=3mm},
+  text-north-style={fill=nskBg, fill opacity=.8, text opacity=1},
+  text-west-style={rotate=90, anchor=center, yshift=3mm},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskMark[]
+	\foreach \c/\s in {Yellow/1, Orange/2, Red/4} {
+			\nskBlock[last-pos-s={below=}, width=\s cm, fill=nsk\c, text-north=\nskBlockID
+			]
+		}
+
+	\foreach \c/\s in {Yellow/1, Orange/2, Red/4} {
+			\nskBlock[last-pos={right=}, height=\s cm, fill=nsk\c, text-north=\nskBlockID]
+		}
+
+	\nskOnbg{
+	\nskConnect[
+	from=\nskID!{2}.north, to=\nskID!{4}.south,
+	shorten-from=-10mm, shorten-to=-10mm, arrow-type=dashed,
+	color=nskStrongCyan,
+	]
+	\nskConnect[
+		from=\nskID{1}.east, to=\nskID{3}.west,
+		shorten-from=-10mm, shorten-to=-10mm, arrow-type=dashed,
+		color=nskStrongCyan,
+	]
+	}
+
+
+\end{nskFigure}
+\end{document}

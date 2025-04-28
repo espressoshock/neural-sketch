@@ -34,15 +34,21 @@
 	axis .choice:,
 	axis / horizontal .code:n = { \tl_set:Nn \l__nsk_measure_axis_tl {horizontal} },
 	axis / vertical .code:n = { \tl_set:Nn \l__nsk_measure_axis_tl {vertical} },
-	axis .default:n = {horizontal},
-	axis .initial:n = {horizontal},
+	axis .initial:V = \g__nsk_style_measure_axis_tl,
+	axis .default:V = \g__nsk_style_measure_axis_tl,
 
 	from .tl_set:N = \l__nsk_measure_from_tl,
-	from .initial:n = {},
-	from .default:n = {},
+	% <NEW> Instead of .initial:n = {}, .default:n = {}:
+	from .initial:V = \g__nsk_style_measure_from_tl,
+	from .default:V = \g__nsk_style_measure_from_tl,
+
 	to .tl_set:N = \l__nsk_measure_to_tl,
-	to .initial:n = {},
-	to .default:n = {},
+	to .initial:V = \g__nsk_style_measure_to_tl,
+	to .default:V = \g__nsk_style_measure_to_tl,
+
+	into .tl_set:N = \l__nsk_measure_into_tl,
+	into .initial:n = {},
+	into .default:n = {},
 
 	unknown .code:n =
 		{
@@ -61,14 +67,27 @@
 %     to   = <node>.<anchor>
 %
 %   Behavior:
-%     - When called with an optional argument, it computes the distance from the “from”
-%       point to the “to” point along the specified axis (using the absolute value so the distance
+%     - When called with an optional argument, it computes the distance from the "from"
+%       point to the "to" point along the specified axis (using the absolute value so the distance
 %       is always positive) and sets \pgfmathsetlengthmacro into \nskDistance.
 %
 %     - When called without any argument, it simply inserts (typesets) the last measured distance stored in \nskDistance.
 %
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\NewDocumentCommand{\nskMeasure}{ o }
+\NewDocumentCommand \nskMeasure { sO{} }
+{
+	\IfBooleanTF{#1}
+	{
+		% Starred form: auto-expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskMeasureR\expandafter[\l_tmpa_tl]
+	}
+	{
+		\nskMeasureR[#2]
+	}
+}
+
+\NewDocumentCommand{\nskMeasureR}{ o }
 {
 	\IfNoValueTF{#1}
 	{
@@ -90,14 +109,20 @@
 
 		% Compute the difference between the two anchor points.
 		\pgfpointdiff
-			{\pgfpointanchor{\l__nsk_measure_to_node_tl}{\l__nsk_measure_to_anchor_tl}}
-			{\pgfpointanchor{\l__nsk_measure_from_node_tl}{\l__nsk_measure_from_anchor_tl}}
+		{\pgfpointanchor{\l__nsk_measure_to_node_tl}{\l__nsk_measure_to_anchor_tl}}
+		{\pgfpointanchor{\l__nsk_measure_from_node_tl}{\l__nsk_measure_from_anchor_tl}}
 
-		% Depending on the axis, compute and store the absolute value of the difference
-		% directly into \nskDistance using \pgfmathsetlengthmacro.
+		% Compute the distance based on axis
 		\tl_if_eq:NnTF \l__nsk_measure_axis_tl {horizontal}
 		{\pgfmathsetlengthmacro{\nskDistance}{abs(\pgf@x)}}
 		{\pgfmathsetlengthmacro{\nskDistance}{abs(\pgf@y)}}
+
+		% If 'into' key is provided, store the result in the specified variable
+		\tl_if_empty:NF \l__nsk_measure_into_tl
+		{
+      \expandafter \pgfmathsetlengthmacro \csname \l__nsk_measure_into_tl \endcsname {\nskDistance}
+		}
+
 	}
 }
 \ExplSyntaxOff

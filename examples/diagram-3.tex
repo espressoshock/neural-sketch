@@ -1,0 +1,50 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[T1]{fontenc}
+\usepackage{inter}
+
+\usepackage[
+  block-width=4.5cm, block-height=1.2cm,
+  block-border-radius=4mm,
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\s{fill=nskMainAccent!70!nskBg, border-color=nskMainAccent, shadow=false, pattern=hatchd, pattern-opacity=.1}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[border-radius=8mm]{
+	\nskBlock*[type=rounded rectangle, text-center=ENABLE, \s]
+	\nskBlock[
+		last-pos={below=},
+		text-center={\textbf{REQUEST}\\ \small \color{nskFg!70!nskBg} Enable},
+		height=2cm, fill=nskOrange!70!nskBg, border-color=nskOrange,
+    pattern=hatch, pattern-opacity=.1, stack=true, stack-count=double,
+	]
+	\nskBlock[
+		pos={right=4cm of \nskID{2}},
+    text-center={\textbf{NEW REQUEST}\\ \small \color{nskFg!70!nskBg} Enable},
+		height=2cm, fill=nskOrange!70!nskBg, border-color=nskOrange,
+    pattern=dots, pattern-opacity=.1, stack=true, stack-count=double,
+	]
+	\nskBlock*[type=rounded rectangle, text-center=APPROVE, last-pos={below=}, \s]
+
+	\nskConnect[id=rr, from=\nskID!{2}.east, to=\nskID!{3}.west,
+    bend-type=double, bend-direction=right, corner-radius=1.2cm,
+    bend-distance=2cm, arrow-type=dashed, arrow-tip={Circle-Straight Barb},
+    shorten-from=-1mm,
+	]
+	\nskConnect[from=\nskID!{1}, to=\nskID!{2},arrow-tip={-Straight Barb}, color=nskMainAccent]
+	\nskConnect[from=\nskID!{3}, to=\nskID!{4},arrow-tip={-Straight Barb}, color=nskOrange]
+  \nskMarkPath[at=.5]{rr}{\nskMark[]}
+  \nskBlock[
+    type=rounded rectangle, pos={at=(\nskID{1})},
+    text-center={\scriptsize \nskIcon[name=send, width=2.5mm] Request sent},
+    width=0cm, padding-y=3mm, fill=nskGreen, shadow=false,
+  ]
+	}
+
+\end{nskFigure}
+\end{document}

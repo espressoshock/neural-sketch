@@ -1,0 +1,32 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  container-fill=nskSecondaryAccent!30!nskBg,
+  container-border-color=nskSecondaryAccent,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[
+		id=ab,
+		text-north-loc=west,
+		border-type=dashed,
+		padding=3mm,
+	]{
+		\nskBlock[id=ba, width=8cm, height=1cm,]
+		\nskMarkPath[
+			path-width=8cm,
+			skip-first=true,
+			skip-last=true,
+			step=10mm
+		]{(ba.south west) -- (ba.south east)}{
+			\draw[nskFg] (0,0) -- (0,1cm);
+		}
+	}
+
+\end{nskFigure}
+\end{document}

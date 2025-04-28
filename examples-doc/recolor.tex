@@ -1,7 +1,9 @@
 \documentclass{standalone}
-\standaloneconfig{border=10mm}
+\standaloneconfig{border=5mm}
 
-\usepackage[]{neural-sketch}
+\usepackage[
+  dark-mode=true,
+]{neural-sketch}
 \nskUseModule{*}
 
 \begin{document}
@@ -45,7 +47,7 @@
 		type=circle,
 		text-north=$c'$,
 		padding=1mm,
-		pos={right=1cm of cc.east},
+		pos={right=3cm of cc},
 		border-type=dashed,
 	]{
 		\nskBlock[

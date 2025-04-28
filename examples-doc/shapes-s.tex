@@ -1,0 +1,48 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskContainer[
+		border-type=dashdotted,
+		text-north=Specials,
+		text-north-style={nskMidGray},
+		text-north-loc=west,
+		fill=nskMainAccent!30!nskBg,
+		border-color=nskMainAccent,
+	]{
+		\foreach \shape in {isosceles triangle, kite, dart}{
+				\nskBlock[
+					type=\shape,
+					id=ablock,
+					last-pos-s={right=.8cm},
+				]
+			}
+	}
+
+	\nskContainer[
+		border-type=dashdotted,
+		text-north=Specials,
+		text-north-style={nskMidGray},
+		text-north-loc=west,
+		fill=nskPink!30!nskBg,
+		border-color=nskPink,
+	   last-pos={right=},
+	]{
+		\foreach \shape in {cylinder, cloud, signal, tape}{
+				\nskBlock*[
+					type=\shape,
+					id=ablock,
+					last-pos-s={right=.8cm},
+				]
+			}
+	}
+\end{nskFigure}
+\end{document}

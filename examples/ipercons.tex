@@ -1,0 +1,20 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+
+\usepackage{svg}
+
+\begin{document}
+\begin{nskFigure}[]
+  % \nskBlock[]
+
+  \node[]{\includesvg[]{../icons/aperture.svg}};
+
+
+\end{nskFigure}
+\write18{ls}
+\end{document}

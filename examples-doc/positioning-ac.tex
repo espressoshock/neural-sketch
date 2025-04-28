@@ -1,0 +1,83 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+\usepackage[
+  block-width=1.5cm, block-height=1.5cm,
+  block-distance=1.5cm,
+  container-border-type=dashed,
+  container-fill=nskRed!30!nskBg,
+  container-border-color=nskRed,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\c{type=circle, fill=nskMainAccent}
+\def\r{type=rounded rectangle, border-radius=0mm, width=3cm, fill=nskBlue}
+\def\p{type=polygon[5], fill=nskMainAccent}
+\def\t{type=polygon[3], height=2cm, shift-y=-2mm, shift-x=1mm, fill=nskMainAccent}
+
+\def\cp{fill=nskSecondaryAccent!30!nskBg, border-color=nskSecondaryAccent}
+\def\x{fill=none, pattern=hatch, border-type=dashed}
+\def\o{type=circle, size=5mm, fill=nskRed, shift-x=.5mm}
+
+\def\ph{
+  type=rectangle,
+  width=1cm,
+  height=1cm,
+  fill=nskRed,
+  border-radius=2mm,
+  rotate=0,
+  fill=none,
+  shadow=false,
+  opacity=.5,
+  border-type=dashed,
+}
+
+\def\guide{color=nskStrongCyan!85!black, arrow-type=dashed}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer![]
+	{
+	\nskBlock*[id=a, \p, \x]
+	\nskBlock*[last-pos={right=7mm}, \r, \x]
+	\nskBlock*[last-pos={right=7mm}, \c, \x]
+	\nskBlock*[last-pos={right=7mm}, \t]
+	}
+
+	\nskOnfg{
+		\nskBlock*[\o, last-pos={above=7mm}]
+	}
+
+	\nskMeasure[from=\nskID!{1}.west, to=\nskID!{4}.corner 3, into=w]
+	\nskConnect[id=c, from=\nskID!{1}.west, to=\nskID!{4}.corner 3 |- \nskID!{1},
+	arrow-tip=|-|, shift-y=-15mm]
+
+	% for docs
+	% \nskBlock*[\ph, pos={above=5mm of \nskID!{1}}]
+	% \nskBlock*[\ph, pos={above=5mm of \nskID!{2}}]
+	% \nskBlock*[\ph, pos={above=5mm of \nskID!{3}}]
+	% \nskBlock*[\ph, pos={above=5mm of \nskID!{4}}]
+	\foreach \i in {1,...,4} {
+	\nskBlock*[\ph, pos={above=5mm of \nskID!{\i}}]
+	\nskConnect[
+	from=\nskID!{\i},to=\nskID{1}.center,
+	arrow-tip={-Straight Barb},color={nskFg!20!nskBg},arrow-type=dashed
+	]
+	}
+
+	% for docs
+	% \nskBlock*[\o, pos={at=(\nskID{2})}]
+
+	\nskMarkPath[at=.5]{c}{
+		\nskMark[marker=x]
+		\nskBlock[type=text, pos={at=(\nskID{1})}, text-south={\w}, height=4mm]
+		\nskBlock[type=circle, pos={at=(\nskID{1})}, fill=nskRed, height=2mm, width=2mm]
+		\nskConnect*[from=\nskID{1}, to={\nskID{1} |- 0, 5}, \guide]
+	}
+
+
+
+	\nskEdgeFade[edge=up]
+
+\end{nskFigure}
+\end{document}

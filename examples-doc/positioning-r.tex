@@ -1,0 +1,34 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-width=1.5cm, block-height=1.5cm,
+  container-border-type=dashed,
+  container-padding=6mm,
+  container-fill=nskOrange!30!nskBg,
+  container-border-color=nskOrange,
+  shorten-from=-1mm,
+  shorten-to=1mm,
+  arrow-tip={Circle[width=1.5mm, length=1.5mm]-Straight Barb},
+  text-east-style={rotate=-90, anchor=center, yshift=3mm},
+  text-west-style={rotate=90, anchor=center, yshift=3mm},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\p{fill=none, border-type=dashed, shadow=false, border-color=nskStrongCyan}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskBlock[id=x, fill=nskRed, pattern=hatch, width=2cm, height=2cm, type=diamond]
+	\nskBlock[pos={right=of x}, text-center=$\bullet$, text-east=right]
+	\nskBlock[pos={left=of x}, text-center=$\bullet$, text-west=left]
+	\nskBlock[pos={above=of x}, text-center=$\bullet$, text-north=above]
+	\nskBlock[pos={below=of x}, text-center=$\bullet$, text-south=below]
+
+	\nskMeasure[from=\nskID!{2}.center, to=\nskID!{3}.center]
+	\nskOnbg{
+		\nskBlock*[type=circle, width=\nskDistance, height=\nskDistance, \p]
+	}
+\end{nskFigure}
+\end{document}

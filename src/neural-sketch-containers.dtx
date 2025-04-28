@@ -36,10 +36,146 @@
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \pgfdeclarelayer{background}
 \pgfdeclarelayer{interim}
+\pgfdeclarelayer{interim-oh}
+\pgfdeclarelayer{fills}
 \pgfdeclarelayer{foreground}
-% layer registration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\pgfsetlayers{background,interim,main,foreground}
 
+% Create additional interim layers for deeper nesting
+\pgfdeclarelayer{interim-1}
+\pgfdeclarelayer{interim-2}
+\pgfdeclarelayer{interim-3}
+\pgfdeclarelayer{interim-4}
+\pgfdeclarelayer{interim-5}
+
+% layer registration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\pgfsetlayers{background,fills,interim,interim-oh,interim-1,interim-2,interim-3,interim-4,interim-5,main,foreground}
+
+% Container nesting level counter
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\int_new:N \g_nsk_container_nesting_level_int
+\int_gset:Nn \g_nsk_container_nesting_level_int {0}
+
+% Stack implementation for container properties
+\seq_new:N \g_nsk_container_pos_stack_seq
+\seq_new:N \g_nsk_container_last_pos_stack_seq
+\seq_new:N \g_nsk_container_last_pos_s_stack_seq
+\seq_new:N \g_nsk_container_anchor_stack_seq
+\seq_new:N \g_nsk_container_border_type_stack_seq
+\seq_new:N \g_nsk_container_border_color_stack_seq
+\seq_new:N \g_nsk_container_fill_stack_seq
+\seq_new:N \g_nsk_container_padding_stack_seq
+\seq_new:N \g_nsk_container_x_stack_seq
+\seq_new:N \g_nsk_container_y_stack_seq
+\seq_new:N \g_nsk_container_rotate_stack_seq
+\seq_new:N \g_nsk_container_scale_stack_seq
+\seq_new:N \g_nsk_block_id_stack_seq
+% --
+\tl_new:N \l_nsk_group_ps_dira_tl
+\tl_new:N \l_nsk_group_ps_dirb_tl
+% --
+\bool_new:N \l_nsk_container_draw_bool
+
+% Temporary variables for position parsing
+\tl_new:N \l_tmpp_pos_tl
+\tl_new:N \l_tmpp_anc_tl
+
+% Helper functions to push and pop container properties to/from stack
+\cs_new_protected:Npn \nsk__container_push_to_stack:
+{
+	% Push the properties to their respective stacks
+	\seq_gpush:NV \g_nsk_container_pos_stack_seq \l_nsk_container_pos_tl
+	\seq_gpush:NV \g_nsk_container_last_pos_stack_seq \l_nsk_container_last_pos_tl
+	\seq_gpush:NV \g_nsk_container_last_pos_s_stack_seq \l_nsk_container_last_pos_s_tl
+	\seq_gpush:NV \g_nsk_container_anchor_stack_seq \l_nsk_container_anchor_tl
+	\seq_gpush:NV \g_nsk_container_border_type_stack_seq \l_nsk_container_border_type_tl
+	\seq_gpush:NV \g_nsk_container_border_color_stack_seq \l_nsk_container_border_color_tl
+	\seq_gpush:NV \g_nsk_container_fill_stack_seq \l_nsk_container_fill_tl
+	\seq_gpush:NV \g_nsk_container_padding_stack_seq \l_nsk_container_padding_dim
+	\seq_gpush:Nx \g_nsk_container_x_stack_seq {\fp_use:N \l_nsk_container_x_fp}
+	\seq_gpush:Nx \g_nsk_container_y_stack_seq {\fp_use:N \l_nsk_container_y_fp}
+	\seq_gpush:Nx \g_nsk_container_rotate_stack_seq {\fp_use:N \l_nsk_container_rotate_fp}
+	\seq_gpush:Nx \g_nsk_container_scale_stack_seq {\fp_use:N \l_nsk_container_scale_fp}
+	\seq_gpush:NV \g_nsk_group_extra_style_stack_seq \l_nsk_group_extra_style_tl
+	\seq_gpush:NV \g_nsk_block_id_stack_seq \l_nsk_block_id_tl
+	\seq_gpush:NV \g_nsk_group_bounds_name_stack_seq \l_nsk_group_bounds_name_tl
+	\seq_gpush:NV \g_nsk_group_ps_dira_stack_seq \l_nsk_group_ps_dira_tl
+	\seq_gpush:NV \g_nsk_group_ps_dirb_stack_seq \l_nsk_group_ps_dirb_tl
+
+	% Clear the unknown properties for the new level
+	\prop_clear:N \l_nsk_container_unknown_prop
+
+	% Clear position direction token lists for new level
+	\tl_clear:N \l_nsk_group_ps_dira_tl
+	\tl_clear:N \l_nsk_group_ps_dirb_tl
+}
+
+\cs_new_protected:Npn \nsk__container_pop_from_stack:
+{
+	% Restore properties from their stacks
+	\seq_gpop:NNTF \g_nsk_container_pos_stack_seq \l_nsk_container_pos_tl
+	{
+		% Successfully popped, continue with other properties
+		\seq_gpop:NN \g_nsk_container_last_pos_stack_seq \l_nsk_container_last_pos_tl
+		\seq_gpop:NN \g_nsk_container_last_pos_s_stack_seq \l_nsk_container_last_pos_s_tl
+		\seq_gpop:NN \g_nsk_container_anchor_stack_seq \l_nsk_container_anchor_tl
+		\seq_gpop:NN \g_nsk_container_border_type_stack_seq \l_nsk_container_border_type_tl
+		\seq_gpop:NN \g_nsk_container_border_color_stack_seq \l_nsk_container_border_color_tl
+		\seq_gpop:NN \g_nsk_container_fill_stack_seq \l_nsk_container_fill_tl
+		\seq_gpop:NN \g_nsk_container_padding_stack_seq \l_nsk_container_padding_dim
+
+		% Pop numeric values and convert them back to their fp types
+		\seq_gpop:NN \g_nsk_container_x_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l_nsk_container_x_fp {\l_tmpa_tl}
+
+		\seq_gpop:NN \g_nsk_container_y_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l_nsk_container_y_fp {\l_tmpa_tl}
+
+		\seq_gpop:NN \g_nsk_container_rotate_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l_nsk_container_rotate_fp {\l_tmpa_tl}
+
+		\seq_gpop:NN \g_nsk_container_scale_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l_nsk_container_scale_fp {\l_tmpa_tl}
+
+		\seq_gpop:NN \g_nsk_group_extra_style_stack_seq \l_nsk_group_extra_style_tl
+		\seq_gpop:NN \g_nsk_block_id_stack_seq \l_nsk_block_id_tl
+		\seq_gpop:NN \g_nsk_group_bounds_name_stack_seq \l_nsk_group_bounds_name_tl
+		\seq_gpop:NN \g_nsk_group_ps_dira_stack_seq \l_nsk_group_ps_dira_tl
+		\seq_gpop:NN \g_nsk_group_ps_dirb_stack_seq \l_nsk_group_ps_dirb_tl
+	}
+	{
+		% If the pop failed, stack is empty, reset to defaults
+		\tl_clear:N \l_nsk_container_pos_tl
+		\tl_clear:N \l_nsk_container_last_pos_tl
+		\tl_clear:N \l_nsk_container_last_pos_s_tl
+		\tl_clear:N \l_nsk_container_anchor_tl
+		\tl_set:NV \l_nsk_container_border_type_tl \g__nsk_style_container_border_type_tl
+		\tl_set:NV \l_nsk_container_border_color_tl \g__nsk_style_container_border_color_tl
+		\tl_set:NV \l_nsk_container_fill_tl \g__nsk_style_container_fill_tl
+		\dim_set:Nn \l_nsk_container_padding_dim {\g__nsk_style_container_padding_dim}
+		\fp_set:NV \l_nsk_container_x_fp \g__nsk_style_container_x_fp
+		\fp_set:NV \l_nsk_container_y_fp \g__nsk_style_container_y_fp
+		\fp_set:NV \l_nsk_container_rotate_fp \g__nsk_style_container_rotate_fp
+		\fp_set:NV \l_nsk_container_scale_fp \g__nsk_style_container_scale_fp
+		\tl_clear:N \l_nsk_group_extra_style_tl
+		\tl_clear:N \l_nsk_block_id_tl
+		\tl_set:Nn \l_nsk_group_bounds_name_tl {__nsk_container_bounds}
+		\tl_clear:N \l_nsk_group_ps_dira_tl
+		\tl_clear:N \l_nsk_group_ps_dirb_tl
+	}
+}
+
+% Helper to get the appropriate layer for a given nesting level
+\cs_new:Npn \nsk__get_container_layer:n #1 {
+	\int_case:nnF {#1} {
+		{1} {interim}
+			{2} {interim-1}
+			{3} {interim-2}
+			{4} {interim-3}
+			{5} {interim-4}
+			{6} {interim-5}
+	}
+	{interim-all}
+}
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Pass-through
@@ -53,19 +189,24 @@
 \dim_new:N \l__nsk_tmp_dim
 \cs_new_protected_nopar:Npn \nsk__container_parse_pos_value:nn #1#2
 {
-% #1 = the user’s "right=1cm of X" or "above=2mm of Y" ...
-% #2 = the container’s padding dimension (e.g. 3mm)
+% #1 = the user's "right=1cm of X" or "above=2mm of Y" or "below right=1cm of Z" or "below and right=2cm of Z" ...
+% #2 = the container's padding dimension (e.g. 3mm)
 
 % Save the raw pos string to \l_nsk_container_pos_tl
 \tl_set:Nx \l_nsk_container_pos_tl {#1}
 
-% Split at '=' (only if the user wrote e.g. "right=1cm of X").
-\seq_set_split:Nnn \l_tmpa_seq {=}{#1}
+% Replace any "and" with spaces in the position string for easier parsing
+\tl_set:Nx \l_tmpp_pos_tl {#1}
+\tl_replace_all:Nnn \l_tmpp_pos_tl {and} { }
+\tl_trim_spaces:N \l_tmpp_pos_tl
 
-% If we have exactly 2 items, item 1 is "right" and item 2 is "1cm of X".
+% Split at '=' (only if the user wrote e.g. "right=1cm of X").
+\seq_set_split:Nnx \l_tmpa_seq {=}{\l_tmpp_pos_tl}
+
+% Process if we have a recognized format
 \int_compare:nNnT { \seq_count:N \l_tmpa_seq } = {2}
 {
-% The direction (left/right/above/below)
+% The direction (left/right/above/below/above right/etc.)
 \tl_set:Nx \l_tmpa_tl { \seq_item:Nn \l_tmpa_seq {1} }
 \tl_trim_spaces:N \l_tmpa_tl
 
@@ -73,12 +214,8 @@
 \tl_set:Nx \l_tmpb_tl { \seq_item:Nn \l_tmpa_seq {2} }
 \tl_trim_spaces:N \l_tmpb_tl
 
-\tl_show:N \l_tmpa_tl
-\tl_show:N \l_tmpb_tl
-
 % split at " of "
 \seq_set_split:Nnx \l_tmpb_seq {of}{\l_tmpb_tl}
-
 
 \int_compare:nNnT { \seq_count:N \l_tmpb_seq } = {2}
 {
@@ -87,30 +224,76 @@
 \tl_trim_spaces:N \l_tmpc_tl
 
 \tl_if_empty:NTF \l_tmpc_tl
-  {
-    % No distance was provided; use default distance.
-    \tl_set:Nn \l_tmpc_tl {2cm}
-  }
-  {}
+{
+	% No distance was provided; use default distance.
+	\tl_set:Nn \l_tmpc_tl {\g__nsk_style_figure_block_distance_tl}
+}
+{}
 
+% Get the node name
 \tl_set:Nx \l_tmpd_tl { \seq_item:Nn \l_tmpb_seq {2} }
 \tl_trim_spaces:N \l_tmpd_tl
-\tl_show:N \l_tmpc_tl
-\tl_show:N \l_tmpd_tl
 
+% Check if node already has a compass point (.east, .north, etc.)
+\bool_set_false:N \l_tmpa_bool
+\tl_if_in:NnT \l_tmpd_tl {.} { \bool_set_true:N \l_tmpa_bool }
+
+% If no compass point is present, determine appropriate one based on direction
+\bool_if:NF \l_tmpa_bool
+{
+	% Determine compass point based on direction
+	\str_case:VnF \l_tmpa_tl
+	{
+		{right} { \tl_put_right:Nn \l_tmpd_tl {.east} }
+			{left} { \tl_put_right:Nn \l_tmpd_tl {.west} }
+			{above} { \tl_put_right:Nn \l_tmpd_tl {.north} }
+			{below} { \tl_put_right:Nn \l_tmpd_tl {.south} }
+			{above~right} { \tl_put_right:Nn \l_tmpd_tl {.north~east} }
+			{above~left} { \tl_put_right:Nn \l_tmpd_tl {.north~west} }
+			{below~right} { \tl_put_right:Nn \l_tmpd_tl {.south~west} }
+			{below~left} { \tl_put_right:Nn \l_tmpd_tl {.south~east} }
+	}
+	{}
+
+	% Also set the corresponding anchor if it's not already set
+	\tl_if_blank:VT \l_nsk_container_anchor_tl
+	{
+		% Set anchor to the opposite of the compass point
+		\str_case:VnF \l_tmpa_tl
+		{
+			{right} { \tl_set:Nn \l_nsk_container_anchor_tl {west} }
+				{left} { \tl_set:Nn \l_nsk_container_anchor_tl {east} }
+				{above} { \tl_set:Nn \l_nsk_container_anchor_tl {south} }
+				{below} { \tl_set:Nn \l_nsk_container_anchor_tl {north} }
+				{above~right} { \tl_set:Nn \l_nsk_container_anchor_tl {south~west} }
+				{above~left} { \tl_set:Nn \l_nsk_container_anchor_tl {south~east} }
+				{below~right} { \tl_set:Nn \l_nsk_container_anchor_tl {north~west} }
+				{below~left} { \tl_set:Nn \l_nsk_container_anchor_tl {north~east} }
+		}
+		{
+			% Default anchor if direction isn't recognized
+			\tl_set:Nn \l_nsk_container_anchor_tl {center}
+		}
+	}
+}
+
+\tl_show:N \l_nsk_container_anchor_tl
+\tl_show:N \l_tmpd_tl
 
 % Convert "1cm" to a dimension variable
 \dim_set:Nn \l__nsk_tmp_dim {\tl_use:N \l_tmpc_tl}
-\dim_show:N \l__nsk_tmp_dim
+\tl_show:N \l_tmpc_tl
+
+% we shouldn't need this anymore
+% todo: just double check r#13
 % Now add the container's padding
-\dim_add:Nn \l__nsk_tmp_dim  { #2 }
-\dim_add:Nn \l__nsk_tmp_dim  { #2 }
-\dim_add:Nn \l__nsk_tmp_dim  { #2 }
-\dim_show:N \l__nsk_tmp_dim
+% \dim_add:Nn \l__nsk_tmp_dim  { #2 }
+% \dim_add:Nn \l__nsk_tmp_dim  { #2 }
+% \dim_add:Nn \l__nsk_tmp_dim  { #2 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-% String buld
-% Rebuild "right=(dist+pad) of X"
+% String build
+% Rebuild "right=(dist+pad) of X.west" or "below right=(dist+pad) of X.north-west"
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \tl_set:Nx \l_nsk_container_pos_tl
 {
@@ -121,6 +304,138 @@
 }
 }
 }
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Auto Anchors
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected:Npn \nsk__container_compute_anchor
+{
+	\tl_if_blank:VT \l_nsk_container_anchor_tl {
+		% split at '='
+		\tl_if_blank:VTF \l_nsk_container_last_pos_s_tl
+		{\seq_set_split:Nnx \l_tmpa_seq {=} { \l_nsk_container_last_pos_tl }}
+		{\seq_set_split:Nnx \l_tmpa_seq {=} { \l_nsk_container_last_pos_s_tl }}
+
+		\tl_set:Nx \l_tmpp_anc_tl {\seq_item:Nn \l_tmpa_seq {1}}
+		\tl_trim_spaces:N \l_tmpp_anc_tl
+
+		% Replace "and" with space if present
+		\tl_replace_all:Nnn \l_tmpp_anc_tl {and} { }
+		\tl_trim_spaces:N \l_tmpp_anc_tl
+
+		\str_case:VnF \l_tmpp_anc_tl
+		{
+			{right}{\tl_set:Nn \l_nsk_container_anchor_tl {west}}
+				{left}{\tl_set:Nn \l_nsk_container_anchor_tl {east}}
+				{above}{\tl_set:Nn \l_nsk_container_anchor_tl {south}}
+				{below}{\tl_set:Nn \l_nsk_container_anchor_tl {north}}
+				{above~right}{\tl_set:Nn \l_nsk_container_anchor_tl {south~west}}
+				{above~left}{\tl_set:Nn \l_nsk_container_anchor_tl {south~east}}
+				{below~left}{\tl_set:Nn \l_nsk_container_anchor_tl {north~east}}
+				{below~right}{\tl_set:Nn \l_nsk_container_anchor_tl {north~west}}
+		}
+		{
+			% add default
+			\tl_set:Nn \l_nsk_container_anchor_tl {center}
+		}
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% offsets
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected:Npn \nsk__container_compute_anchor_offsets:
+{
+	% Default offsets (no offset)
+	\tl_set:Nn \l_tmpa_tl {0pt}
+	\tl_set:Nn \l_tmpb_tl {0pt}
+
+
+	\str_case:Vn \l_nsk_container_anchor_tl
+	{
+		{north}       { \tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_dim } }
+			{south}       { \tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_dim } }
+			{east}        { \tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_dim } }
+			{west}        { \tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_dim } }
+			{north east}  {
+				\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_dim }
+				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_dim }
+			}
+			{north west}  {
+				\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_dim }
+				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_dim }
+			}
+			{south east}  {
+				\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_dim }
+				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_dim }
+			}
+			{south west}  {
+				\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_dim }
+				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_dim }
+			}
+	}
+}
+
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% last-pos
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__process_container_last_pos:
+{
+	\tl_if_blank:VF \l_nsk_container_last_pos_tl
+	{
+		\seq_if_empty:NTF \g_nsk_block_id_history_seq
+		{
+			\msg_warning:nn {nsk}{No-previous-container-for-last-pos}
+		}
+		{
+			% Retrieve the previous block ID
+			\nsk__internal_get_nth_block_id:n {1}
+			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
+			\str_if_in:NnTF \l_nsk_container_last_pos_tl {=}
+			{
+				\tl_set:Nx \l_nsk_container_pos_tl
+				{ \exp_not:V \l_nsk_container_last_pos_tl\space of~\exp_not:V \l_tmpa_tl }
+			}
+			{
+				\tl_set:Nx \l_nsk_container_pos_tl
+				{ \exp_not:V \l_nsk_container_last_pos_tl =of~\exp_not:V \l_tmpa_tl }
+			}
+		}
+
+		% compute auto anchors
+		\nsk__container_compute_anchor
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% last-pos-s
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__process_container_last_pos_s:
+{
+	\tl_if_blank:VF \l_nsk_container_last_pos_s_tl
+	{
+		\seq_if_empty:NTF \g_nsk_block_id_history_seq
+		{}
+		{
+			% Retrieve the previous block ID
+			\nsk__internal_get_nth_block_id:n {1}
+			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
+			\str_if_in:NnTF \l_nsk_container_last_pos_s_tl {=}
+			{
+				\tl_set:Nx \l_nsk_container_pos_tl
+				{ \exp_not:V \l_nsk_container_last_pos_s_tl\space of~\exp_not:V \l_tmpa_tl }
+			}
+			{
+				\tl_set:Nx \l_nsk_container_pos_tl
+				{ \exp_not:V \l_nsk_container_last_pos_s_tl =of~\exp_not:V \l_tmpa_tl }
+			}
+		}
+
+		% compute auto anchors
+		\nsk__container_compute_anchor
+	}
 }
 
 
@@ -146,8 +461,8 @@
 			}
 
 		},
-	border-type .initial:n = {solid},
-	border-type .default:n = {solid},
+	border-type .initial:V = \g__nsk_style_container_border_type_tl,
+	border-type .default:V = \g__nsk_style_container_border_type_tl,
 
 	border-color .tl_set:N = \l_nsk_container_border_color_tl,
 	border-color .initial:V = \g__nsk_style_container_border_color_tl,
@@ -157,7 +472,7 @@
 	fill .initial:V = \g__nsk_style_container_fill_tl,
 	fill .default:V = \g__nsk_style_container_fill_tl,
 
-	padding .dim_set:N = \l_nsk_container_padding_tl,
+	padding .dim_set:N = \l_nsk_container_padding_dim,
 	padding .initial:V = \g__nsk_style_container_padding_dim,
 	padding .default:V = \g__nsk_style_container_padding_dim,
 
@@ -172,10 +487,22 @@
 	% natural positioning using positioning library
 	pos .code:n =
 		{
-			\nsk__container_parse_pos_value:nn {#1} {\l_nsk_container_padding_tl}
+			\nsk__container_parse_pos_value:nn {#1} {\l_nsk_container_padding_dim}
 		},
 	pos .initial:n = { },
 	pos .default:n = { },
+
+	last-pos .tl_set:N = \l_nsk_container_last_pos_tl,
+	last-pos .initial:n = {},
+	last-pos .default:n = {},
+
+	last-pos-s .tl_set:N = \l_nsk_container_last_pos_s_tl,
+	last-pos-s .initial:n = {},
+	last-pos-s .default:n = {},
+
+	anchor .tl_set:N = \l_nsk_container_anchor_tl,
+	anchor .initial:V = \g__nsk_style_container_anchor_tl,
+	anchor .default:V = \g__nsk_style_container_anchor_tl,
 
 	rotate .fp_set:N = \l_nsk_container_rotate_fp,
 	rotate .initial:V = \g__nsk_style_container_rotate_fp,
@@ -188,7 +515,7 @@
 	group-opts .code:n =
 		{
 			% #1 is exactly what is inside { ... }, including any commas.
-			% store it literally into \l_nsk_block_extra_style_tl
+			% store it literally into \l_nsk_group_extra_style_tl
 			\tl_set:Nn \l_nsk_group_extra_style_tl {#1}
 		},
 	group-opts .initial:n = {},
@@ -210,9 +537,35 @@
 % Public Interface
 % - (user-facing)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\NewDocumentCommand \nskContainer { O{} +m }
+\NewDocumentCommand \nskContainer { st!O{} }
 {
-  \group_begin:
+
+\IfBooleanTF{#2}{\bool_set_false:N \l_nsk_container_draw_bool}
+{\bool_set_true:N \l_nsk_container_draw_bool}
+
+\IfBooleanTF{#1}
+{
+	% Starred form: auto-expand keys
+	\edef\l_tmpa_tl{#3}
+	\expandafter\nskContainerR\expandafter[\l_tmpa_tl]
+}
+{
+	\nskContainerR[#3]
+}
+}
+
+\NewDocumentCommand \nskContainerR { O{} +m }
+{
+	% Increment nesting level counter
+	\int_gincr:N \g_nsk_container_nesting_level_int
+
+	% Create a unique bounds name for this nesting level
+	\tl_set:Nx \l_nsk_group_bounds_name_tl {__nsk_container_bounds_\int_use:N \g_nsk_container_nesting_level_int}
+
+	% Save the current state to the stack
+	\nsk__container_push_to_stack:
+
+	\group_begin:
 
 	% (a) Clear the property list so it doesn't retain any old unknown keys
 	\prop_clear_new:N \l_nsk_container_unknown_prop
@@ -220,28 +573,66 @@
 	% (b) Parse recognized container keys + store unknown keys
 	\keys_set:nn {nsk / container}{#1}
 
+	% if no style, then no padding as well --
+	\bool_if:NF \l_nsk_container_draw_bool
+	{\tl_set:Nn \l_nsk_container_padding_dim {0mm}}
+
+	% wrapping --
+	\bool_if:NTF \g_nsk_wrap_left_bool
+	{
+		\tl_set:Nn \l_nsk_container_anchor_tl {north~west}
+		\tl_set:Nn \l_nsk_container_pos_tl { % account for shadow
+			below~right=\l_nsk_container_padding_dim+.5mm~and~
+			\l_nsk_container_padding_dim-.5mm
+			~of~\nskID{1}
+		}
+
+		\bool_gset_false:N \g_nsk_wrap_left_bool
+	}{
+		\bool_if:NTF \g_nsk_wrap_right_bool
+		{
+			\tl_set:Nn \l_nsk_container_anchor_tl {north~east}
+			\tl_set:Nn \l_nsk_container_pos_tl { % account for shadow
+				below~right=\l_nsk_container_padding_dim+.5mm~and~
+				-\l_nsk_container_padding_dim+0mm
+				~of~\nskID{1}
+			}
+
+			\bool_gset_false:N \g_nsk_wrap_right_bool
+		}{}
+	}
+
+	% --- Process relative positioning:
+	\tl_if_blank:VTF \l_nsk_container_last_pos_s_tl
+	{ \nsk__process_container_last_pos: }
+	{ \nsk__process_container_last_pos_s: }
+
 	% (c) Now call \nskGroup, passing the same #1 so that shift-x, rotate, etc.
 	%     get recognized by nsk / group (or remain unknown for that domain).
 
-  \tl_show:N \l_nsk_container_pos_tl
+	% % compute offsets
+	\nsk__container_compute_anchor_offsets:
+
 	\tl_set:Nx \l_tmpx_tl
 	{
-		shift-x=\l_nsk_container_x_fp,
-		shift-y=\l_nsk_container_y_fp,
+		bounds-name=\l_nsk_group_bounds_name_tl,
+		shift-x=\fp_to_dim:n{\l_nsk_container_x_fp}+\l_tmpa_tl,
+		shift-y=\fp_to_dim:n{\l_nsk_container_y_fp}+\l_tmpb_tl,
 		rotate=\l_nsk_container_rotate_fp,
 		scale=\l_nsk_container_scale_fp,
-    pos={\l_nsk_container_pos_tl},
+		pos={\l_nsk_container_pos_tl},
 	}
 
-  \tl_show:N \l_tmpx_tl
-
-	% % pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+	% pass-through ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\tl_if_empty:VTF \l_nsk_group_extra_style_tl
 	{ }
 	{
-		\tl_put_right:Nx \l_tmpx_tl {\l_nsk_block_extra_style_tl,}
+		\tl_put_right:Nx \l_tmpx_tl {\l_nsk_group_extra_style_tl,}
 	}
 
+	\tl_if_empty:VTF \l_nsk_container_anchor_tl
+	{\tl_set:Nn \l_nsk_container_anchor_tl {center}}
+	{}
 
 	\nsk__expand_group_aux:Vn \l_tmpx_tl {#2}
 
@@ -249,13 +640,18 @@
 	%     stored in \l_nsk_container_unknown_prop. We'll do a small helper:
 	\nsk__container_draw_block:
 
-  \group_end:
+	\group_end:
 
+	% Restore previous state from stack
+	\nsk__container_pop_from_stack:
+
+	% Decrement nesting level counter
+	\int_gdecr:N \g_nsk_container_nesting_level_int
 }
 
 \cs_new_protected:Npn \nsk__expand_group_aux:nn #1 #2
 {
-	\nskGroup[#1]
+	\nskGroup[anchor=\l_nsk_container_anchor_tl, #1]
 	{
 		#2
 	}
@@ -265,8 +661,18 @@
 % block expander ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__expand_block_aux:n #1
 {
+	% Determine which layer to use based on nesting level
+	\int_case:nnF {\g_nsk_container_nesting_level_int} {
+		{1} {\tl_set:Nn \l_tmpa_tl {interim}}
+			{2} {\tl_set:Nn \l_tmpa_tl {interim-oh}}
+			{3} {\tl_set:Nn \l_tmpa_tl {interim-2}}
+			{4} {\tl_set:Nn \l_tmpa_tl {interim-3}}
+			{5} {\tl_set:Nn \l_tmpa_tl {interim-4}}
+			{6} {\tl_set:Nn \l_tmpa_tl {interim-5}}
+	}
+	{\tl_set:Nn \l_tmpa_tl {fills}}
 
-	\begin{pgfonlayer}{background}
+	\begin{pgfonlayer}{\l_tmpa_tl}
 		\nskBlock [
 			% this are computed by bounding box
 			width=0pt, height=0pt,
@@ -294,11 +700,19 @@
 
 % put recognized container keys:
 \tl_put_right:No \l_tmpa_tl { type=rectangle, }
-\tl_put_right:No \l_tmpa_tl { fill=\l_nsk_container_fill_tl, }
-\tl_put_right:No \l_tmpa_tl { border-color=\l_nsk_container_border_color_tl, }
-% use tikz-ops keys
+
+% unstyled if <!> ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\bool_if:NTF \l_nsk_container_draw_bool
+{
+	\tl_put_right:No \l_tmpa_tl { fill=\l_nsk_container_fill_tl, }
+	\tl_put_right:No \l_tmpa_tl { border-color=\l_nsk_container_border_color_tl, }
+}{
+	\tl_put_right:No \l_tmpa_tl { fill=none, }
+	\tl_put_right:No \l_tmpa_tl { border-type=none, }
+}
+% use tikz-ops keys with the current level's bounding box name
 \tl_put_right:Nx \l_tmpa_tl
-{ tikz-opts={fit=(\l_nsk_group_bounds_name_tl), inner\space sep=\l_nsk_container_padding_tl,
+{ tikz-opts={fit=(\l_nsk_group_bounds_name_tl), inner\space sep=\l_nsk_container_padding_dim,
 			\l_nsk_container_border_type_tl}, }
 
 

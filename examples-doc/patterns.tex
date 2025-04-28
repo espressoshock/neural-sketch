@@ -1,7 +1,12 @@
-\documentclass{standalone}
-% \standaloneconfig{border=10mm}
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
 
-\usepackage{neural-sketch}
+\usepackage[
+  container-border-type=dashed,
+  text-south-style={yshift=-2mm},
+  block-distance=5mm,
+  dark-mode=true,
+]{neural-sketch}
 \nskUseModule{*}
 
 \begin{document}
@@ -9,22 +14,16 @@
 \begin{nskFigure}[]
 	\nskContainer[
 		border-type=dashdotted,
-		text-north=Patterns,
 		text-north-style={nskMidGray},
 		text-north-loc=west,
+		fill=nskMainAccent!30!nskBg,
+		border-color=nskMainAccent,
 	]{
-		\foreach \i/\p in
-			{
-				1/north west lines,
-				2/north east lines,
-				3/vertical lines,
-				4/horizontal lines
-			}{
-				\nskBlock[
-					width=1cm, height=1cm,
-					id=a, fill=white,
+		\foreach \p[count=\i] in {hatch, rhatch, hatchd, vlines, hlines, dots, grid, bricks, check, star5, star6}{
+				\nskBlock*[
 					pattern=\p,
-					x=1.5*\i
+          text-south=\p,
+          last-pos-s={right=},
 				]
 			}
 	}

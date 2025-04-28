@@ -1,0 +1,58 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  % block-width=2.5cm,
+  block-height=1.2cm,
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	% blocks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\nskBlock[
+		text-center=BOMB, width=3.5cm,
+		fill=nskOrange, border-type=dashed,
+	]
+
+	% dummy
+	\nskMark[last-pos={below left=2cm and 2.7cm}]
+
+	\foreach \c in {B, O, M, B} {
+			\nskBlock[
+				text-center=\c, height=1.1cm,
+				stack=true, stack-count=double,
+				last-pos={right=}
+			]
+
+		}
+
+	\nskBlock[
+	text-center=first letter, width=3.5cm,
+	fill=nskSecondaryAccent, stack=true, stack-count=double,
+	pos={below=4cm of \nskID!{1}}
+	]
+
+	% connections ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	\foreach \i in {3,...,6} {
+	\nskConnect[
+	from=\nskID!{\i}.north,to=\nskID!{1}.south,
+	arrow-tip={-Straight Barb},
+	bend-type=double, bend-direction=up, bend-distance=4mm,
+	]
+
+	\nskConnect[
+	from=\nskID!{\i}.south, to=\nskID!{7}.north,
+	arrow-tip={-Straight Barb},
+	bend-type=double, bend-direction=down, bend-distance=4mm,
+	]
+	}
+	% \nskConnect[
+	%   from=\nskID{2},to=\nskID!{3},
+	%   arrow-tip={-Straight Barb},
+	%   bend-type=double, bend-direction=up, bend-distance=4mm,
+	% ]
+
+\end{nskFigure}
+\end{document}

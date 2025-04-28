@@ -1,0 +1,34 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  container-fill=nskSecondaryAccent!30!nskBg,
+  container-border-color=nskSecondaryAccent,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[]{
+	\tikzmath{ \df = 65; \a = -(180-\df);}
+
+	\nskBlock[id=a, text-center=A,]
+	\nskBlock[id=b, text-center=B, last-pos={right=3cm}]
+	\nskBlock[
+    type=rounded rectangle, pos={below right=1cm and .8cm of \nskID!{1}},
+    fill=nskMainAccent, width=2cm, border-radius=0mm,
+    id=op, text-center=node, outer-border-type=solid,
+	]
+	\nskConnect[from=a.south, to=op.west, bend-type=single, bend-direction=up,]
+	\nskConnect[id=bTo, from=b.south, to=op.east, route={to[in=0, out=\a]}]
+	\nskMarkPath[at=.5,]{bTo}{
+		\node[below right=.5cm] {Text};
+		\draw[nskFg, thick] (0,0) -- (0,.5); % you can use nskFg
+    }
+	}
+
+
+\end{nskFigure}
+\end{document}

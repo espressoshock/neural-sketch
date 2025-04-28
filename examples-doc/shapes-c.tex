@@ -1,0 +1,92 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  text-west-style={xshift=-10mm},
+  container-border-type=dashed,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskContainer[
+    id=rrect,
+		border-type=dashdotted,
+		text-west=Rounded Rects,
+		text-north-style={nskMidGray},
+		fill=nskMainAccent!20!nskBg,
+		border-color=nskMainAccent,
+	]{
+		\foreach \a in {180, 120, 90}{
+				\nskBlock*[
+          type=rrect[\a],
+					text-center={hello},
+					width=2.2cm, height=1cm,
+					last-pos-s={right=.8cm},
+				]
+			}
+	}
+
+
+	\nskContainer[
+    id=crect,
+		border-type=dashdotted,
+		text-west=Chamfered Rects,
+		text-north-style={nskMidGray},
+		fill=nskSecondaryAccent!20!nskBg,
+		border-color=nskSecondaryAccent,
+    last-pos={below=}
+	]{
+		\foreach \a in {180, 120, 90}{
+				\nskBlock*[
+          type=crect[\a],
+					text-center={hello},
+					width=2cm, height=1cm,
+					border-radius=.6mm,
+          id=a,
+					pos={right=.8cm of a},
+				]
+			}
+	}
+
+	\nskContainer[
+		border-type=dashdotted,
+		text-west=Custom Chamfer,
+		text-north-style={nskMidGray},
+		fill=nskPink!20!nskBg,
+		border-color=nskPink,
+    pos={below=2cm of crect}
+	]{
+		\nskBlock[
+			type=chamfered rectangle,
+			text-center={hello},
+			id=cblock,
+			width=2cm, height=1cm,
+			border-radius=.6mm,
+			pos={right=.8cm of cblock},
+			tikz-opts={chamfered rectangle corners={north east, south east}},
+		]
+		\nskBlock[
+			type=chamfered rectangle,
+			text-center={hello},
+			id=cblock,
+			width=2cm, height=1cm,
+			border-radius=.6mm,
+			pos={right=.8cm of cblock},
+			tikz-opts={chamfered rectangle corners={north west, south west}},
+		]
+
+		\nskBlock[
+			type=chamfered rectangle,
+			text-center={hello},
+			id=cblock,
+			width=2cm, height=1cm,
+			border-radius=.6mm,
+			pos={right=.8cm of cblock},
+			tikz-opts={chamfered rectangle corners={north east, south west}},
+		]
+	}
+\end{nskFigure}
+\end{document}

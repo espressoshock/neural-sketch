@@ -1,0 +1,26 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-width=2cm, block-height=2cm,
+  block-distance=1.5cm,
+  container-border-type=dashed,
+  container-fill=nskOrange!30!nskBg,
+  container-border-color=nskOrange,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskContainer[text-north=Variable Embed Padding, text-north-loc=west]{
+		\foreach \p in {1,...,4} {
+				\nskBlock[
+					last-pos-s=right, text-north=\p mm,
+					embed-gfx={../assets/in.png}, embed-padding={\p mm},
+				]
+			}
+	}
+\end{nskFigure}
+\end{document}

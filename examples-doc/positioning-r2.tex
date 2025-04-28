@@ -1,0 +1,39 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  block-width=1.5cm, block-height=1.5cm,
+  container-border-type=dashed,
+  container-padding=6mm,
+  container-fill=nskOrange!30!nskBg,
+  container-border-color=nskOrange,
+  shorten-from=-2mm,
+  shorten-to=1mm,
+  arrow-tip={Circle[width=1.5mm, length=1.5mm]-Straight Barb},
+  block-distance=4cm,
+  text-east-style={rotate=-90, anchor=center, yshift=3mm},
+  text-west-style={rotate=90, anchor=center, yshift=3mm},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\def\l{arrow-type=dashed, color=nskStrongCyan, arrow-tip={}, shorten-from=-10mm, shorten-to=-10mm}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskBlock[type=diamond, fill=nskRed, pattern=hatch, width=2cm, height=2cm]
+
+	\nskBlock[pos={right=of \nskID{1}}, text-center=$\bullet$, fill=nskSecondaryAccent]
+	\nskBlock[pos={above right=2cm of \nskID{1}}, text-center=$\bullet$, type=circle]
+	\nskBlock[pos={below right=2cm of \nskID{2}}, text-center=$\bullet$, type=circle]
+
+
+	\foreach \i in {1,...,3} {
+	\nskConnect[from=\nskID!{1}.east, to=\nskID{\i}, bend-type=single, bend-direction=right]
+	}
+
+	\nskOnbg{
+	\nskConnect*[from=\nskID!{3}.north, to=\nskID!{4}.south, \l]
+	}
+\end{nskFigure}
+\end{document}

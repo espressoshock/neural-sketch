@@ -1,0 +1,20 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+\begin{document}
+
+\begin{nskFigure}[]
+
+	\nskBlock[id=myblock, text-center=$\mathbf{a}$]
+	\nskAnnotate[
+		connect-to=myblock.west,
+		text=Vector~,
+		pos={left=of myblock},
+	]
+
+\end{nskFigure}
+\end{document}

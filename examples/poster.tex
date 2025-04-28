@@ -1,0 +1,65 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  icon-clean=false,
+  arrow-type={loosely dotted},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\NewDocumentCommand {\hcircle} {mmmm}
+{
+  \nskGroup[#4]{
+    \nskBlock[type=circle, width=#1, fill=#3]
+    \nskBlock[type=circle, width=#2, fill=nskBg, pos={at=(\nskID{1}.center)}]
+  }
+}
+
+\begin{document}
+\begin{nskFigure}[]
+	\hcircle{6cm}{4cm}{nskBlue}{}
+	\nskBlock[type=star[8], width=3cm, fill=nskRed]
+
+	\nskBlock[type=circle, pos={above left=0cm of \nskID!{1}}, width=1cm, fill=nskYellow]
+	\nskBlock[type=circle, pos={above right=2mm and 0cm of \nskID!{1}}, width=3cm, fill=nskGreen]
+	\nskBlock[type=circle, pos={below right=5mm of \nskID!{1}}, width=1.2cm, fill=nskLightGray]
+	\nskBlock[type=polygon[6], pos={below left=3mm of \nskID!{1}}, width=1.8cm, fill=nskMainAccent]
+	\nskBlock[
+    type=diamond, pos={above right=.6cm and 2.7cm of \nskID!{1}.east},
+    width=5.5cm, height=5.5cm, fill=nskMainAccent, anchor=center
+	]
+	\hcircle{2cm}{1cm}{nskStrongGrape}{pos={at=(\nskID{1}.center)}}
+	\nskBlock[type=star[8], width=2cm, pos={above right=.7cm of \nskID{3}}, fill=nskOrange]
+	\nskBlock[type=circle, width=1cm, pos={above right=2mm of \nskID{1}}, fill=nskBrown]
+	\nskBlock[type=polygon[3], width=2cm, pos={above right=-7.9mm and 4cm of \nskID{4}.east}, fill=nskLime, tikz-opts={rotate=90}]
+	\nskBlock[type=star[10], width=2.5cm, pos={above right=-2.8cm and 1.4cm of \nskID{5}.east}, fill=nskPink]
+
+	\nskConnect[from=\nskID!{1}.south, to=\nskID!{6}, route={to[bend right]}, shorten-from=.5cm,color=nskFg!50!nskBg]
+	\nskConnect[from=\nskID!{1}, to=\nskID!{7}, route={to[bend right]}, shorten-from=2mm, color=nskFg!50!nskBg]
+	\nskConnect[from=\nskID!{1}.center, to=\nskID!{8}.center, color=nskFg!50!nskBg, arrow-tip={-Circle[width=2mm, length=2mm]}, shorten-to=-1mm]
+
+	\nskConnect[from=\nskID!{12}.center, to=\nskID!{13}.center, color=nskFg!50!nskBg, arrow-tip={-Circle[width=2mm, length=2mm]}, shorten-to=-1mm, route={to[bend left]}]
+
+	\nskBlock[pos={at=(\nskID!{8})}]
+	\nskBlock[type=circle, pos={at=(\nskID!{8})}, fill=none, width=3cm, shadow=false,border-type=dashed, border-color=nskFg!60!nskBg]
+	\nskBlock[type=circle, pos={at=(\nskID!{8})}, fill=none, width=7.5cm, shadow=false, border-type=dashed, border-color=nskFg!30!nskBg]
+	\nskBlock[type=circle, pos={at=(star2)}, fill=none, width=3.5cm, shadow=false, border-type=dashed, border-color=nskFg!30!nskBg]
+	\nskBlock[type=circle, pos={at=(star3)}, fill=none, width=3.5cm, shadow=false, border-type=dashed, border-color=nskFg!30!nskBg]
+	\nskBlock[type=circle, pos={at=(\nskID{5})}, fill=none, width=3.5cm, shadow=false, border-type=dashed, border-color=nskFg!30!nskBg]
+	\nskBlock[type=circle, pos={at=(\nskID{8})}, fill=none, width=3.5cm, shadow=false, border-type=dashed, border-color=nskFg!30!nskBg]
+	\nskBlock[type=star[8], pos={at=(\nskID!{1})}, fill=none, width=3.6cm, shadow=false, border-type=dashed, border-color=nskFg!30!nskBg]
+
+	\nskOnbg{
+    \nskBlock[type=circle, pos={at=(\nskID!{1})}, fill=none, width=7cm, shadow=false, border-type=dashed, border-color=nskFg!20!nskBg]
+    \nskBlock[type=circle, pos={at=(\nskID!{1})}, fill=none, width=8.5cm, shadow=false, border-type=dashed, border-color=nskFg!30!nskBg]
+    \nskBlock[type=circle, pos={at=(\nskID!{5})}, fill=none, width=4.25cm, shadow=false, border-type=dashed, border-color=nskFg!30!nskBg]
+	}
+
+	\foreach \i in {1,...,14} {
+    \nskMark[at={\nskID!{\i}.center}]
+    \nskBlock[type=circle, pos={at=(\nskID{1})}, fill=nskStrongCyan, width=2mm, height=2mm, border-type=none, shadow=false]
+  }
+
+\end{nskFigure}
+\end{document}

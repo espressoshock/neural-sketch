@@ -1,0 +1,23 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  auto-increment-duplicates=true,
+  container-border-type=dashed,
+  container-fill=nskSecondaryAccent!30!nskBg,
+  container-border-color=nskSecondaryAccent,
+  text-south-style={yshift=-3mm, nskSecondaryAccent!70!nskFg},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+  \nskContainer[text-south={User-provided ID {\noexpand\small (enabled)}}]{
+		\foreach \i in {1,...,4} {
+				\nskLerp[from=100, to=0, n=4, into=p]{\i}
+				\nskBlock[id=a, last-pos-s={right=}, fill=nskRed!\p!nskBg, text-north=\nskBlockID]
+			}
+	}
+\end{nskFigure}
+\end{document}

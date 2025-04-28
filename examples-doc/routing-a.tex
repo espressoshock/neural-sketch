@@ -1,0 +1,42 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[
+		text-north=Connection, text-north-loc=west,
+		fill=nskMainAccent!20!nskBg, border-color=nskMainAccent,
+	]{
+		\nskBlock[
+			id=ablock,text-center=A, fill=nskMainAccent, pattern=hatchd,
+			importance=1.2, outer-border-type=solid, outer-border-size=3mm,
+		]
+		\nskBlock[id=bblock,last-pos={right=1cm},text-center=B,]
+		\nskConnect[
+			from=ablock.east,
+			to=bblock.west,
+		]
+	}
+
+	\nskContainer[
+		text-north=Arrow, text-north-loc=west,
+		last-pos={right=}, fill=nskSecondaryAccent!30!nskBg, border-color=nskSecondaryAccent,
+	]{
+		\nskBlock[
+			id=cblock,text-center=C,importance=1.2, fill=nskSecondaryAccent, pattern=hatch,
+			outer-border-type=solid, outer-border-color=nskSecondaryAccent, outer-border-size=3mm,
+		]
+		\nskBlock[id=dblock, last-pos={right=1cm}, text-center=D,]
+		\nskConnect[
+			from=cblock, to=dblock,
+			arrow-tip={->},
+		]
+	}
+\end{nskFigure}
+\end{document}

@@ -1,0 +1,31 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  container-padding=6mm,
+  container-fill=nskOrange!30!nskBg,
+  container-border-color=nskOrange,
+  annotate-width=0cm,
+  block-distance=1mm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+
+\begin{nskFigure}[]
+	\nskBlock[id=a, fill=nskYellow, text-center=A, width=5cm]
+	\nskBlock[id=b, fill=nskOrange, text-center=B, width=2cm, pos={right=of a}]
+	\nskMeasure[
+		axis=horizontal,
+		from=a.west, to=b.east,
+	]
+	\nskBlock[
+		id=c, fill=nskSecondaryAccent, pos={below=of a.south west}, anchor=north west,
+		width={\nskDistance}, text-center={$A+B$}, pattern=hatch,
+	]
+	\nskConnect[id=mn,from=a.north west,to=b.north east,arrow-tip={|-|},shift-y=5mm,]
+	\nskMarkPath[at=.5, ]{mn}{ \node[above] {\nskDistance};}
+\end{nskFigure}
+\end{document}

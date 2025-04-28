@@ -1,0 +1,42 @@
+\documentclass[]{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  dark-mode=false,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskOnfg{
+		\nskMark[x=0]
+		\nskBlock[type=rectangle, last-pos={right=2cm}, fill=nskMainAccent]
+		\nskBlock[type=circle, last-pos={right=2cm}, fill=nskSecondaryAccent]
+		\nskBlock[type=circle, last-pos={right=1cm}, fill=nskSecondaryAccent]
+		\nskBlock[type=diamond, last-pos={right=2cm}, fill=nskOrange]
+		\nskMark[pos={right=2cm of \nskID{1}}]
+	}
+
+	\foreach \i in {2,...,4} {\nskConnect[from=\nskID!{\i}, to=\nskID!{\i+1}, shorten-to={-1mm}]}
+	\nskConnect[from=\nskID!{1}, to=\nskID!{2}, arrow-style={ultra thick, dashed}]
+	\nskConnect[from=\nskID{1}, to=\nskID{2}, arrow-style={ultra thick, dashed}, shorten-to={0mm}]
+
+
+	\foreach \y/\st[count=\i] in {1cm/rectangle1, 3.4cm/circle1, 2cm/circle2, .8cm/diamond1} {
+	% annotate
+	\nskAnnotate[
+	pos={above=\y of \nskID!{\i+1}},
+	anchor-from=south, connect-to={\nskID!{\i+1}.north},
+	header={Auto-tracking},
+	title={\st},
+	% fill=none,
+	% border-type=none,
+	text-align=center,
+	]
+
+	}
+
+	\nskEdgeFade[edge=left]
+	\nskEdgeFade[edge=right]
+\end{nskFigure}
+\end{document}
