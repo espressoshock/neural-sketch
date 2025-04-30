@@ -41,10 +41,6 @@
 % -----------------------------------------------------------------------------
 \keys_define:nn { nsk / zoom }
 {
-	type .tl_set:N = \l_nsk_zoom_type_tl,
-	type .initial:V = \g__nsk_style_zoom_type_tl,
-	type .default:V = \g__nsk_style_zoom_type_tl,
-
 	at .tl_set:N = \l_nsk_zoom_at_tl,
 	at .initial:V = \g__nsk_style_zoom_at_tl,
 	at .default:V = \g__nsk_style_zoom_at_tl,
@@ -87,6 +83,15 @@
 	connecting-path .tl_set:N = \l_nsk_zoom_connecting_path_tl,
 	connecting-path .initial:V = \g__nsk_style_zoom_connecting_path_tl,
 	connecting-path .default:V = \g__nsk_style_zoom_connecting_path_tl,
+
+  type .code:n = {
+    \tl_put_right:Nn \l_nsk_zoom_callout_style_tl {, #1, }
+    \tl_put_right:Nn \l_nsk_zoom_zoomed_style_tl {, #1, }
+    \tl_set:Nn \l_nsk_zoom_type_tl {#1}
+  },
+	type .initial:V = \g__nsk_style_zoom_type_tl,
+	type .default:V = \g__nsk_style_zoom_type_tl,
+
 }
 
 % -----------------------------------------------------------------------------
@@ -109,7 +114,6 @@
 {
 
 \spy[
-\l_nsk_zoom_type_tl,
 every~spy~on~node/.style={#3, draw=#7},
 size=#5,
 magnification=#6,
