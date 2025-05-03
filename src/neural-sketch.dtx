@@ -198,15 +198,15 @@ every~node/.append~style={text=c__nsk_principal},
 	grid-on .default:n = {},
 	grid-on .initial:n = {},
 
-	grid-border-size-x .dim_set:N = \l_nsk_block_grid_sizex_dim,
-	grid-border-size-x .default:n = {.4mm},
-	grid-border-size-x .initial:n = {.4mm},
+	grid-line-size-x .dim_set:N = \l_nsk_block_grid_sizex_dim,
+	grid-line-size-x .default:n = {.4mm},
+	grid-line-size-x .initial:n = {.4mm},
 
-	grid-border-size-y .dim_set:N = \l_nsk_block_grid_sizey_dim,
-	grid-border-size-y .default:n = {.4mm},
-	grid-border-size-y .initial:n = {.4mm},
+	grid-line-size-y .dim_set:N = \l_nsk_block_grid_sizey_dim,
+	grid-line-size-y .default:n = {.4mm},
+	grid-line-size-y .initial:n = {.4mm},
 
-	grid-border-size .code:n = {
+	grid-line-size .code:n = {
 			% \tl_set:Nn \l_nsk_block_grid_size_args_tl {#1}
       \seq_set_split:Nnn \l_args_seq {,} {#1}
 
