@@ -140,6 +140,12 @@ every~node/.append~style={text=c__nsk_principal},
 \bool_new:N \g_nsk_wrap_left_bool
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Grid dims
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\dim_new:N \l_nsk_block_grid_stepx_dim
+\dim_new:N \l_nsk_block_grid_stepy_dim
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Main nsk / Block Primitive
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \keys_define:nn {nsk / block}
@@ -165,6 +171,20 @@ every~node/.append~style={text=c__nsk_principal},
 		},
 	type .initial:n = {rectangle},
 	type .default:n = {rectangle},
+
+  % grid ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  grid .code:n = {
+    \tl_set:Nn \l_nsk_block_grid_args_tl {#1}
+    \tl_if_blank:VF \l_nsk_block_grid_args_tl {
+      \seq_set_split:Nnn \l_args_seq {,} {#1}
+
+      % set args -> [stepx], [stepy]
+      \seq_pop_left:NNT \l_args_seq \l_tmpa_tl { \dim_set:Nn \l_nsk_block_grid_stepx_dim {\l_tmpa_tl} }
+      \seq_pop_left:NNT \l_args_seq \l_tmpa_tl { \dim_set:Nn \l_nsk_block_grid_stepy_dim {\l_tmpa_tl} }
+    }
+  },
+  grid .default:n = {},
+  grid .initial:n = {},
 
 	% padding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	padding-x .dim_set:N = \l_nsk_block_padding_x_dim,
@@ -814,10 +834,41 @@ every~node/.append~style={text=c__nsk_principal},
 \cs_new_protected_nopar:Npn \nsk__draw_block_aux:n #1
 {
 
-	\node [
-		spath/save~global=\l_nsk_block_id_tl,
-		#1,
-	] {};
+	\tl_if_blank:VTF \l_nsk_block_grid_args_tl
+	{
+		\node [
+			spath/save~global=\l_nsk_block_id_tl,
+			#1,
+		] {};
+	}
+	{
+		% Calculate number of horizontal and vertical lines
+		\int_set:Nn \l_tmpa_int {  \l_nsk_block_width_dim / \l_nsk_block_grid_stepy_dim -1 }
+		\int_set:Nn \l_tmpb_int {  \l_nsk_block_height_dim / \l_nsk_block_grid_stepy_dim  -1 }
+		\int_show:N \l_tmpa_int
+		\int_show:N \l_tmpb_int
+
+		\node [
+			spath/save~global=\l_nsk_block_id_tl,
+			#1,
+		    path~picture={
+		      % horizontal
+		      \int_step_inline:nnnn {0}{1}{\l_tmpb_int}
+		      {
+		        \draw[]
+		        (-\l_nsk_block_width_dim/2, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2)
+		        -- (\l_nsk_block_width_dim, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2);
+		      }
+
+		      % vertical
+		      \int_step_inline:nnnn {0}{1}{\l_tmpa_int}
+		      {
+		        \draw[]
+		        (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2, -\l_nsk_block_height_dim/2) -- (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2, \l_nsk_block_height_dim);
+		      }
+		    }
+		] {};
+	}
 
 	% embedding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	\tl_if_blank:VF {\l_nsk_embed_tl}
