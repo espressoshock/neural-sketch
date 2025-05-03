@@ -895,7 +895,7 @@ path~picture={
 % horizontal
 \int_step_inline:nnnn {0}{1}{\l_tmpb_int}
 {
-	\draw[draw~opacity=1, line~width=\l_nsk_block_grid_sizex_dim]
+	\draw[draw~opacity=\l_nsk_block_opacity_tl, line~width=\l_nsk_block_grid_sizex_dim]
 	(-\l_nsk_block_width_dim/2, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2 + \l_nsk_block_grid_stepy_dim)
 	-- (\l_nsk_block_width_dim, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2 + \l_nsk_block_grid_stepy_dim);
 }
@@ -903,7 +903,7 @@ path~picture={
 % vertical
 \int_step_inline:nnnn {0}{1}{\l_tmpa_int}
 {
-	\draw[draw~opacity=1, line~width=\l_nsk_block_grid_sizey_dim]
+	\draw[draw~opacity=\l_nsk_block_opacity_tl, line~width=\l_nsk_block_grid_sizey_dim]
 	(########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, -\l_nsk_block_height_dim/2)
 	-- (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, \l_nsk_block_height_dim);
 }
