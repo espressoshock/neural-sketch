@@ -1,0 +1,31 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  auto-increment-duplicates=false,
+  container-border-type=dashed,
+  container-fill=nskSecondaryAccent!30!nskBg,
+  container-border-color=nskSecondaryAccent,
+  block-width=2cm, block-height=2cm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+  \foreach \s/\c[count=\i] in {circle/Red, rectangle/Blue, diamond/MainAccent, polygon[5]/Pink, star[8]/Green} {
+    \nskBlock*[
+      id=a\i,
+      type=\s,
+      fill=nsk\c,
+      last-pos-s={right=},
+      store-style=true,
+      text-north={2mm},
+      text-north-style={yshift=1mm},
+    ]
+    \nskBlock*[grid={2mm, 2mm}, grid-on=a\i, opacity=.5]
+  }
+  \nskEdgeFade[edge=left]
+  \nskEdgeFade[edge=right]
+\end{nskFigure}
+\end{document}

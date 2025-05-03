@@ -1,0 +1,45 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  container-fill=nskMainAccent!50!nskBg,
+  container-border-color=nskMainAccent,
+  block-width=2cm, block-height=2cm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+
+  \nskContainer[id=x]{
+    \nskBlock[
+      grid={4mm, 4mm},
+      text-south={\noexpand \footnotesize $.4mm$},
+      text-south-style={yshift=-2mm},
+    ]
+  }
+  \nskContainer![id=h, last-pos={right=1.5cm}]{
+    \nskBlock[
+      grid={4mm, 4mm},
+      grid-line-size={.2mm},
+      text-south={\noexpand \scriptsize $.2 mm$},
+      text-south-style={yshift=-2mm},
+    ]
+
+    \foreach \s in {.6,.8,1,1.2} {
+      \nskBlock[
+        grid={4mm, 4mm},
+        grid-line-size={\s mm},
+        text-south={\noexpand \scriptsize $\s mm$},
+        text-south-style={yshift=-2mm},
+        last-pos={right},
+      ]
+    }
+  }
+
+  \nskConnect[from=x.east, to=h.west, arrow-type=dashed, shorten-to=5mm]
+
+\end{nskFigure}
+\end{document}

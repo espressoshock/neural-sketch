@@ -73,7 +73,6 @@
 }
 \ProcessKeysOptions { nsk / pkgopts }
 
-\prop_show:N \l__nsk_pkgopts_opts_prop
 
 % prop->tl
 \tl_new:N \l__nsk_pkgopts_opts_tl
@@ -87,7 +86,6 @@
 	}
 }
 
-\tl_show:N \l__nsk_pkgopts_opts_tl
 
 % dark-mode ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \bool_if:NTF \g__nsk_dark_mode_bool
@@ -97,6 +95,8 @@
 \pagecolor{c__nsk_dark_bg_clr}
 \colorlet{nskBg}{c__nsk_dark_bg_clr}
 \colorlet{nskFg}{c__nsk_principal}
+\colorlet{nskDarker}{c__nsk_dark_bg_clr}
+\colorlet{nskLighter}{c__nsk_principal}
 \tikzset{
 every~node/.append~style={text=c__nsk_principal},
 % every~path/.append~style={draw=red}
@@ -104,8 +104,11 @@ every~node/.append~style={text=c__nsk_principal},
 }
 {
 \definecolor{ c__nsk_principal } {HTML}{000000}
+\pagecolor{white}
 \colorlet{nskBg}{white}
 \colorlet{nskFg}{black}
+\colorlet{nskDarker}{nskFg}
+\colorlet{nskLighter}{nskBg}
 }
 
 \ExplSyntaxOff
@@ -121,6 +124,12 @@ every~node/.append~style={text=c__nsk_principal},
 % Pass-through nsk / style
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \keys_set:nx { nsk / style } { \l__nsk_pkgopts_opts_tl }
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Global Stored Styles
+% to reuse-previouse elements styles
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\prop_new:N \g_nsk_block_stored_style_prop
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Global props -
@@ -138,6 +147,12 @@ every~node/.append~style={text=c__nsk_principal},
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \bool_new:N \g_nsk_wrap_right_bool
 \bool_new:N \g_nsk_wrap_left_bool
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Grid dims
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\dim_new:N \l_nsk_block_grid_stepx_dim
+\dim_new:N \l_nsk_block_grid_stepy_dim
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Main nsk / Block Primitive
@@ -165,6 +180,57 @@ every~node/.append~style={text=c__nsk_principal},
 		},
 	type .initial:n = {rectangle},
 	type .default:n = {rectangle},
+
+	% grid ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	grid .code:n = {
+			\tl_set:Nn \l_nsk_block_grid_args_tl {#1}
+			\tl_if_blank:VF \l_nsk_block_grid_args_tl {
+				\seq_set_split:Nnn \l_args_seq {,} {#1}
+
+				% set args -> [stepx], [stepy]
+				\seq_pop_left:NNT \l_args_seq \l_tmpa_tl { \dim_set:Nn \l_nsk_block_grid_stepx_dim {\l_tmpa_tl} }
+				\seq_pop_left:NNT \l_args_seq \l_tmpa_tl { \dim_set:Nn \l_nsk_block_grid_stepy_dim {\l_tmpa_tl} }
+
+				% set some styles
+				\bool_set_false:N \l_nsk_block_shadow_bool
+				\tl_set:Nn \l_nsk_block_fill_tl {none}
+			}
+		},
+	grid .default:n = {},
+	grid .initial:n = {},
+
+	grid-on .tl_set:N = \l_nsk_block_grid_on_tl,
+	grid-on .default:n = {},
+	grid-on .initial:n = {},
+
+	grid-line-size-x .dim_set:N = \l_nsk_block_grid_sizex_dim,
+	grid-line-size-x .default:n = {.4mm},
+	grid-line-size-x .initial:n = {.4mm},
+
+	grid-line-size-y .dim_set:N = \l_nsk_block_grid_sizey_dim,
+	grid-line-size-y .default:n = {.4mm},
+	grid-line-size-y .initial:n = {.4mm},
+
+	grid-line-size .code:n = {
+			% \tl_set:Nn \l_nsk_block_grid_size_args_tl {#1}
+      \seq_set_split:Nnn \l_args_seq {,} {#1}
+
+				% set args -> [sizex], [sizey]
+				\seq_pop_left:NNT \l_args_seq \l_tmpa_tl { \dim_set:Nn \l_nsk_block_grid_sizex_dim {\l_tmpa_tl} }
+        \seq_pop_left:NNTF \l_args_seq \l_tmpa_tl
+        {\dim_set:Nn \l_nsk_block_grid_sizey_dim {\l_tmpa_tl}}
+        {\dim_set_eq:NN \l_nsk_block_grid_sizey_dim \l_nsk_block_grid_sizex_dim}
+		},
+
+
+	grid-outer-border .bool_set:N = \l_nsk_block_grid_outerb_tl,
+	grid-outer-border .default:n = {true},
+	grid-outer-border .initial:n = {true},
+
+	% store style ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	store-style .bool_set:N = \l_nsk_block_store_style_bool,
+	store-style .default:n = {true},
+	store-style .initial:n = {false},
 
 	% padding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	padding-x .dim_set:N = \l_nsk_block_padding_x_dim,
@@ -502,7 +568,6 @@ every~node/.append~style={text=c__nsk_principal},
 {
 	% First check if the ID exists in the history sequence
 	\bool_set_false:N \l_tmpa_bool
-	\seq_show:N \g_nsk_block_id_history_seq
 	\seq_map_inline:Nn \g_nsk_block_id_history_seq
 	{
 		\tl_if_eq:nVT {##1} \l_nsk_block_id_tl
@@ -814,66 +879,99 @@ every~node/.append~style={text=c__nsk_principal},
 \cs_new_protected_nopar:Npn \nsk__draw_block_aux:n #1
 {
 
-	\node [
-		spath/save~global=\l_nsk_block_id_tl,
-		#1,
-	] {};
+\tl_if_blank:VTF \l_nsk_block_grid_args_tl
+{
+\node [
+	spath/save~global=\l_nsk_block_id_tl,
+	#1,
+] {};
+}
+{
+% update width to account for border size
+\dim_set:Nn \l_nsk_block_width_dim {\l_nsk_block_width_dim - \l_nsk_block_border_size_dim}
+\dim_set:Nn \l_nsk_block_height_dim {\l_nsk_block_height_dim - \l_nsk_block_border_size_dim}
+% Calculate number of horizontal and vertical lines
 
-	% embedding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_if_blank:VF {\l_nsk_embed_tl}
-	{
-		\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
-		\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
+\int_set:Nn \l_tmpa_int {  \l_nsk_block_width_dim / \l_nsk_block_grid_stepx_dim -2 }
+\int_set:Nn \l_tmpb_int {  \l_nsk_block_height_dim / \l_nsk_block_grid_stepy_dim  -2 }
 
-		\begin{scope}
-			\pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
-			\pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
-			\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
-			\dim_compare:nNnTF {\l_nsk_block_embed_border_size_dim} = {0pt}
-			{
-			% Ember border size is 0, so do not draw a border.
-			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{clip}}
-			}
-			{
-			% Ember border size is nonzero; set the linewidth and draw border.
-			\pgfsetlinewidth{\l_nsk_block_embed_border_size_dim}
-			\pgfsetstrokecolor{\l_nsk_block_embed_border_color_tl}
-			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
-			}
-			% raw embedding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-			\tl_use:N \l_nsk_embed_tl
-		\end{scope}
+\node [
+spath/save~global=\l_nsk_block_id_tl, #1,
+path~picture={
+% horizontal
+\int_step_inline:nnnn {0}{1}{\l_tmpb_int}
+{
+	\draw[draw~opacity=\l_nsk_block_opacity_tl, line~width=\l_nsk_block_grid_sizex_dim]
+	(-\l_nsk_block_width_dim/2, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2 + \l_nsk_block_grid_stepy_dim)
+	-- (\l_nsk_block_width_dim, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2 + \l_nsk_block_grid_stepy_dim);
+}
 
-	}
+% vertical
+\int_step_inline:nnnn {0}{1}{\l_tmpa_int}
+{
+	\draw[draw~opacity=\l_nsk_block_opacity_tl, line~width=\l_nsk_block_grid_sizey_dim]
+    (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, -\l_nsk_block_height_dim/2)
+	-- (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, \l_nsk_block_height_dim);
+}
+}
+] {};
+}
 
-	\tl_if_blank:VF {\l_nsk_embed_gfx_tl}
-	{
-		\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
-		\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
+% embedding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_if_blank:VF {\l_nsk_embed_tl}
+{
+	\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
+	\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
 
-		\begin{scope}
-			\pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
-			\pgfset{minimum~width=\l_tmpa_dim, minimum~height=\l_tmpb_dim}
-			\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
+	\begin{scope}
+		\pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
+		\pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
+		\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
+		\dim_compare:nNnTF {\l_nsk_block_embed_border_size_dim} = {0pt}
+		{
+		% Ember border size is 0, so do not draw a border.
+		\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{clip}}
+		}
+		{
+		% Ember border size is nonzero; set the linewidth and draw border.
+		\pgfsetlinewidth{\l_nsk_block_embed_border_size_dim}
+		\pgfsetstrokecolor{\l_nsk_block_embed_border_color_tl}
+		\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
+		}
+		% raw embedding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+		\tl_use:N \l_nsk_embed_tl
+	\end{scope}
 
-			\dim_compare:nNnTF {\l_nsk_block_embed_border_size_dim} = {0pt}
-			{
-			% Ember border size is 0, so do not draw a border.
-			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{clip}}
-			}
-			{
-			% Ember border size is nonzero; set the linewidth and draw border.
-			\pgfsetlinewidth{\l_nsk_block_embed_border_size_dim}
-			\pgfsetstrokecolor{\l_nsk_block_embed_border_color_tl}
-			\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
-			}
+}
 
-			% gfx node ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-			\node[]
-			{\includegraphics[width=\l_nsk_block_width_dim, height=\l_nsk_block_height_dim]{\tl_use:N \l_nsk_embed_gfx_tl}};
-		\end{scope}
+\tl_if_blank:VF {\l_nsk_embed_gfx_tl}
+{
+	\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
+	\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
 
-	}
+	\begin{scope}
+		\pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
+		\pgfset{minimum~width=\l_tmpa_dim, minimum~height=\l_tmpb_dim}
+		\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
+
+		\dim_compare:nNnTF {\l_nsk_block_embed_border_size_dim} = {0pt}
+		{
+		% Ember border size is 0, so do not draw a border.
+		\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{clip}}
+		}
+		{
+		% Ember border size is nonzero; set the linewidth and draw border.
+		\pgfsetlinewidth{\l_nsk_block_embed_border_size_dim}
+		\pgfsetstrokecolor{\l_nsk_block_embed_border_color_tl}
+		\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
+		}
+
+		% gfx node ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+		\node[]
+		{\includegraphics[width=\l_nsk_block_width_dim, height=\l_nsk_block_height_dim]{\tl_use:N \l_nsk_embed_gfx_tl}};
+	\end{scope}
+
+}
 
 
 }
@@ -993,10 +1091,17 @@ every~node/.append~style={text=c__nsk_principal},
 \tl_put_right:No \l_tmps_tl {minimum\space width=\l_nsk_block_width_dim,}
 \tl_put_right:No \l_tmps_tl {minimum\space height=\l_nsk_block_height_dim,}
 % borders ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+% outer-border
+\tl_if_blank:VF \l_nsk_block_grid_args_tl
+{
+	\bool_if:NF \l_nsk_block_grid_outerb_tl
+	{\tl_put_right:No \l_tmps_tl {draw~opacity=0,}}
+}
+
 \tl_if_eq:NnT \l_nsk_block_fade_tl { none }
 {\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}}
 \tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
-
 
 \tl_if_in:nVTF {cylinder~cloud~signal~tape} \l_nsk_block_type_tl
 {\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
@@ -1186,7 +1291,6 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
 	% parse the horizontal and vertical direction
 	\seq_set_split:Nnx \l_tmpa_seq {=}{\l_nsk_block_pos_tl}
-	\seq_show:N \l_tmpa_seq
 
 	% h-dir
 	\tl_clear_new:N \l_tmp_hdirc_tl
@@ -1302,19 +1406,49 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	% # 1 -> k=v list
 	\keys_set:nn {nsk / block } {#1}
 
+	% possibly autogenerate the id
+	\nsk__maybe_set_id:
+
+	\bool_if:NT \l_nsk_block_store_style_bool
+	{
+		% parse and remove id
+		\prop_clear:N \l_tmpa_prop
+		\prop_set_from_keyval:Nn \l_tmpa_prop {#1}
+		\prop_remove:Nn \l_tmpa_prop {id}
+		% remove any pos
+		\prop_remove:Nn \l_tmpa_prop {pos}
+		\prop_remove:Nn \l_tmpa_prop {last-pos}
+		\prop_remove:Nn \l_tmpa_prop {last-pos-s}
+		\prop_remove:Nn \l_tmpa_prop {x}
+		\prop_remove:Nn \l_tmpa_prop {y}
+		\prop_remove:Nn \l_tmpa_prop {border-type}
+		\prop_remove:Nn \l_tmpa_prop {text-north}
+		\prop_remove:Nn \l_tmpa_prop {text-south}
+		\prop_remove:Nn \l_tmpa_prop {text-east}
+		\prop_remove:Nn \l_tmpa_prop {text-west}
+
+		% store id
+		\prop_gput:NVx \g_nsk_block_stored_style_prop \l_nsk_block_id_tl {\prop_to_keyval:N \l_tmpa_prop}
+	}
+	% if grid-on
+	\tl_if_blank:VF \l_nsk_block_grid_on_tl
+	{
+		\prop_get:NVN \g_nsk_block_stored_style_prop \l_nsk_block_grid_on_tl \l_tmps_tl
+		\keys_set:nx {nsk / block } {\l_tmps_tl}
+		% snap to->
+		\tl_set:Nx \l_nsk_block_pos_tl {at=(\l_nsk_block_grid_on_tl)}
+		\tl_set:Nx \l_nsk_block_anchor_tl {center}
+	}
+
 	% check if type is ...[n]
 	\nsk__check_polygon_type:
 	\nsk__check_star_type:
 	\nsk__check_rrect_type:
 	\nsk__check_crect_type:
 
-	% possibly autogenerate the id
-	\nsk__maybe_set_id:
 
 	% process last-pos -> set cpos if neeeded
 	% if last-pos-s is given, use it (without error); otherwise use last-pos
-
-
 	\tl_if_blank:VTF \l_nsk_block_last_pos_s_tl
 	{ \nsk__process_last_pos: }
 	{ \nsk__process_last_pos_s: }
@@ -1345,7 +1479,6 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 % Parse the user-provided options
 \keys_set:nn { nsk / figure } { #1 }
 
-\prop_show:N \l_nsk_figure_unknown_prop
 
 % reset all keys (bridging)
 \seq_clear:N \g__nsk_bridging_info_seq
@@ -1496,7 +1629,6 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 			{left}{\tl_set:Nx \l_tmpefpos_tl {above~right=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.south~west}}
 			{right}{\tl_set:Nx \l_tmpefpos_tl {above~left=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.south~east}}
 	}
-	\tl_show:N \l_tmpefpos_tl
 
 
 	% sizings

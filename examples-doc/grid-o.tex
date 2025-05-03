@@ -1,0 +1,65 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  container-fill=nskMainAccent!50!nskBg,
+  container-border-color=nskMainAccent,
+  block-width=2cm, block-height=2cm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+
+  \nskContainer[id=x]{
+    \nskBlock[
+      type=diamond,
+      border-type=dashed,
+      pattern=hatch,
+      % grid={4mm, 4mm},
+      text-south={\noexpand \scriptsize $.4mm$},
+      text-south-style={yshift=-2mm},
+    ]
+  }
+  \nskContainer![id=h, last-pos={right=1.5cm}]{
+      \nskBlock[
+        id=d,
+        type=diamond,
+        border-type=dashed,
+        pattern=hatch,
+        text-south={with border},
+        text-south-style={yshift=-2mm},
+        store-style=true
+      ]
+      \nskBlock[
+        grid={4mm, 4mm},
+        border-size=.8mm,
+        grid-on=d,
+        border-color=nskStrongGrape,
+      ]
+
+      \nskBlock[
+        id=e,
+        type=diamond,
+        border-type=dashed,
+        last-pos=right,
+        pattern=hatch,
+        text-south={without border},
+        text-south-style={yshift=-2mm},
+        store-style=true
+      ]
+      \nskBlock[
+        grid={4mm, 4mm},
+        border-size=.8mm,
+        grid-outer-border=false,
+        grid-on=e,
+        border-color=nskStrongGrape,
+      ]
+  }
+
+  \nskConnect[from=x.east, to=h.west, arrow-type=dashed, shorten-to=5mm]
+
+\end{nskFigure}
+\end{document}

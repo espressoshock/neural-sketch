@@ -1,0 +1,53 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  container-fill=nskMainAccent!50!nskBg,
+  container-border-color=nskMainAccent,
+  block-width=2cm, block-height=2cm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+
+  \nskContainer[id=x]{
+    \nskBlock[
+      type=circle,
+      border-type=dashed,
+      pattern=hatch,
+      % grid={4mm, 4mm},
+      text-south={\noexpand \scriptsize $.4mm$},
+      text-south-style={yshift=-2mm},
+    ]
+  }
+  \nskContainer![id=h, last-pos={right=1.5cm}]{
+      \nskBlock[type=circle, border-type=dashed, pattern=hatch, grid={4mm, 4mm}, text-south={\noexpand \scriptsize $.4mm$}, text-south-style={yshift=-2mm},]
+      \nskBlock[
+        grid={4mm, 4mm},
+        grid-line-size={.4mm},
+        border-color=nskStrongGrape,
+        text-north={\noexpand \footnotesize rectangle},
+        text-north-style={yshift=2mm},
+      ]
+    \foreach \s in {circle, diamond, polygon[5], star[5]} {
+      \nskBlock[type=circle, border-type=dashed, pattern=hatch, grid={4mm, 4mm}, text-south={\noexpand \scriptsize $.4mm$}, text-south-style={yshift=-2mm},last-pos={right=}]
+      \nskBlock*[
+        type=\s,
+        border-color=nskStrongGrape,
+        grid={4mm, 4mm},
+        grid-line-size={.4mm},
+        pos={at=(\nskID{1}.center)},
+        anchor={center},
+        text-north={\noexpand \footnotesize \s},
+        text-north-style={yshift=2mm},
+      ]
+    }
+  }
+
+  \nskConnect[from=x.east, to=h.west, arrow-type=dashed, shorten-to=5mm]
+
+\end{nskFigure}
+\end{document}
