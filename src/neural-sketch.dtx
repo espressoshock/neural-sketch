@@ -122,6 +122,12 @@ every~node/.append~style={text=c__nsk_principal},
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \keys_set:nx { nsk / style } { \l__nsk_pkgopts_opts_tl }
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Global Stored Styles
+% to reuse-previouse elements styles
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\prop_new:N \g_nsk_block_stored_style_prop
+
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Global props -
 % to track auto-increment counters
@@ -185,6 +191,15 @@ every~node/.append~style={text=c__nsk_principal},
   },
   grid .default:n = {},
   grid .initial:n = {},
+
+  grid-on .tl_set:N = \l_nsk_block_grid_on_tl,
+  grid-on .default:n = {},
+  grid-on .initial:n = {},
+
+  % store style ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+  store-style .bool_set:N = \l_nsk_block_store_style_bool,
+  store-style .default:n = {true},
+  store-style .initial:n = {false},
 
 	% padding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	padding-x .dim_set:N = \l_nsk_block_padding_x_dim,
@@ -1353,19 +1368,38 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	% # 1 -> k=v list
 	\keys_set:nn {nsk / block } {#1}
 
+	% possibly autogenerate the id
+	\nsk__maybe_set_id:
+
+  \bool_if:NT \l_nsk_block_store_style_bool
+  {
+    % parse and remove id
+    \prop_clear:N \l_tmpa_prop
+    \prop_set_from_keyval:Nn \l_tmpa_prop {#1}
+    \prop_remove:Nn \l_tmpa_prop {id}
+
+    % store id
+    \prop_gput:NVx \g_nsk_block_stored_style_prop \l_nsk_block_id_tl {\prop_to_keyval:N \l_tmpa_prop}
+    \prop_show:N \g_nsk_block_stored_style_prop
+  }
+  % if grid-on
+  \tl_if_blank:VF \l_nsk_block_grid_on_tl
+  {
+
+    \prop_get:NVN \g_nsk_block_stored_style_prop \l_nsk_block_grid_on_tl \l_kv_tl
+    \tl_show:N \l_kv_tl
+    \keys_set:nx {nsk / block } {\l_kv_tl}
+  }
+
 	% check if type is ...[n]
 	\nsk__check_polygon_type:
 	\nsk__check_star_type:
 	\nsk__check_rrect_type:
 	\nsk__check_crect_type:
 
-	% possibly autogenerate the id
-	\nsk__maybe_set_id:
 
 	% process last-pos -> set cpos if neeeded
 	% if last-pos-s is given, use it (without error); otherwise use last-pos
-
-
 	\tl_if_blank:VTF \l_nsk_block_last_pos_s_tl
 	{ \nsk__process_last_pos: }
 	{ \nsk__process_last_pos_s: }
