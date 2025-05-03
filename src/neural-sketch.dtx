@@ -104,6 +104,7 @@ every~node/.append~style={text=c__nsk_principal},
 }
 {
 \definecolor{ c__nsk_principal } {HTML}{000000}
+\pagecolor{white}
 \colorlet{nskBg}{white}
 \colorlet{nskFg}{black}
 \colorlet{nskDarker}{nskFg}
@@ -223,8 +224,8 @@ every~node/.append~style={text=c__nsk_principal},
 
 
 	grid-outer-border .bool_set:N = \l_nsk_block_grid_outerb_tl,
-	grid-outer-border .default:n = {false},
-	grid-outer-border .initial:n = {false},
+	grid-outer-border .default:n = {true},
+	grid-outer-border .initial:n = {true},
 
 	% store style ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	store-style .bool_set:N = \l_nsk_block_store_style_bool,
@@ -890,8 +891,11 @@ every~node/.append~style={text=c__nsk_principal},
 \dim_set:Nn \l_nsk_block_width_dim {\l_nsk_block_width_dim - \l_nsk_block_border_size_dim}
 \dim_set:Nn \l_nsk_block_height_dim {\l_nsk_block_height_dim - \l_nsk_block_border_size_dim}
 % Calculate number of horizontal and vertical lines
+
 \int_set:Nn \l_tmpa_int {  \l_nsk_block_width_dim / \l_nsk_block_grid_stepy_dim -2 }
 \int_set:Nn \l_tmpb_int {  \l_nsk_block_height_dim / \l_nsk_block_grid_stepy_dim  -2 }
+
+% \int_set:Nn \l_tmpb_int {  \fp_eval:n {ceil(\l_nsk_block_height_dim / \l_nsk_block_grid_stepy_dim)}  -2 }
 
 \node [
 spath/save~global=\l_nsk_block_id_tl, #1,
@@ -1419,6 +1423,10 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		\prop_remove:Nn \l_tmpa_prop {last-pos-s}
 		\prop_remove:Nn \l_tmpa_prop {x}
 		\prop_remove:Nn \l_tmpa_prop {y}
+		\prop_remove:Nn \l_tmpa_prop {text-north}
+		\prop_remove:Nn \l_tmpa_prop {text-south}
+		\prop_remove:Nn \l_tmpa_prop {text-east}
+		\prop_remove:Nn \l_tmpa_prop {text-west}
 
 		% store id
 		\prop_gput:NVx \g_nsk_block_stored_style_prop \l_nsk_block_id_tl {\prop_to_keyval:N \l_tmpa_prop}
