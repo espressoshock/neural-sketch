@@ -1,0 +1,24 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  container-fill=nskSecondaryAccent!30!nskBg,
+  container-border-color=nskSecondaryAccent,
+  block-width=2cm, block-height=2cm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+  \foreach \s in {2,4,5, 10} {
+    \nskBlock[
+      grid={\s mm, \s mm},
+      text-south=\s mm,
+      last-pos-s={right},
+    ]
+  }
+
+\end{nskFigure}
+\end{document}

@@ -892,10 +892,8 @@ every~node/.append~style={text=c__nsk_principal},
 \dim_set:Nn \l_nsk_block_height_dim {\l_nsk_block_height_dim - \l_nsk_block_border_size_dim}
 % Calculate number of horizontal and vertical lines
 
-\int_set:Nn \l_tmpa_int {  \l_nsk_block_width_dim / \l_nsk_block_grid_stepy_dim -2 }
+\int_set:Nn \l_tmpa_int {  \l_nsk_block_width_dim / \l_nsk_block_grid_stepx_dim -2 }
 \int_set:Nn \l_tmpb_int {  \l_nsk_block_height_dim / \l_nsk_block_grid_stepy_dim  -2 }
-
-% \int_set:Nn \l_tmpb_int {  \fp_eval:n {ceil(\l_nsk_block_height_dim / \l_nsk_block_grid_stepy_dim)}  -2 }
 
 \node [
 spath/save~global=\l_nsk_block_id_tl, #1,
@@ -912,7 +910,7 @@ path~picture={
 \int_step_inline:nnnn {0}{1}{\l_tmpa_int}
 {
 	\draw[draw~opacity=\l_nsk_block_opacity_tl, line~width=\l_nsk_block_grid_sizey_dim]
-	(########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, -\l_nsk_block_height_dim/2)
+    (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, -\l_nsk_block_height_dim/2)
 	-- (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, \l_nsk_block_height_dim);
 }
 }
@@ -1423,6 +1421,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		\prop_remove:Nn \l_tmpa_prop {last-pos-s}
 		\prop_remove:Nn \l_tmpa_prop {x}
 		\prop_remove:Nn \l_tmpa_prop {y}
+		\prop_remove:Nn \l_tmpa_prop {border-type}
 		\prop_remove:Nn \l_tmpa_prop {text-north}
 		\prop_remove:Nn \l_tmpa_prop {text-south}
 		\prop_remove:Nn \l_tmpa_prop {text-east}
@@ -1438,6 +1437,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		\keys_set:nx {nsk / block } {\l_tmps_tl}
 		% snap to->
 		\tl_set:Nx \l_nsk_block_pos_tl {at=(\l_nsk_block_grid_on_tl)}
+		\tl_set:Nx \l_nsk_block_anchor_tl {center}
 	}
 
 	% check if type is ...[n]

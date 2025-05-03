@@ -1,0 +1,62 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-border-type=dashed,
+  container-fill=nskMainAccent!50!nskBg,
+  container-border-color=nskMainAccent,
+  block-width=2cm, block-height=2cm,
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+
+  \nskContainer[id=x]{
+    \nskBlock[
+      grid={2mm, 2mm},
+      text-south={\noexpand \footnotesize $\{2mm, 2mm\}$},
+      text-south-style={yshift=-2mm},
+    ]
+  }
+  \nskContainer[id=h, last-pos={above right=-1cm and 4cm}, fill=nskBlue!50!nskBg, border-color=nskBlue, text-north=$\rightarrow$]{
+    \nskBlock[
+      grid={4mm, 2mm},
+      text-south={\noexpand \scriptsize $\{4mm, -\}$},
+      text-south-style={yshift=-2mm},
+    ]
+
+    \foreach \s in {5, 10} {
+      \nskBlock[
+        grid={\s mm, 2mm},
+        text-south={\noexpand \scriptsize $\{\s mm, -\}$},
+        text-south-style={yshift=-2mm},
+        last-pos={right},
+      ]
+    }
+  }
+
+  \nskWrap[under=\nskID{1}, shift-y=0cm]
+  \nskContainer[id=v, fill=nskRed!50!nskBg, border-color=nskRed, text-north=$\uparrow$ ]{
+    \nskBlock[
+      grid={2mm, 4mm},
+      text-south={\noexpand \scriptsize $\{-, 4mm\}$},
+      text-south-style={yshift=-2mm},
+    ]
+
+    \foreach \s in {5, 10} {
+      \nskBlock[
+        grid={2mm, \s mm},
+        text-south={\noexpand \scriptsize $\{-, \s mm\}$},
+        text-south-style={yshift=-2mm},
+        last-pos={right},
+      ]
+    }
+  }
+
+  \nskConnect[from=x.east, to=h.west, bend-type=double, bend-direction=right]
+  \nskConnect[from=x.east, to=v.west, bend-type=double, bend-direction=right]
+
+\end{nskFigure}
+\end{document}
