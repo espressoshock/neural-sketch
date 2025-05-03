@@ -73,7 +73,6 @@
 }
 \ProcessKeysOptions { nsk / pkgopts }
 
-\prop_show:N \l__nsk_pkgopts_opts_prop
 
 % prop->tl
 \tl_new:N \l__nsk_pkgopts_opts_tl
@@ -87,7 +86,6 @@
 	}
 }
 
-\tl_show:N \l__nsk_pkgopts_opts_tl
 
 % dark-mode ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \bool_if:NTF \g__nsk_dark_mode_bool
@@ -199,6 +197,26 @@ every~node/.append~style={text=c__nsk_principal},
 	grid-on .tl_set:N = \l_nsk_block_grid_on_tl,
 	grid-on .default:n = {},
 	grid-on .initial:n = {},
+
+	grid-border-size-x .dim_set:N = \l_nsk_block_grid_sizex_dim,
+	grid-border-size-x .default:n = {.4mm},
+	grid-border-size-x .initial:n = {.4mm},
+
+	grid-border-size-y .dim_set:N = \l_nsk_block_grid_sizey_dim,
+	grid-border-size-y .default:n = {.4mm},
+	grid-border-size-y .initial:n = {.4mm},
+
+	grid-border-size .code:n = {
+			% \tl_set:Nn \l_nsk_block_grid_size_args_tl {#1}
+      \seq_set_split:Nnn \l_args_seq {,} {#1}
+
+				% set args -> [sizex], [sizey]
+				\seq_pop_left:NNT \l_args_seq \l_tmpa_tl { \dim_set:Nn \l_nsk_block_grid_sizex_dim {\l_tmpa_tl} }
+        \seq_pop_left:NNTF \l_args_seq \l_tmpa_tl
+        {\dim_set:Nn \l_nsk_block_grid_sizey_dim {\l_tmpa_tl}}
+        {\dim_set_eq:NN \l_nsk_block_grid_sizey_dim \l_nsk_block_grid_sizex_dim}
+		},
+
 
 	grid-outer-border .bool_set:N = \l_nsk_block_grid_outerb_tl,
 	grid-outer-border .default:n = {false},
@@ -545,7 +563,6 @@ every~node/.append~style={text=c__nsk_principal},
 {
 	% First check if the ID exists in the history sequence
 	\bool_set_false:N \l_tmpa_bool
-	\seq_show:N \g_nsk_block_id_history_seq
 	\seq_map_inline:Nn \g_nsk_block_id_history_seq
 	{
 		\tl_if_eq:nVT {##1} \l_nsk_block_id_tl
@@ -857,40 +874,41 @@ every~node/.append~style={text=c__nsk_principal},
 \cs_new_protected_nopar:Npn \nsk__draw_block_aux:n #1
 {
 
-  \tl_if_blank:VTF \l_nsk_block_grid_args_tl
-  {
-    \node [
-      spath/save~global=\l_nsk_block_id_tl,
-      #1,
-    ] {};
-  }
-  {
-    % Calculate number of horizontal and vertical lines
-    \int_set:Nn \l_tmpa_int {  \l_nsk_block_width_dim / \l_nsk_block_grid_stepy_dim -2 }
-    \int_set:Nn \l_tmpb_int {  \l_nsk_block_height_dim / \l_nsk_block_grid_stepy_dim  -2 }
-    \int_show:N \l_tmpa_int
-    \int_show:N \l_tmpb_int
+\tl_if_blank:VTF \l_nsk_block_grid_args_tl
+{
+\node [
+	spath/save~global=\l_nsk_block_id_tl,
+	#1,
+] {};
+}
+{
+% update width to account for border size
+\dim_set:Nn \l_nsk_block_width_dim {\l_nsk_block_width_dim - \l_nsk_block_border_size_dim}
+\dim_set:Nn \l_nsk_block_height_dim {\l_nsk_block_height_dim - \l_nsk_block_border_size_dim}
+% Calculate number of horizontal and vertical lines
+\int_set:Nn \l_tmpa_int {  \l_nsk_block_width_dim / \l_nsk_block_grid_stepy_dim -2 }
+\int_set:Nn \l_tmpb_int {  \l_nsk_block_height_dim / \l_nsk_block_grid_stepy_dim  -2 }
 
-    \node [
-    spath/save~global=\l_nsk_block_id_tl, #1,
-    path~picture={
-    % horizontal
-    \int_step_inline:nnnn {0}{1}{\l_tmpb_int}
-    {
-      \draw[draw~opacity=1]
-      (-\l_nsk_block_width_dim/2, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2 + \l_nsk_block_grid_stepy_dim)
-      -- (\l_nsk_block_width_dim, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2 + \l_nsk_block_grid_stepy_dim);
-    }
+\node [
+spath/save~global=\l_nsk_block_id_tl, #1,
+path~picture={
+% horizontal
+\int_step_inline:nnnn {0}{1}{\l_tmpb_int}
+{
+	\draw[draw~opacity=1, line~width=\l_nsk_block_grid_sizex_dim]
+	(-\l_nsk_block_width_dim/2, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2 + \l_nsk_block_grid_stepy_dim)
+	-- (\l_nsk_block_width_dim, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2 + \l_nsk_block_grid_stepy_dim);
+}
 
-    % vertical
-    \int_step_inline:nnnn {0}{1}{\l_tmpa_int}
-    {
-      \draw[draw~opacity=1]
-      (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, -\l_nsk_block_height_dim/2)
-      -- (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, \l_nsk_block_height_dim);
-    }
-  }
-  ] {};
+% vertical
+\int_step_inline:nnnn {0}{1}{\l_tmpa_int}
+{
+	\draw[draw~opacity=1, line~width=\l_nsk_block_grid_sizey_dim]
+	(########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, -\l_nsk_block_height_dim/2)
+	-- (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, \l_nsk_block_height_dim);
+}
+}
+] {};
 }
 
 % embedding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -1071,8 +1089,8 @@ every~node/.append~style={text=c__nsk_principal},
 % outer-border
 \tl_if_blank:VF \l_nsk_block_grid_args_tl
 {
-  \bool_if:NF \l_nsk_block_grid_outerb_tl
-  {\tl_put_right:No \l_tmps_tl {draw~opacity=0,}}
+	\bool_if:NF \l_nsk_block_grid_outerb_tl
+	{\tl_put_right:No \l_tmps_tl {draw~opacity=0,}}
 }
 
 \tl_if_eq:NnT \l_nsk_block_fade_tl { none }
@@ -1267,7 +1285,6 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
 	% parse the horizontal and vertical direction
 	\seq_set_split:Nnx \l_tmpa_seq {=}{\l_nsk_block_pos_tl}
-	\seq_show:N \l_tmpa_seq
 
 	% h-dir
 	\tl_clear_new:N \l_tmp_hdirc_tl
@@ -1401,7 +1418,6 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
 		% store id
 		\prop_gput:NVx \g_nsk_block_stored_style_prop \l_nsk_block_id_tl {\prop_to_keyval:N \l_tmpa_prop}
-		\prop_show:N \g_nsk_block_stored_style_prop
 	}
 	% if grid-on
 	\tl_if_blank:VF \l_nsk_block_grid_on_tl
@@ -1451,7 +1467,6 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 % Parse the user-provided options
 \keys_set:nn { nsk / figure } { #1 }
 
-\prop_show:N \l_nsk_figure_unknown_prop
 
 % reset all keys (bridging)
 \seq_clear:N \g__nsk_bridging_info_seq
@@ -1602,7 +1617,6 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 			{left}{\tl_set:Nx \l_tmpefpos_tl {above~right=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.south~west}}
 			{right}{\tl_set:Nx \l_tmpefpos_tl {above~left=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.south~east}}
 	}
-	\tl_show:N \l_tmpefpos_tl
 
 
 	% sizings
