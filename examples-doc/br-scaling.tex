@@ -1,0 +1,26 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-padding=4mm,
+  container-border-type=dashed,
+  text-west-style={xshift=-3mm},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+  \nskContainer[text-west=No scaling, border-color=nskRed]{
+    \foreach \i in {1, 1.5,...,3} {
+      \nskBlock[last-pos^=right, size={\i cm}, border-radius-scale=false, pattern=hatch]
+    }
+  }
+  \nskReset[^]
+  \nskContainer[last-pos={below=}, text-west=Scaling, border-color=nskSecondaryAccent]{
+    \foreach \i in {1, 1.5,...,3} {
+      \nskBlock[last-pos^=right, size={\i cm}, pattern=hatchd]
+    }
+  }
+\end{nskFigure}
+\end{document}
