@@ -1,0 +1,28 @@
+\documentclass{standalone}
+\standaloneconfig{border=5mm}
+
+\usepackage[
+  container-padding=4mm,
+  container-border-type=dashdotted,
+  text-west-style={xshift=-3mm},
+  dark-mode=true,
+]{neural-sketch}
+\nskUseModule{*}
+
+\begin{document}
+\begin{nskFigure}[]
+	\nskContainer[fill=nskMainAccent!30!nskBg, border-color=nskMainAccent, text-west=Solid]
+	{
+    \foreach \p[count=\i] in {hatch, rhatch, vlines, hlines, bricks}{
+      \nskBlock*[pattern=\p, text-south=\p, last-pos^={right=},]
+    }
+	}
+	\nskReset[^]
+	\nskContainer[last-pos={below},fill=nskPink!30!nskBg, border-color=nskPink, text-west=Dashed]
+	{
+    \foreach \p[count=\i] in {hatch, rhatch, vlines, hlines, bricks}{
+      \nskBlock*[pattern=\p, text-south=\p, last-pos^={right=}, pattern-line-type=densely dashed]
+    }
+	}
+\end{nskFigure}
+\end{document}
