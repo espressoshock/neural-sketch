@@ -155,6 +155,13 @@ every~node/.append~style={text=c__nsk_principal},
 \dim_new:N \l_nsk_block_grid_stepy_dim
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Global counter -
+% to track skipping pos
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\int_new:N \g_nsk_block_skip_pos_counter_int
+\int_gset:Nn \g_nsk_block_skip_pos_counter_int {0}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Main nsk / Block Primitive
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \keys_define:nn {nsk / block}
@@ -213,13 +220,13 @@ every~node/.append~style={text=c__nsk_principal},
 
 	grid-line-size .code:n = {
 			% \tl_set:Nn \l_nsk_block_grid_size_args_tl {#1}
-      \seq_set_split:Nnn \l_args_seq {,} {#1}
+			\seq_set_split:Nnn \l_args_seq {,} {#1}
 
-				% set args -> [sizex], [sizey]
-				\seq_pop_left:NNT \l_args_seq \l_tmpa_tl { \dim_set:Nn \l_nsk_block_grid_sizex_dim {\l_tmpa_tl} }
-        \seq_pop_left:NNTF \l_args_seq \l_tmpa_tl
-        {\dim_set:Nn \l_nsk_block_grid_sizey_dim {\l_tmpa_tl}}
-        {\dim_set_eq:NN \l_nsk_block_grid_sizey_dim \l_nsk_block_grid_sizex_dim}
+			% set args -> [sizex], [sizey]
+			\seq_pop_left:NNT \l_args_seq \l_tmpa_tl { \dim_set:Nn \l_nsk_block_grid_sizex_dim {\l_tmpa_tl} }
+			\seq_pop_left:NNTF \l_args_seq \l_tmpa_tl
+			{\dim_set:Nn \l_nsk_block_grid_sizey_dim {\l_tmpa_tl}}
+			{\dim_set_eq:NN \l_nsk_block_grid_sizey_dim \l_nsk_block_grid_sizex_dim}
 		},
 
 
@@ -278,15 +285,48 @@ every~node/.append~style={text=c__nsk_principal},
 	pos .tl_set:N = \l_nsk_block_pos_tl,
 	pos .initial:n = { },
 
+  pos^ .code:n = {
+    \int_compare:nNnTF {\g_nsk_block_skip_pos_counter_int} = {0}
+    {\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}}
+    {
+      \tl_set:Nn \l_nsk_block_pos_tl {#1}
+    }
+
+  },
+	pos^ .initial:n = { },
+	pos^ .default:n = { },
+
 	% last-nat pos ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	last-pos .tl_set:N = \l_nsk_block_last_pos_tl,
 	last-pos .initial:n = { },
 	last-pos .default:n = { },
 
+  last-pos^ .code:n = {
+    \int_compare:nNnTF {\g_nsk_block_skip_pos_counter_int} = {0}
+    {\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}}
+    {
+      \tl_set:Nn \l_nsk_block_last_pos_tl {#1}
+    }
+
+  },
+	last-pos^ .initial:n = { },
+	last-pos^ .default:n = { },
+
 	% (works like last-pos but without error)
 	last-pos-s .tl_set:N = \l_nsk_block_last_pos_s_tl,
 	last-pos-s .initial:n = { },
 	last-pos-s .default:n = { },
+
+  last-pos-s^ .code:n = {
+    \int_compare:nNnTF {\g_nsk_block_skip_pos_counter_int} = {0}
+    {\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}}
+    {
+      \tl_set:Nn \l_nsk_block_last_pos_s_tl {#1}
+    }
+
+  },
+	last-pos-s^ .initial:n = { },
+	last-pos-s^ .default:n = { },
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Alignment (flush.)
@@ -337,9 +377,18 @@ every~node/.append~style={text=c__nsk_principal},
 	border-color .initial:V = \g__nsk_style_block_border_color_tl,
 	border-color .default:V = \g__nsk_style_block_border_color_tl,
 
-	border-radius .dim_set:N = \l_nsk_block_border_radius_dim,
+	% border-radius .dim_set:N = \l_nsk_block_border_radius_dim,
+	border-radius .code:n = {
+			\dim_new:N \l_nsk_block_border_radius_dim
+			\dim_set:Nn \l_nsk_block_border_radius_dim {#1}
+			\bool_set_true:N \l_nsk_block_border_radius_mset_bool
+		},
 	border-radius .initial:V = \g__nsk_style_block_border_radius_dim,
 	border-radius .default:V = \g__nsk_style_block_border_radius_dim,
+
+	border-radius-scale .bool_set:N = \l_nsk_block_border_radius_scale_bool,
+  border-radius-scale .initial:n = {true},
+  border-radius-scale .default:n = {true},
 
 	border-size .dim_set:N = \l_nsk_block_border_size_dim,
 	border-size .initial:V = \g__nsk_style_block_border_size_dim,
@@ -509,6 +558,10 @@ every~node/.append~style={text=c__nsk_principal},
 	pattern-opacity .tl_set:N = \l_nsk_block_pattern_opacity_tl,
 	pattern-opacity .initial:n = {.2},
 	pattern-opacity .default:n = {.2},
+
+  pattern-line-type .tl_set:N = \l_nsk_block_pattern_line_type_tl,
+	pattern-line-type .initial:n = {solid},
+	pattern-line-type .default:n = {solid},
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Fade
@@ -910,7 +963,7 @@ path~picture={
 \int_step_inline:nnnn {0}{1}{\l_tmpa_int}
 {
 	\draw[draw~opacity=\l_nsk_block_opacity_tl, line~width=\l_nsk_block_grid_sizey_dim]
-    (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, -\l_nsk_block_height_dim/2)
+	(########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, -\l_nsk_block_height_dim/2)
 	-- (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, \l_nsk_block_height_dim);
 }
 }
@@ -1032,6 +1085,7 @@ path~picture={
 
 % Possibly scale border-size according to importance:
 \nsk__maybe_scale_border_by_importance:
+\nsk__maybe_uniform_border_scaling:
 
 % id-ref ---------------------------------------------------
 \tl_put_right:No \l_tmps_tl { name=\l_nsk_block_id_tl,}
@@ -1175,6 +1229,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	%   postaction={pattern=..., pattern color=...}
 	\tl_clear_new:N \l_tmpb_tl
 	\tl_put_right:Nx \l_tmpb_tl { pattern=\l_nsk_block_pattern_tl, }
+	\tl_put_right:Nx \l_tmpb_tl { \l_nsk_block_pattern_line_type_tl, }
 	\tl_if_blank:VTF \l_nsk_block_pattern_color_tl
 	{ }
 	{
@@ -1502,10 +1557,12 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 \bool_if:NTF \l_nsk_figure_center_bool
 {
 	\begin{center}
+    \nskReset[]
 	\nsk__render_figure:V \l_nsk_figure_opts_tl
 	\begin{scope}[spy~using~outlines]
 }
 {
+  \nskReset[]
 	\nsk__render_figure:V \l_nsk_figure_opts_tl
 	\begin{scope}[spy~using~outlines]
 		}
@@ -1690,6 +1747,19 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_generate_variant:Nn \nsk__render_edge_fading:nnnn { VVVV }
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Position jumps (skips)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\NewDocumentCommand {\nskReset} {o} {
+  \str_case:nnF {#1}
+  {
+    {pos} {\int_gset:Nn \g_nsk_block_skip_pos_counter_int {0}}
+  }{
+    % reset all
+    \int_gset:Nn \g_nsk_block_skip_pos_counter_int {0}
+  }
+}
+
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Wraps (resets)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -1751,6 +1821,26 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
 		% set wrap flag
 		\bool_gset_true:N \g_nsk_wrap_left_bool
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Uniform Border Scaling
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__maybe_uniform_border_scaling:
+{
+	% Only scale if border radius was manually set and scaling is enabled
+	\bool_if:nT { \l_nsk_block_border_radius_mset_bool && \l_nsk_block_border_radius_scale_bool }
+	{
+		% Calculate scaling factors based on width and height increase from defaults
+		\fp_set:Nn \l_tmpa_fp { \l_nsk_block_width_dim / \g__nsk_style_block_width_dim }
+		\fp_set:Nn \l_tmpb_fp { \l_nsk_block_height_dim / \g__nsk_style_block_height_dim }
+
+		% Use the larger scaling factor
+		\fp_set:Nn \l_tmpa_fp { max(\l_tmpa_fp, \l_tmpb_fp) }
+
+		% Scale the border radius by this factor
+		\dim_set:Nn \l_nsk_block_border_radius_dim { \fp_to_dim:n { \l_nsk_block_border_radius_dim * \l_tmpa_fp } }
 	}
 }
 

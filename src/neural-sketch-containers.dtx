@@ -464,7 +464,10 @@
 	border-type .initial:V = \g__nsk_style_container_border_type_tl,
 	border-type .default:V = \g__nsk_style_container_border_type_tl,
 
-	border-color .tl_set:N = \l_nsk_container_border_color_tl,
+  border-color .code:n = {
+    \tl_set:Nn \l_nsk_container_border_color_tl {#1}
+    \tl_set:Nn \l_nsk_container_fill_tl {#1!60!nskBg}
+  },
 	border-color .initial:V = \g__nsk_style_container_border_color_tl,
 	border-color .default:V = \g__nsk_style_container_border_color_tl,
 
@@ -677,6 +680,7 @@
 			% this are computed by bounding box
 			width=0pt, height=0pt,
 			shadow=false,
+      border-radius-scale=false, % un-rendered content
 			% text-north=\nskBlockID,
 			#1,
 		]
