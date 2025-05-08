@@ -154,6 +154,7 @@ every~node/.append~style={text=c__nsk_principal},
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \dim_new:N \l_nsk_block_grid_stepx_dim
 \dim_new:N \l_nsk_block_grid_stepy_dim
+\dim_new:N \l_nsk_block_border_radius_dim
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Global counter -
@@ -378,9 +379,7 @@ every~node/.append~style={text=c__nsk_principal},
 	border-color .initial:V = \g__nsk_style_block_border_color_tl,
 	border-color .default:V = \g__nsk_style_block_border_color_tl,
 
-	% border-radius .dim_set:N = \l_nsk_block_border_radius_dim,
 	border-radius .code:n = {
-			\dim_new:N \l_nsk_block_border_radius_dim
 			\dim_set:Nn \l_nsk_block_border_radius_dim {#1}
 			\bool_set_true:N \l_nsk_block_border_radius_mset_bool
 		},
@@ -1741,6 +1740,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	\nskBlock[
 		pos={#1},
 		width=#2, height=#3,
+    border-radius=0mm,
 		fade=#4,
 	]
 }
@@ -1893,6 +1893,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
         \tl_set:No \l_nsk_block_squircle_ey_tl {\l_nsk_block_squircle_ex_tl}
       }
     }
+   \tl_set:Nn \l_nsk_block_type_tl {superellipse} 
 	}
 	{
     % check if just squircle or squircle[]
