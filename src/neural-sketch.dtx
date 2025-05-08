@@ -41,7 +41,7 @@
 	arrows.meta,
 	shadows,
 	shadings,
-	patterns,
+	patterns, patterns.meta,
 	backgrounds,
 	tikzmark,
 	math,
@@ -552,12 +552,12 @@ every~node/.append~style={text=c__nsk_principal},
 	pattern .default:n = { },
 
 	pattern-color .tl_set:N = \l_nsk_block_pattern_color_tl,
-	pattern-color .initial:n = {nskFg},
-	pattern-color .default:n = {nskFg},
+	pattern-color .initial:n = {nskDarkGray},
+	pattern-color .default:n = {nskDarkGray},
 
 	pattern-opacity .tl_set:N = \l_nsk_block_pattern_opacity_tl,
-	pattern-opacity .initial:n = {.2},
-	pattern-opacity .default:n = {.2},
+	pattern-opacity .initial:n = {.3},
+	pattern-opacity .default:n = {.3},
 
   pattern-line-type .tl_set:N = \l_nsk_block_pattern_line_type_tl,
 	pattern-line-type .initial:n = {solid},
@@ -1228,7 +1228,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	% something like:
 	%   postaction={pattern=..., pattern color=...}
 	\tl_clear_new:N \l_tmpb_tl
-	\tl_put_right:Nx \l_tmpb_tl { pattern=\l_nsk_block_pattern_tl, }
+  \tl_put_right:Nx \l_tmpb_tl { pattern={\l_nsk_block_pattern_tl}, }
 	\tl_put_right:Nx \l_tmpb_tl { \l_nsk_block_pattern_line_type_tl, }
 	\tl_if_blank:VTF \l_nsk_block_pattern_color_tl
 	{ }
