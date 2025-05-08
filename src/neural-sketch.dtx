@@ -1909,23 +1909,23 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
     \tl_set:Nn \l_nsk_block_squircle_step_tl {18}
   }
 
-  \tl_show:N \l_nsk_block_squircle_ey_tl
-  \tl_show:N \l_nsk_block_squircle_ex_tl
-  \tl_show:N \l_nsk_block_squircle_step_tl
+  \tl_if_eq:NnT \l_nsk_block_type_tl {superellipse}
+  {
+    % Append to tikz-opts
+    \tl_put_left:No \l_nsk_block_extra_style_tl
+    {superellipse~x~exponent=\l_nsk_block_squircle_ex_tl, }
+    \tl_put_left:No \l_nsk_block_extra_style_tl
+    {superellipse~y~exponent=\l_nsk_block_squircle_ey_tl, }
+    \tl_put_left:No \l_nsk_block_extra_style_tl
+    {superellipse~step=\l_nsk_block_squircle_step_tl, }
 
-  % Append to tikz-opts
-  \tl_put_left:No \l_nsk_block_extra_style_tl
-  {superellipse~x~exponent=\l_nsk_block_squircle_ex_tl, }
-  \tl_put_left:No \l_nsk_block_extra_style_tl
-  {superellipse~y~exponent=\l_nsk_block_squircle_ey_tl, }
-  \tl_put_left:No \l_nsk_block_extra_style_tl
-  {superellipse~step=\l_nsk_block_squircle_step_tl, }
+    % set block type
+    \tl_set:Nn \l_nsk_block_type_tl {superellipse}
 
-  % set block type
-  \tl_set:Nn \l_nsk_block_type_tl {superellipse}
+    % set some styles
+    \dim_set:Nn \l_nsk_block_border_radius_dim {0mm}
+  }
 
-  % set some styles
-  \dim_set:Nn \l_nsk_block_border_radius_dim {0mm}
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
