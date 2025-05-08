@@ -45,6 +45,7 @@
 	backgrounds,
 	tikzmark,
 	math,
+  ext.shapes.superellipse
 }
 
 
@@ -1496,10 +1497,12 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	}
 
 	% check if type is ...[n]
+  % TODO: refactor this --
 	\nsk__check_polygon_type:
 	\nsk__check_star_type:
 	\nsk__check_rrect_type:
 	\nsk__check_crect_type:
+  \nsk__check_squircle_type:
 
 
 	% process last-pos -> set cpos if neeeded
@@ -1842,6 +1845,87 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		% Scale the border radius by this factor
 		\dim_set:Nn \l_nsk_block_border_radius_dim { \fp_to_dim:n { \l_nsk_block_border_radius_dim * \l_tmpa_fp } }
 	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Squircle
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__check_squircle_type:
+{
+	% extract args if any
+	\regex_match:nVTF {squircle\[(.*?)\]} \l_nsk_block_type_tl
+	{
+		% Extract the args
+		\regex_extract_once:nVN {squircle\[(.*?)\]} \l_nsk_block_type_tl \l_tmpa_seq
+		\tl_set:Nx \l_args_tl {\seq_item:Nn \l_tmpa_seq {2}}
+    \tl_if_blank:VF \l_args_tl {
+      \seq_set_split:Nnx \l_args_seq {,} {\l_args_tl}
+      \seq_show:N \l_args_seq
+
+      % set to default
+      \tl_clear_new:N \l_nsk_block_squircle_ex_tl
+      \tl_clear_new:N \l_nsk_block_squircle_ey_tl
+      \tl_clear_new:N \l_nsk_block_squircle_step_tl
+      \tl_set:Nn \l_nsk_block_squircle_ex_tl {4}
+      \tl_set:Nn \l_nsk_block_squircle_ey_tl {4}
+      \tl_set:Nn \l_nsk_block_squircle_step_tl {18}
+
+
+      % set args -> [[x],[y]]/[e],[step]
+      % [4, 4, 15]
+      % [4, 2]
+      % [4,]
+
+      \int_compare:nNnTF {\seq_count:N \l_args_seq} > {1}
+      {
+        \seq_pop_left:NNT \l_args_seq \l_tmpa_tl
+        { \tl_set:No \l_nsk_block_squircle_ex_tl {\l_tmpa_tl} }
+        % ey
+        \seq_pop_left:NNT \l_args_seq \l_tmpa_tl
+        { \tl_set:No \l_nsk_block_squircle_ey_tl {\l_tmpa_tl} }
+        % step
+        \seq_pop_left:NNT \l_args_seq \l_tmpa_tl
+        { \tl_set:No \l_nsk_block_squircle_step_tl {\l_tmpa_tl} }
+      }
+      {
+        \seq_pop_left:NNT \l_args_seq \l_tmpa_tl
+        { \tl_set:No \l_nsk_block_squircle_ex_tl {\l_tmpa_tl} }
+        \tl_set:No \l_nsk_block_squircle_ey_tl {\l_nsk_block_squircle_ex_tl}
+      }
+    }
+	}
+	{
+    % check if just squircle or squircle[]
+    \tl_if_in:NnT \l_nsk_block_type_tl {squircle}
+    { \tl_set:Nn \l_nsk_block_type_tl {superellipse} }
+
+    % set to default
+    % TODO: rework this as well with the new more robust shape args sys
+    \tl_clear_new:N \l_nsk_block_squircle_ex_tl
+    \tl_clear_new:N \l_nsk_block_squircle_ey_tl
+    \tl_clear_new:N \l_nsk_block_squircle_step_tl
+    \tl_set:Nn \l_nsk_block_squircle_ex_tl {4}
+    \tl_set:Nn \l_nsk_block_squircle_ey_tl {4}
+    \tl_set:Nn \l_nsk_block_squircle_step_tl {18}
+  }
+
+  \tl_show:N \l_nsk_block_squircle_ey_tl
+  \tl_show:N \l_nsk_block_squircle_ex_tl
+  \tl_show:N \l_nsk_block_squircle_step_tl
+
+  % Append to tikz-opts
+  \tl_put_left:No \l_nsk_block_extra_style_tl
+  {superellipse~x~exponent=\l_nsk_block_squircle_ex_tl, }
+  \tl_put_left:No \l_nsk_block_extra_style_tl
+  {superellipse~y~exponent=\l_nsk_block_squircle_ey_tl, }
+  \tl_put_left:No \l_nsk_block_extra_style_tl
+  {superellipse~step=\l_nsk_block_squircle_step_tl, }
+
+  % set block type
+  \tl_set:Nn \l_nsk_block_type_tl {superellipse}
+
+  % set some styles
+  \dim_set:Nn \l_nsk_block_border_radius_dim {0mm}
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
