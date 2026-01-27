@@ -52,6 +52,36 @@
 \ExplSyntaxOn
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Helper: set dimension with optional unit (defaults to cm like TikZ)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected:Npn \__nsk_set_coord_dim:Nn #1 #2
+{
+	\tl_if_in:nnTF {#2} {pt}
+	{ \dim_set:Nn #1 {#2} }
+	{
+		\tl_if_in:nnTF {#2} {cm}
+		{ \dim_set:Nn #1 {#2} }
+		{
+			\tl_if_in:nnTF {#2} {mm}
+			{ \dim_set:Nn #1 {#2} }
+			{
+				\tl_if_in:nnTF {#2} {in}
+				{ \dim_set:Nn #1 {#2} }
+				{
+					\tl_if_in:nnTF {#2} {em}
+					{ \dim_set:Nn #1 {#2} }
+					{
+						\tl_if_in:nnTF {#2} {ex}
+						{ \dim_set:Nn #1 {#2} }
+						{ \dim_set:Nn #1 {#2 cm} }
+					}
+				}
+			}
+		}
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Pkg opts
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \prop_new:N \l__nsk_pkgopts_opts_prop
@@ -157,6 +187,12 @@ every~node/.append~style={text=c__nsk_principal},
 \dim_new:N \l_nsk_block_border_radius_dim
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Block position dims
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\dim_new:N \l_nsk_block_x_dim
+\dim_new:N \l_nsk_block_y_dim
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Global counter -
 % to track skipping pos
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -256,13 +292,15 @@ every~node/.append~style={text=c__nsk_principal},
 	id .initial:n = { },
 
 	% coords ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	x .fp_set:N = \l_nsk_block_x_fp,
-	x .initial:V = \g__nsk_style_block_x_fp,
-	x .default:V = \g__nsk_style_block_x_fp,
+	% Use code handler to accept both unitless (e.g., x=0) and with-unit (e.g., x=1cm)
+	% Unitless values get cm appended (TikZ default)
+	x .code:n = { \__nsk_set_coord_dim:Nn \l_nsk_block_x_dim {#1} },
+	x .initial:n = {0pt},
+	x .default:n = {0pt},
 
-	y .fp_set:N = \l_nsk_block_y_fp,
-	y .initial:V = \g__nsk_style_block_y_fp,
-	y .default:V = \g__nsk_style_block_y_fp,
+	y .code:n = { \__nsk_set_coord_dim:Nn \l_nsk_block_y_dim {#1} },
+	y .initial:n = {0pt},
+	y .default:n = {0pt},
 
 	shift-x .tl_set:N = \l_nsk_block_shiftx_tl,
 	shift-x .initial:n = {0},
@@ -836,8 +874,8 @@ every~node/.append~style={text=c__nsk_principal},
 \cs_new_protected_nopar:Npn \nsk__block_debug:
 {
 	\iow_term:x {type   = \tl_use:N \l_nsk_block_type_tl}
-	\iow_term:x {x      = \fp_use:N \l_nsk_block_x_fp}
-	\iow_term:x {y      = \fp_use:N \l_nsk_block_y_fp}
+	\iow_term:x {x      = \dim_use:N \l_nsk_block_x_dim}
+	\iow_term:x {y      = \dim_use:N \l_nsk_block_y_dim}
 	\iow_term:x {width  = \dim_use:N \l_nsk_block_width_dim}
 	\iow_term:x {height = \dim_use:N \l_nsk_block_height_dim}
 }
@@ -1128,7 +1166,7 @@ path~picture={
 {
 	% -- pos is blank => place the node using x,y
 	\tl_put_right:Nx \l_tmps_tl
-	{ at={(\fp_use:N \l_nsk_block_x_fp,\fp_use:N \l_nsk_block_y_fp)}, }
+	{ at={(\dim_use:N \l_nsk_block_x_dim,\dim_use:N \l_nsk_block_y_dim)}, }
 }
 {
 	% -- pos is given => place the node by raw TikZ positioning
