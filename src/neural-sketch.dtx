@@ -187,6 +187,21 @@ every~node/.append~style={text=c__nsk_principal},
 \dim_new:N \l_nsk_block_border_radius_dim
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Per-corner border radius dimensions
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\dim_new:N \l_nsk_block_border_radius_nw_dim
+\dim_new:N \l_nsk_block_border_radius_ne_dim
+\dim_new:N \l_nsk_block_border_radius_sw_dim
+\dim_new:N \l_nsk_block_border_radius_se_dim
+
+% Tracking booleans for per-corner border radius
+\bool_new:N \l_nsk_block_border_radius_nw_mset_bool
+\bool_new:N \l_nsk_block_border_radius_ne_mset_bool
+\bool_new:N \l_nsk_block_border_radius_sw_mset_bool
+\bool_new:N \l_nsk_block_border_radius_se_mset_bool
+\bool_new:N \l_nsk_block_percorner_mode_bool
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Block position dims
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \dim_new:N \l_nsk_block_x_dim
@@ -428,6 +443,32 @@ every~node/.append~style={text=c__nsk_principal},
 	border-radius-scale .bool_set:N = \l_nsk_block_border_radius_scale_bool,
   border-radius-scale .initial:n = {true},
   border-radius-scale .default:n = {true},
+
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% Per-corner border radius
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	% Per-corner border radius - NO .initial:n to avoid triggering mset_bool
+	% The dimensions are initialized to 0pt by \dim_new:N
+	% The mset_bool stays false unless user explicitly sets the key
+	border-radius-nw .code:n = {
+		\dim_set:Nn \l_nsk_block_border_radius_nw_dim {#1}
+		\bool_set_true:N \l_nsk_block_border_radius_nw_mset_bool
+	},
+
+	border-radius-ne .code:n = {
+		\dim_set:Nn \l_nsk_block_border_radius_ne_dim {#1}
+		\bool_set_true:N \l_nsk_block_border_radius_ne_mset_bool
+	},
+
+	border-radius-sw .code:n = {
+		\dim_set:Nn \l_nsk_block_border_radius_sw_dim {#1}
+		\bool_set_true:N \l_nsk_block_border_radius_sw_mset_bool
+	},
+
+	border-radius-se .code:n = {
+		\dim_set:Nn \l_nsk_block_border_radius_se_dim {#1}
+		\bool_set_true:N \l_nsk_block_border_radius_se_mset_bool
+	},
 
 	border-size .dim_set:N = \l_nsk_block_border_size_dim,
 	border-size .initial:V = \g__nsk_style_block_border_size_dim,
@@ -993,7 +1034,7 @@ path~picture={
 % horizontal
 \int_step_inline:nnnn {0}{1}{\l_tmpb_int}
 {
-	\draw[draw~opacity=\l_nsk_block_opacity_tl, line~width=\l_nsk_block_grid_sizex_dim]
+	\draw[draw=\l_nsk_block_border_color_tl, draw~opacity=\l_nsk_block_opacity_tl, line~width=\l_nsk_block_grid_sizex_dim]
 	(-\l_nsk_block_width_dim/2, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2 + \l_nsk_block_grid_stepy_dim)
 	-- (\l_nsk_block_width_dim, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2 + \l_nsk_block_grid_stepy_dim);
 }
@@ -1001,7 +1042,7 @@ path~picture={
 % vertical
 \int_step_inline:nnnn {0}{1}{\l_tmpa_int}
 {
-	\draw[draw~opacity=\l_nsk_block_opacity_tl, line~width=\l_nsk_block_grid_sizey_dim]
+	\draw[draw=\l_nsk_block_border_color_tl, draw~opacity=\l_nsk_block_opacity_tl, line~width=\l_nsk_block_grid_sizey_dim]
 	(########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, -\l_nsk_block_height_dim/2)
 	-- (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, \l_nsk_block_height_dim);
 }
@@ -1207,16 +1248,29 @@ path~picture={
 	{\tl_put_right:No \l_tmps_tl {draw~opacity=0,}}
 }
 
-\tl_if_eq:NnT \l_nsk_block_fade_tl { none }
-{\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}}
-\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
+% Determine if per-corner mode is needed
+\nsk__determine_percorner_mode:
 
-\tl_if_in:nVTF {cylinder~cloud~signal~tape} \l_nsk_block_type_tl
-{\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
+% Handle border drawing based on per-corner mode
+\bool_if:NTF \l_nsk_block_percorner_mode_bool
 {
-	\tl_if_eq:NnTF \l_nsk_block_type_tl {rounded~rectangle}
+	% Per-corner mode: make node invisible, we'll draw the shape overlay
+	\tl_put_right:No \l_tmps_tl {draw=none, fill=none,}
+	\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}
+}
+{
+	% Standard mode: use existing border logic
+	\tl_if_eq:NnT \l_nsk_block_fade_tl { none }
+	{\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}}
+	\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
+
+	\tl_if_in:nVTF {cylinder~cloud~signal~tape} \l_nsk_block_type_tl
 	{\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
-	{\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}}
+	{
+		\tl_if_eq:NnTF \l_nsk_block_type_tl {rounded~rectangle}
+		{\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
+		{\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}}
+	}
 }
 
 
@@ -1461,7 +1515,16 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	% 1. draw the main block shape
 	\nsk__build_block_style:
 
-	% 2. draw the text anchorings
+	% 2. draw per-corner rounded rectangle if needed (only for rectangle type)
+	\bool_if:NT \l_nsk_block_percorner_mode_bool
+	{
+		\tl_if_eq:NnT \l_nsk_block_type_tl {rectangle}
+		{
+			\nsk__draw_percorner_rounded_rect:
+		}
+	}
+
+	% 3. draw the text anchorings
 	\nsk__render_all_text:
 }
 
@@ -1952,7 +2015,151 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
 		% Scale the border radius by this factor
 		\dim_set:Nn \l_nsk_block_border_radius_dim { \fp_to_dim:n { \l_nsk_block_border_radius_dim * \l_tmpa_fp } }
+
+		% Also scale per-corner radii if they were manually set
+		\bool_if:NT \l_nsk_block_border_radius_nw_mset_bool
+		{
+			\dim_set:Nn \l_nsk_block_border_radius_nw_dim { \fp_to_dim:n { \l_nsk_block_border_radius_nw_dim * \l_tmpa_fp } }
+		}
+		\bool_if:NT \l_nsk_block_border_radius_ne_mset_bool
+		{
+			\dim_set:Nn \l_nsk_block_border_radius_ne_dim { \fp_to_dim:n { \l_nsk_block_border_radius_ne_dim * \l_tmpa_fp } }
+		}
+		\bool_if:NT \l_nsk_block_border_radius_sw_mset_bool
+		{
+			\dim_set:Nn \l_nsk_block_border_radius_sw_dim { \fp_to_dim:n { \l_nsk_block_border_radius_sw_dim * \l_tmpa_fp } }
+		}
+		\bool_if:NT \l_nsk_block_border_radius_se_mset_bool
+		{
+			\dim_set:Nn \l_nsk_block_border_radius_se_dim { \fp_to_dim:n { \l_nsk_block_border_radius_se_dim * \l_tmpa_fp } }
+		}
 	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Per-corner border radius mode detection
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__determine_percorner_mode:
+{
+	% Reset per-corner mode
+	\bool_set_false:N \l_nsk_block_percorner_mode_bool
+
+	% Check if any corner was explicitly set
+	\bool_if:nT {
+		\l_nsk_block_border_radius_nw_mset_bool ||
+		\l_nsk_block_border_radius_ne_mset_bool ||
+		\l_nsk_block_border_radius_sw_mset_bool ||
+		\l_nsk_block_border_radius_se_mset_bool
+	}
+	{
+		% Enable per-corner mode
+		\bool_set_true:N \l_nsk_block_percorner_mode_bool
+
+		% Resolve unset corners to main border-radius
+		\bool_if:NF \l_nsk_block_border_radius_nw_mset_bool
+		{
+			\dim_set_eq:NN \l_nsk_block_border_radius_nw_dim \l_nsk_block_border_radius_dim
+		}
+		\bool_if:NF \l_nsk_block_border_radius_ne_mset_bool
+		{
+			\dim_set_eq:NN \l_nsk_block_border_radius_ne_dim \l_nsk_block_border_radius_dim
+		}
+		\bool_if:NF \l_nsk_block_border_radius_sw_mset_bool
+		{
+			\dim_set_eq:NN \l_nsk_block_border_radius_sw_dim \l_nsk_block_border_radius_dim
+		}
+		\bool_if:NF \l_nsk_block_border_radius_se_mset_bool
+		{
+			\dim_set_eq:NN \l_nsk_block_border_radius_se_dim \l_nsk_block_border_radius_dim
+		}
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Custom rounded rectangle drawing with per-corner radii
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__draw_percorner_rounded_rect:
+{
+	% Get node anchors for positioning
+	\path (\l_nsk_block_id_tl.north~west) coordinate (nsk@nw);
+	\path (\l_nsk_block_id_tl.north~east) coordinate (nsk@ne);
+	\path (\l_nsk_block_id_tl.south~west) coordinate (nsk@sw);
+	\path (\l_nsk_block_id_tl.south~east) coordinate (nsk@se);
+
+	% Build the path token list
+	\tl_clear_new:N \l__nsk_percorner_path_tl
+
+	% Start at NW corner, offset by radius along top edge
+	\tl_put_right:Nx \l__nsk_percorner_path_tl
+		{ ([xshift=\dim_use:N \l_nsk_block_border_radius_nw_dim]nsk@nw) }
+
+	% Top edge to NE
+	\tl_put_right:Nx \l__nsk_percorner_path_tl
+		{ -- ([xshift=-\dim_use:N \l_nsk_block_border_radius_ne_dim]nsk@ne) }
+
+	% NE corner arc (or sharp corner if radius is 0)
+	\dim_compare:nNnTF {\l_nsk_block_border_radius_ne_dim} > {0pt}
+	{
+		\tl_put_right:Nx \l__nsk_percorner_path_tl
+			{ arc[start~angle=90, end~angle=0, radius=\dim_use:N \l_nsk_block_border_radius_ne_dim] }
+	}
+	{
+		\tl_put_right:Nn \l__nsk_percorner_path_tl { -- (nsk@ne) }
+	}
+
+	% Right edge to SE
+	\tl_put_right:Nx \l__nsk_percorner_path_tl
+		{ -- ([yshift=\dim_use:N \l_nsk_block_border_radius_se_dim]nsk@se) }
+
+	% SE corner arc (or sharp corner if radius is 0)
+	\dim_compare:nNnTF {\l_nsk_block_border_radius_se_dim} > {0pt}
+	{
+		\tl_put_right:Nx \l__nsk_percorner_path_tl
+			{ arc[start~angle=0, end~angle=-90, radius=\dim_use:N \l_nsk_block_border_radius_se_dim] }
+	}
+	{
+		\tl_put_right:Nn \l__nsk_percorner_path_tl { -- (nsk@se) }
+	}
+
+	% Bottom edge to SW
+	\tl_put_right:Nx \l__nsk_percorner_path_tl
+		{ -- ([xshift=\dim_use:N \l_nsk_block_border_radius_sw_dim]nsk@sw) }
+
+	% SW corner arc (or sharp corner if radius is 0)
+	\dim_compare:nNnTF {\l_nsk_block_border_radius_sw_dim} > {0pt}
+	{
+		\tl_put_right:Nx \l__nsk_percorner_path_tl
+			{ arc[start~angle=-90, end~angle=-180, radius=\dim_use:N \l_nsk_block_border_radius_sw_dim] }
+	}
+	{
+		\tl_put_right:Nn \l__nsk_percorner_path_tl { -- (nsk@sw) }
+	}
+
+	% Left edge to NW
+	\tl_put_right:Nx \l__nsk_percorner_path_tl
+		{ -- ([yshift=-\dim_use:N \l_nsk_block_border_radius_nw_dim]nsk@nw) }
+
+	% NW corner arc (or sharp corner if radius is 0)
+	\dim_compare:nNnTF {\l_nsk_block_border_radius_nw_dim} > {0pt}
+	{
+		\tl_put_right:Nx \l__nsk_percorner_path_tl
+			{ arc[start~angle=180, end~angle=90, radius=\dim_use:N \l_nsk_block_border_radius_nw_dim] }
+	}
+	{
+		\tl_put_right:Nn \l__nsk_percorner_path_tl { -- (nsk@nw) }
+	}
+
+	% Close the path
+	\tl_put_right:Nn \l__nsk_percorner_path_tl { -- cycle }
+
+	% Draw the path using tl_use for expansion
+	\draw [
+		fill=\l_nsk_block_fill_tl,
+		draw=\l_nsk_block_border_color_tl,
+		line~width=\l_nsk_block_border_size_dim,
+		opacity=\l_nsk_block_opacity_tl,
+		\l_nsk_block_border_type_tl
+	] \tl_use:N \l__nsk_percorner_path_tl ;
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
