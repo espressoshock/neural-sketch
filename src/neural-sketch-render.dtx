@@ -40,6 +40,7 @@
 \tl_clear_new:N \l__nsk_switch_type_tl
 \tl_clear_new:N \l__nsk_switch_operand_tl
 \bool_new:N \l__nsk_switch_matched_bool
+\clist_new:N \l__nsk_case_values_clist
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Main nsk / render Primitive
@@ -54,6 +55,20 @@
 	type .initial:n = { string },
 }
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Helper: check if single value matches operand according to type
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\prg_new_conditional:Npnn \__nsk_value_matches:n #1 { TF }
+{
+	\str_case:VnF \l__nsk_switch_type_tl
+	{
+		{string}{ \str_if_eq:VnTF \l__nsk_switch_operand_tl {#1} { \prg_return_true: } { \prg_return_false: } }
+		{int}{ \int_compare:nTF { \int_eval:n { \l__nsk_switch_operand_tl } = \int_eval:n {#1} } { \prg_return_true: } { \prg_return_false: } }
+		{float}{ \fp_compare:nTF { \fp_eval:n { \l__nsk_switch_operand_tl } == \fp_eval:n {#1} } { \prg_return_true: } { \prg_return_false: } }
+		{bool}{ \str_if_eq:VnTF \l__nsk_switch_operand_tl {#1} { \prg_return_true: } { \prg_return_false: } }
+	}
+	{ \prg_return_false: }
+}
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Public Interface
@@ -69,45 +84,39 @@
 { \group_end: }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-% If no previous case has matched, compares the switch operand with the
-% provided case value (according to the chosen type) and, if they match,
+% If no previous case has matched, compares the switch operand with each
+% comma-separated case value (according to the chosen type) and, if any match,
 % sets the flag and executes the code in a group.
+% For single values (no comma), uses direct comparison to preserve spaces.
 \NewDocumentCommand{\nskCase}{ d[] +m }
 {
-	\bool_if:NTF \l__nsk_switch_matched_bool
-	{ } % already matched: do nothing
+	\bool_if:NF \l__nsk_switch_matched_bool
 	{
-		\tl_show:N \l__nsk_switch_operand_tl
-		\str_if_eq:VnTF \l__nsk_switch_type_tl { string }
+		% Check if argument contains a comma (multi-value case)
+		\tl_if_in:nnTF {#1} {,}
 		{
-			\str_if_eq:VnTF \l__nsk_switch_operand_tl  {#1}
-			{ \bool_set_true:N \l__nsk_switch_matched_bool \group_begin: #2 \group_end: }
+			% Multi-value: parse as comma-separated list
+			\clist_set:Nn \l__nsk_case_values_clist {#1}
+			\clist_map_inline:Nn \l__nsk_case_values_clist
+			{
+				\bool_if:NF \l__nsk_switch_matched_bool
+				{
+					\__nsk_value_matches:nTF {##1}
+					{ \bool_set_true:N \l__nsk_switch_matched_bool \clist_map_break: }
+					{ }
+				}
+			}
+		}
+		{
+			% Single value: direct comparison (preserves spaces)
+			\__nsk_value_matches:nTF {#1}
+			{ \bool_set_true:N \l__nsk_switch_matched_bool }
 			{ }
 		}
-		{
-			\str_if_eq:VnTF \l__nsk_switch_type_tl { int }
-			{ \int_compare:nTF
-				{ \int_eval:n { \l__nsk_switch_operand_tl } = \int_eval:n {#1} }
-				{ \bool_set_true:N \l__nsk_switch_matched_bool \group_begin: #2 \group_end: }
-				{ } }
-			{
-				\str_if_eq:VnTF \l__nsk_switch_type_tl { float }
-				{ \fp_compare:nTF
-					{ \fp_eval:n { \l__nsk_switch_operand_tl } == \fp_eval:n {#1} }
-					{ \bool_set_true:N \l__nsk_switch_matched_bool \group_begin: #2 \group_end: }
-					{ } }
-				{
-					\str_if_eq:VnTF \l__nsk_switch_type_tl { bool }
-					{ \str_if_eq:nnTF { \l__nsk_switch_operand_tl } {#1}
-						{ \bool_set_true:N \l__nsk_switch_matched_bool \group_begin: #2 \group_end: }
-						{ } }
-					{ % fallback: treat as string
-						\str_if_eq:nnTF { \l__nsk_switch_operand_tl } {#1}
-						{
-							\bool_set_true:N \l__nsk_switch_matched_bool \group_begin: #2 \group_end:
-						}
-						{ } } } }
-		}
+
+		% Execute body if matched
+		\bool_if:NT \l__nsk_switch_matched_bool
+		{ \group_begin: #2 \group_end: }
 	}
 }
 
