@@ -95,8 +95,8 @@
 	block-embed-border-size .default:n = {1pt},
 
 	block-embed-border-color .tl_gset:N = \g__nsk_style_block_embed_border_color_tl,
-	block-embed-border-color .initial:n = {c__nsk_principal},
-	block-embed-border-color .default:n = {c__nsk_principal},
+	block-embed-border-color .initial:n = {nskDarkGray},
+	block-embed-border-color .default:n = {nskDarkGray},
 
 	block-embed-padding .dim_gset:N = \g__nsk_style_block_embed_padding_dim,
 	block-embed-padding .initial:n = {1mm},
@@ -524,6 +524,32 @@
 	icon-clean .initial:n  = {true},
 	icon-clean .default:n  = {true},
 
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	% nsk / 3D (view- prefix to avoid LaTeX3 digit parsing)
+	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+	view-azimuth .fp_gset:N = \g__nsk_style_view_azimuth_fp,
+	view-azimuth .initial:n = {45},
+	view-azimuth .default:n = {45},
+
+	view-elevation .fp_gset:N = \g__nsk_style_view_elevation_fp,
+	view-elevation .initial:n = {35},
+	view-elevation .default:n = {35},
+
+	plane-fill .tl_gset:N = \g__nsk_style_plane_fill_tl,
+	plane-fill .initial:n = {none},
+	plane-fill .default:n = {none},
+
+	plane-border-color .tl_gset:N = \g__nsk_style_plane_border_color_tl,
+	plane-border-color .initial:n = {none},
+	plane-border-color .default:n = {none},
+
+	plane-opacity .fp_gset:N = \g__nsk_style_plane_opacity_fp,
+	plane-opacity .initial:n = {1},
+	plane-opacity .default:n = {1},
+
+	plane-distance .dim_gset:N = \g__nsk_style_plane_distance_dim,
+	plane-distance .initial:n = {2cm},
+	plane-distance .default:n = {2cm},
 
 }
 

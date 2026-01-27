@@ -1,0 +1,502 @@
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%  neural-sketch-3d.dtx
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% \iffalse
+%<*driver>
+\documentclass{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+
+\begin{document}
+\DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+
+\ProvidesFile{neural-sketch-3d.dtx}%
+[2025/12/05 v0.1 neural-sketch-3d]
+
+% \title{neural-sketch-3d.sty\\[1ex]
+%        3D/Perspective plane support for neural-sketch}
+% \author{Vincenzo Buono}
+% \date{\today}
+% \maketitle
+%
+% \StopEventually{}
+
+% implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+%<*package>
+%    \begin{macrocode}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Dependencies
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\usetikzlibrary{3d}
+\RequirePackage{tikz-3dplot}
+
+\ExplSyntaxOn
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Global 3D State
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+
+% View angles (degrees) - global settings
+\fp_new:N \g__nsk_threed_azimuth_fp
+\fp_new:N \g__nsk_threed_elevation_fp
+\fp_gset:Nn \g__nsk_threed_azimuth_fp {45}     % Default azimuth (horizontal rotation)
+\fp_gset:Nn \g__nsk_threed_elevation_fp {35}   % Default elevation (~isometric)
+
+% 3D mode active flag
+\bool_new:N \g__nsk_threed_mode_active_bool
+\bool_gset_false:N \g__nsk_threed_mode_active_bool
+
+% Plane counter for auto-ID generation
+\int_new:N \g__nsk_threed_plane_count_int
+\int_gset:Nn \g__nsk_threed_plane_count_int {0}
+
+% Plane nesting level
+\int_new:N \g__nsk_threed_plane_nesting_int
+\int_gset:Nn \g__nsk_threed_plane_nesting_int {0}
+
+% Plane registry: maps plane-id -> serialized plane data
+\prop_new:N \g__nsk_threed_plane_registry_prop
+
+% Current plane ID (for block registration)
+\tl_new:N \g__nsk_threed_current_plane_tl
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Local variables for plane command
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_new:N \l__nsk_threed_plane_id_tl
+\tl_new:N \l__nsk_threed_plane_type_tl
+\dim_new:N \l__nsk_threed_at_dim
+\fp_new:N \l__nsk_threed_azimuth_fp
+\fp_new:N \l__nsk_threed_elevation_fp
+\fp_new:N \l__nsk_threed_scale_fp
+\fp_new:N \l__nsk_threed_rotate_fp
+\tl_new:N \l__nsk_threed_fill_tl
+\fp_new:N \l__nsk_threed_opacity_fp
+\tl_new:N \l__nsk_threed_border_color_tl
+\bool_new:N \l__nsk_threed_inherit_view_bool
+\bool_new:N \l__nsk_threed_billboard_bool
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Stack sequences for plane nesting
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\seq_new:N \g__nsk_threed_plane_id_stack_seq
+\seq_new:N \g__nsk_threed_plane_type_stack_seq
+\seq_new:N \g__nsk_threed_at_stack_seq
+\seq_new:N \g__nsk_threed_azimuth_stack_seq
+\seq_new:N \g__nsk_threed_elevation_stack_seq
+\seq_new:N \g__nsk_threed_scale_stack_seq
+\seq_new:N \g__nsk_threed_rotate_stack_seq
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Push/Pop helpers (following containers pattern)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected:Npn \__nsk_threed_push_to_stack:
+{
+	\seq_gpush:NV \g__nsk_threed_plane_id_stack_seq \l__nsk_threed_plane_id_tl
+	\seq_gpush:NV \g__nsk_threed_plane_type_stack_seq \l__nsk_threed_plane_type_tl
+	\seq_gpush:Nx \g__nsk_threed_at_stack_seq {\dim_use:N \l__nsk_threed_at_dim}
+	\seq_gpush:Nx \g__nsk_threed_azimuth_stack_seq {\fp_use:N \l__nsk_threed_azimuth_fp}
+	\seq_gpush:Nx \g__nsk_threed_elevation_stack_seq {\fp_use:N \l__nsk_threed_elevation_fp}
+	\seq_gpush:Nx \g__nsk_threed_scale_stack_seq {\fp_use:N \l__nsk_threed_scale_fp}
+	\seq_gpush:Nx \g__nsk_threed_rotate_stack_seq {\fp_use:N \l__nsk_threed_rotate_fp}
+}
+
+\cs_new_protected:Npn \__nsk_threed_pop_from_stack:
+{
+	\seq_gpop:NNTF \g__nsk_threed_plane_id_stack_seq \l__nsk_threed_plane_id_tl
+	{
+		\seq_gpop:NN \g__nsk_threed_plane_type_stack_seq \l__nsk_threed_plane_type_tl
+		\seq_gpop:NN \g__nsk_threed_at_stack_seq \l_tmpa_tl
+		\dim_set:Nn \l__nsk_threed_at_dim {\l_tmpa_tl}
+		\seq_gpop:NN \g__nsk_threed_azimuth_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l__nsk_threed_azimuth_fp {\l_tmpa_tl}
+		\seq_gpop:NN \g__nsk_threed_elevation_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l__nsk_threed_elevation_fp {\l_tmpa_tl}
+		\seq_gpop:NN \g__nsk_threed_scale_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l__nsk_threed_scale_fp {\l_tmpa_tl}
+		\seq_gpop:NN \g__nsk_threed_rotate_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l__nsk_threed_rotate_fp {\l_tmpa_tl}
+	}
+	{
+		% Stack empty - reset to defaults
+		\tl_clear:N \l__nsk_threed_plane_id_tl
+		\tl_set:Nn \l__nsk_threed_plane_type_tl {xy}
+		\dim_set:Nn \l__nsk_threed_at_dim {0pt}
+		\fp_set:Nn \l__nsk_threed_azimuth_fp {\g__nsk_threed_azimuth_fp}
+		\fp_set:Nn \l__nsk_threed_elevation_fp {\g__nsk_threed_elevation_fp}
+		\fp_set:Nn \l__nsk_threed_scale_fp {1}
+		\fp_set:Nn \l__nsk_threed_rotate_fp {0}
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Auto-ID generation
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected:Npn \__nsk_threed_maybe_set_id:
+{
+	\tl_if_blank:VT \l__nsk_threed_plane_id_tl
+	{
+		\int_gincr:N \g__nsk_threed_plane_count_int
+		\tl_set:Nx \l__nsk_threed_plane_id_tl {plane\int_use:N \g__nsk_threed_plane_count_int}
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Register plane in global registry
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected:Npn \__nsk_threed_register_plane:
+{
+	% Store plane data as: type|at|azimuth|elevation
+	\tl_set:Nx \l_tmpa_tl {
+		\l__nsk_threed_plane_type_tl |
+		\dim_use:N \l__nsk_threed_at_dim |
+		\fp_use:N \l__nsk_threed_azimuth_fp |
+		\fp_use:N \l__nsk_threed_elevation_fp
+	}
+	\prop_gput:NVV \g__nsk_threed_plane_registry_prop \l__nsk_threed_plane_id_tl \l_tmpa_tl
+
+	% Set current plane for block registration
+	\tl_gset:NV \g__nsk_threed_current_plane_tl \l__nsk_threed_plane_id_tl
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% View preset application
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected:Npn \__nsk_threed_apply_view_preset:n #1
+{
+	\str_case:nnF {#1}
+	{
+		{isometric}
+		{
+			\fp_set:Nn \l__nsk_threed_azimuth_fp {45}
+			\fp_set:Nn \l__nsk_threed_elevation_fp {35.264}
+		}
+		{front}
+		{
+			\fp_set:Nn \l__nsk_threed_azimuth_fp {0}
+			\fp_set:Nn \l__nsk_threed_elevation_fp {0}
+		}
+		{side}
+		{
+			\fp_set:Nn \l__nsk_threed_azimuth_fp {90}
+			\fp_set:Nn \l__nsk_threed_elevation_fp {0}
+		}
+		{top}
+		{
+			\fp_set:Nn \l__nsk_threed_azimuth_fp {0}
+			\fp_set:Nn \l__nsk_threed_elevation_fp {90}
+		}
+		{cabinet}
+		{
+			\fp_set:Nn \l__nsk_threed_azimuth_fp {45}
+			\fp_set:Nn \l__nsk_threed_elevation_fp {30}
+		}
+	}
+	{
+		% Unknown preset - do nothing, use current values
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Canvas plane string helper
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new:Npn \__nsk_threed_get_canvas_string:
+{
+	\str_case:VnF \l__nsk_threed_plane_type_tl
+	{
+		{xy} {canvas~is~xy~plane~at~z}
+		{xz} {canvas~is~xz~plane~at~y}
+		{yz} {canvas~is~yz~plane~at~x}
+	}
+	{canvas~is~xy~plane~at~z}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Key definitions: nsk / threed (global setup)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\keys_define:nn { nsk / threed }
+{
+	% View presets
+	view .code:n = {
+		\__nsk_threed_apply_view_preset:n {#1}
+		\fp_gset:Nn \g__nsk_threed_azimuth_fp {\l__nsk_threed_azimuth_fp}
+		\fp_gset:Nn \g__nsk_threed_elevation_fp {\l__nsk_threed_elevation_fp}
+	},
+
+	% Direct angle specification
+	azimuth .code:n = {
+		\fp_gset:Nn \g__nsk_threed_azimuth_fp {#1}
+	},
+
+	elevation .code:n = {
+		\fp_gset:Nn \g__nsk_threed_elevation_fp {#1}
+	},
+
+	% Theta/phi aliases for tikz-3dplot users
+	theta .code:n = {
+		\fp_gset:Nn \g__nsk_threed_elevation_fp {#1}
+	},
+
+	phi .code:n = {
+		\fp_gset:Nn \g__nsk_threed_azimuth_fp {#1}
+	},
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Key definitions: nsk / plane
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\keys_define:nn { nsk / plane }
+{
+	% Plane identification
+	id .tl_set:N = \l__nsk_threed_plane_id_tl,
+	id .initial:n = {},
+
+	% Plane orientation
+	plane .choice:,
+	plane / xy .code:n = { \tl_set:Nn \l__nsk_threed_plane_type_tl {xy} },
+	plane / xz .code:n = { \tl_set:Nn \l__nsk_threed_plane_type_tl {xz} },
+	plane / yz .code:n = { \tl_set:Nn \l__nsk_threed_plane_type_tl {yz} },
+	plane .initial:n = {xy},
+
+	% Position along perpendicular axis
+	at .dim_set:N = \l__nsk_threed_at_dim,
+	at .initial:n = {0pt},
+
+	% View override (preset)
+	view .code:n = {
+		\__nsk_threed_apply_view_preset:n {#1}
+		\bool_set_false:N \l__nsk_threed_inherit_view_bool
+	},
+
+	% View override (direct angles)
+	azimuth .fp_set:N = \l__nsk_threed_azimuth_fp,
+	elevation .fp_set:N = \l__nsk_threed_elevation_fp,
+
+	% Theta/phi aliases
+	theta .fp_set:N = \l__nsk_threed_elevation_fp,
+	phi .fp_set:N = \l__nsk_threed_azimuth_fp,
+
+	% In-plane transformations
+	scale .fp_set:N = \l__nsk_threed_scale_fp,
+	scale .initial:n = {1},
+
+	rotate .fp_set:N = \l__nsk_threed_rotate_fp,
+	rotate .initial:n = {0},
+
+	% Visual properties for plane background
+	fill .tl_set:N = \l__nsk_threed_fill_tl,
+	fill .initial:n = {none},
+
+	opacity .fp_set:N = \l__nsk_threed_opacity_fp,
+	opacity .initial:n = {1},
+
+	border-color .tl_set:N = \l__nsk_threed_border_color_tl,
+	border-color .initial:n = {none},
+
+	% Billboard mode: shapes stay flat (facing camera), only positioned in 3D
+	billboard .bool_set:N = \l__nsk_threed_billboard_bool,
+	billboard .initial:n = {false},
+	billboard .default:n = {true},
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Key definitions: nsk / plane-connect
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_new:N \l__nsk_pconnect_from_tl
+\tl_new:N \l__nsk_pconnect_to_tl
+\tl_new:N \l__nsk_pconnect_from_plane_tl
+\tl_new:N \l__nsk_pconnect_to_plane_tl
+\tl_new:N \l__nsk_pconnect_color_tl
+\tl_new:N \l__nsk_pconnect_arrow_style_tl
+\tl_new:N \l__nsk_pconnect_arrow_tip_tl
+\dim_new:N \l__nsk_pconnect_shorten_from_dim
+\dim_new:N \l__nsk_pconnect_shorten_to_dim
+
+\keys_define:nn { nsk / plane-connect }
+{
+	% Endpoints
+	from .tl_set:N = \l__nsk_pconnect_from_tl,
+	to .tl_set:N = \l__nsk_pconnect_to_tl,
+	from-plane .tl_set:N = \l__nsk_pconnect_from_plane_tl,
+	to-plane .tl_set:N = \l__nsk_pconnect_to_plane_tl,
+
+	% Styling
+	color .tl_set:N = \l__nsk_pconnect_color_tl,
+	color .initial:n = {nskFg},
+
+	arrow-style .tl_set:N = \l__nsk_pconnect_arrow_style_tl,
+	arrow-style .initial:n = {thick},
+
+	arrow-tip .tl_set:N = \l__nsk_pconnect_arrow_tip_tl,
+	arrow-tip .initial:n = {-},
+
+	% Shortening
+	shorten-from .dim_set:N = \l__nsk_pconnect_shorten_from_dim,
+	shorten-from .initial:n = {0pt},
+
+	shorten-to .dim_set:N = \l__nsk_pconnect_shorten_to_dim,
+	shorten-to .initial:n = {0pt},
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main plane drawing function
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected:Npn \__nsk_threed_draw_plane:n #1
+{
+	% Apply tdplot view angles
+	\tdplotsetmaincoords
+		{\fp_use:N \l__nsk_threed_elevation_fp}
+		{\fp_use:N \l__nsk_threed_azimuth_fp}
+
+	% Build canvas transform string
+	\tl_set:Nx \l_tmpa_tl {\__nsk_threed_get_canvas_string:}
+
+	% Check which mode to use
+	\bool_if:NTF \l__nsk_threed_billboard_bool
+	{
+		% Layered 2.5D mode: offset based on depth, shapes stay as squares
+		% x_offset = at * cos(azimuth)
+		% y_offset = at * sin(azimuth) * sin(elevation)
+		\pgfmathsetmacro{\__nsk_xoff}{cos(\fp_use:N \l__nsk_threed_azimuth_fp)}
+		\pgfmathsetmacro{\__nsk_yoff}{sin(\fp_use:N \l__nsk_threed_azimuth_fp)*sin(\fp_use:N \l__nsk_threed_elevation_fp)}
+		\begin{scope}[
+			shift={(\__nsk_xoff*\dim_use:N \l__nsk_threed_at_dim, \__nsk_yoff*\dim_use:N \l__nsk_threed_at_dim)},
+			rotate=\fp_use:N \l__nsk_threed_rotate_fp,
+			scale=\fp_use:N \l__nsk_threed_scale_fp,
+		]
+			#1
+		\end{scope}
+	}
+	{
+		% Full 3D: transform shapes onto plane (isometric projection)
+		\begin{scope}[
+			tdplot_main_coords,
+			\l_tmpa_tl = \dim_use:N \l__nsk_threed_at_dim,
+			transform~shape,
+		]
+			\begin{scope}[
+				rotate=\fp_use:N \l__nsk_threed_rotate_fp,
+				scale=\fp_use:N \l__nsk_threed_scale_fp,
+			]
+				#1
+			\end{scope}
+		\end{scope}
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface: \nskViewSetup (was \nsk3DSetup)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\NewDocumentCommand \nskViewSetup { O{} }
+{
+	% Parse keys
+	\keys_set:nn { nsk / threed } { #1 }
+
+	% Set global 3D mode flag
+	\bool_gset_true:N \g__nsk_threed_mode_active_bool
+
+	% Apply tdplot coordinates globally
+	\tdplotsetmaincoords
+		{\fp_use:N \g__nsk_threed_elevation_fp}
+		{\fp_use:N \g__nsk_threed_azimuth_fp}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface: \nskPlane
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\NewDocumentCommand \nskPlane { sO{} +m }
+{
+	\IfBooleanTF{#1}
+	{
+		% Starred form: expand keys
+		\edef\l_tmpa_tl{#2}
+		\expandafter\nskPlaneR\expandafter[\l_tmpa_tl]{#3}
+	}
+	{
+		\nskPlaneR[#2]{#3}
+	}
+}
+
+\NewDocumentCommand \nskPlaneR { O{} +m }
+{
+	% Increment nesting level
+	\int_gincr:N \g__nsk_threed_plane_nesting_int
+
+	% Push current state
+	\__nsk_threed_push_to_stack:
+
+	\group_begin:
+
+	% Initialize with global view angles
+	\bool_set_true:N \l__nsk_threed_inherit_view_bool
+	\fp_set:Nn \l__nsk_threed_azimuth_fp {\g__nsk_threed_azimuth_fp}
+	\fp_set:Nn \l__nsk_threed_elevation_fp {\g__nsk_threed_elevation_fp}
+
+	% Parse keys
+	\keys_set:nn { nsk / plane } { #1 }
+
+	% Auto-generate ID if needed
+	\__nsk_threed_maybe_set_id:
+
+	% Register plane in global registry
+	\__nsk_threed_register_plane:
+
+	% Draw the plane with content
+	\__nsk_threed_draw_plane:n { #2 }
+
+	\group_end:
+
+	% Pop state
+	\__nsk_threed_pop_from_stack:
+
+	% Decrement nesting level
+	\int_gdecr:N \g__nsk_threed_plane_nesting_int
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Public Interface: \nskPlaneConnect (was \nsk3DConnect)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\NewDocumentCommand \nskPlaneConnect { O{} }
+{
+	\group_begin:
+
+	% Parse keys
+	\keys_set:nn { nsk / plane-connect } { #1 }
+
+	% Draw connection in 3D space
+	% (This uses the globally set tdplot coordinates)
+	\begin{scope}[tdplot_main_coords]
+		\draw[
+			\l__nsk_pconnect_arrow_style_tl,
+			draw=\l__nsk_pconnect_color_tl,
+			\l__nsk_pconnect_arrow_tip_tl,
+			shorten~<=\dim_use:N \l__nsk_pconnect_shorten_from_dim,
+			shorten~>=\dim_use:N \l__nsk_pconnect_shorten_to_dim,
+		]
+		(\l__nsk_pconnect_from_tl) -- (\l__nsk_pconnect_to_tl);
+	\end{scope}
+
+	\group_end:
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Convenience: Reset 3D state
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\NewDocumentCommand \nskViewReset { }
+{
+	\bool_gset_false:N \g__nsk_threed_mode_active_bool
+	\fp_gset:Nn \g__nsk_threed_azimuth_fp {45}
+	\fp_gset:Nn \g__nsk_threed_elevation_fp {35}
+	\int_gset:Nn \g__nsk_threed_plane_count_int {0}
+	\prop_gclear:N \g__nsk_threed_plane_registry_prop
+}
+
+\ExplSyntaxOff
+%    \end{macrocode}
+%</package>
+\endinput

@@ -171,21 +171,22 @@ every~node/.append~style={text=c__nsk_principal},
 	% block type ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	type .code:n =
 		{
-			\bool_lazy_or:nnTF
-			{ \str_if_eq_p:nn {#1}{text} }
-			{ \str_if_eq_p:nn {#1}{icon} }
-			{
-				\tl_set:Nn \l_nsk_block_type_tl {rectangle}
-				\tl_set:Nn \l_nsk_block_border_type_tl {draw=none}
-				\bool_set_false:N \l_nsk_block_shadow_bool
-				\tl_set:Nn \l_nsk_block_fill_tl {none}
-				% auto width
-				\dim_set:Nn \l_nsk_block_width_dim {0cm}
-				\dim_set:Nn \l_nsk_block_padding_x_dim {0mm}
-			}
-			{
-				\tl_set:Nn \l_nsk_block_type_tl {#1}
-			} % false branch (do nothing)
+			% \bool_lazy_or:nnTF
+			% { \str_if_eq_p:nn {#1}{text} }
+			% { \str_if_eq_p:nn {#1}{icon} }
+			% {
+			% 	\tl_set:Nn \l_nsk_block_type_tl {rectangle}
+			% 	\tl_set:Nn \l_nsk_block_border_type_tl {draw=none}
+			% 	\bool_set_false:N \l_nsk_block_shadow_bool
+			% 	\tl_set:Nn \l_nsk_block_fill_tl {none}
+			% 	% auto width
+			% 	\dim_set:Nn \l_nsk_block_width_dim {0cm}
+			% 	\dim_set:Nn \l_nsk_block_padding_x_dim {0mm}
+			% }
+			% {
+			% 	\tl_set:Nn \l_nsk_block_type_tl {#1}
+			% }
+      \tl_set:Nn \l_nsk_block_type_tl {#1}
 		},
 	type .initial:n = {rectangle},
 	type .default:n = {rectangle},
@@ -973,7 +974,7 @@ path~picture={
 % embedding ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \tl_if_blank:VF {\l_nsk_embed_tl}
 {
-	\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
+	\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim }
 	\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
 
 	\begin{scope}
@@ -999,7 +1000,7 @@ path~picture={
 
 \tl_if_blank:VF {\l_nsk_embed_gfx_tl}
 {
-	\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim}
+	\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim }
 	\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
 
 	\begin{scope}
@@ -1009,6 +1010,14 @@ path~picture={
 
 		\dim_compare:nNnTF {\l_nsk_block_embed_border_size_dim} = {0pt}
 		{
+    % TODO: rework this, quick workaround rn
+    \tl_if_eq:NnT \l_nsk_block_type_tl {superellipse}
+    {
+      \pgfkeys{/pgf/superellipse~x~exponent=\l_nsk_block_squircle_ex_tl}
+      \pgfkeys{/pgf/superellipse~y~exponent=\l_nsk_block_squircle_ex_tl}
+      \pgfkeys{/pgf/superellipse~step=\l_nsk_block_squircle_step_tl}
+    }
+
 		% Ember border size is 0, so do not draw a border.
 		\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{clip}}
 		}
@@ -1016,12 +1025,19 @@ path~picture={
 		% Ember border size is nonzero; set the linewidth and draw border.
 		\pgfsetlinewidth{\l_nsk_block_embed_border_size_dim}
 		\pgfsetstrokecolor{\l_nsk_block_embed_border_color_tl}
+    % TODO: rework this, quick workaround rn
+    \tl_if_eq:NnT \l_nsk_block_type_tl {superellipse}
+    {
+      \pgfkeys{/pgf/superellipse~x~exponent=\l_nsk_block_squircle_ex_tl}
+      \pgfkeys{/pgf/superellipse~y~exponent=\l_nsk_block_squircle_ex_tl}
+      \pgfkeys{/pgf/superellipse~step=\l_nsk_block_squircle_step_tl}
+    }
 		\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
 		}
 
 		% gfx node ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 		\node[]
-		{\includegraphics[width=\l_nsk_block_width_dim, height=\l_nsk_block_height_dim]{\tl_use:N \l_nsk_embed_gfx_tl}};
+		{\includegraphics[width=\l_tmpa_dim+1.2pt, height=\l_tmpb_dim+1.2pt]{\tl_use:N \l_nsk_embed_gfx_tl}};
 	\end{scope}
 
 }
@@ -1437,6 +1453,57 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		},
 }
 
+\tl_new:N \l__nsk_block_type_e_tl
+\tl_new:N \l__nsk_block_type_args_e_tl
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Parse and extract block type args
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected_nopar:Npn \nsk__parse_block_type_args
+{
+  % Extract the args
+  % 1. full string, 2. type, 3. type args
+  \regex_extract_once:nVN {^(\w+)(?:\[([^\]]+)\])?} \l_nsk_block_type_tl \l_tmpa_seq
+	{
+    % extract --v
+		\tl_set:Nx \l__nsk_block_type_e_tl {\seq_item:Nn \l_tmpa_seq {2}}
+		\tl_set:Nx \l__nsk_block_type_args_e_tl {\seq_item:Nn \l_tmpa_seq {3}}
+
+    % proxy args
+    \nsk__proxy_type_args
+  }
+}
+
+\cs_new_protected_nopar:Npn \nsk__proxy_type_args
+{
+
+  \tl_show:N \l__nsk_block_type_e_tl
+  \str_case:Vn \l__nsk_block_type_e_tl
+  {
+    {text}
+    {
+        \tl_show:N \l__nsk_block_type_e_tl
+				\tl_set:Nn \l_nsk_block_type_tl {rectangle}
+				\tl_set:Nn \l_nsk_block_border_type_tl {draw=none}
+				\bool_set_false:N \l_nsk_block_shadow_bool
+				\tl_set:Nn \l_nsk_block_fill_tl {none}
+				% auto width
+				\dim_set:Nn \l_nsk_block_width_dim {0cm}
+				\dim_set:Nn \l_nsk_block_padding_x_dim {0mm}
+    }
+    {icon}
+    {
+				\tl_set:Nn \l_nsk_block_type_tl {rectangle}
+				\tl_set:Nn \l_nsk_block_border_type_tl {draw=none}
+				\bool_set_false:N \l_nsk_block_shadow_bool
+				\tl_set:Nn \l_nsk_block_fill_tl {none}
+				% auto width
+				\dim_set:Nn \l_nsk_block_width_dim {0cm}
+				\dim_set:Nn \l_nsk_block_padding_x_dim {0mm}
+    }
+  }
+
+}
+
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Public Interface
 % - (user-facing)
@@ -1495,6 +1562,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		\tl_set:Nx \l_nsk_block_anchor_tl {center}
 	}
 
+
 	% check if type is ...[n]
   % TODO: refactor this --
 	\nsk__check_polygon_type:
@@ -1503,6 +1571,8 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	\nsk__check_crect_type:
   \nsk__check_squircle_type:
 
+  % extract args --
+  \nsk__parse_block_type_args
 
 	% process last-pos -> set cpos if neeeded
 	% if last-pos-s is given, use it (without error); otherwise use last-pos
@@ -1868,7 +1938,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
       \tl_clear_new:N \l_nsk_block_squircle_step_tl
       \tl_set:Nn \l_nsk_block_squircle_ex_tl {4}
       \tl_set:Nn \l_nsk_block_squircle_ey_tl {4}
-      \tl_set:Nn \l_nsk_block_squircle_step_tl {18}
+      \tl_set:Nn \l_nsk_block_squircle_step_tl {5}
 
 
       % set args -> [[x],[y]]/[e],[step]
@@ -1907,7 +1977,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
     \tl_clear_new:N \l_nsk_block_squircle_step_tl
     \tl_set:Nn \l_nsk_block_squircle_ex_tl {4}
     \tl_set:Nn \l_nsk_block_squircle_ey_tl {4}
-    \tl_set:Nn \l_nsk_block_squircle_step_tl {18}
+    \tl_set:Nn \l_nsk_block_squircle_step_tl {5}
   }
 
   \tl_if_eq:NnT \l_nsk_block_type_tl {superellipse}
@@ -1925,6 +1995,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 
     % set some styles
     \dim_set:Nn \l_nsk_block_border_radius_dim {0mm}
+    \dim_set:Nn \l_nsk_block_embed_border_radius_dim {0mm}
   }
 
 }
