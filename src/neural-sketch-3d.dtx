@@ -80,12 +80,14 @@
 \tl_new:N \l__nsk_threed_border_color_tl
 \bool_new:N \l__nsk_threed_inherit_view_bool
 \bool_new:N \l__nsk_threed_billboard_bool
+\bool_new:N \l__nsk_threed_axes_swapped_bool
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Stack sequences for plane nesting
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \seq_new:N \g__nsk_threed_plane_id_stack_seq
 \seq_new:N \g__nsk_threed_plane_type_stack_seq
+\seq_new:N \g__nsk_threed_axes_swapped_stack_seq
 \seq_new:N \g__nsk_threed_at_stack_seq
 \seq_new:N \g__nsk_threed_azimuth_stack_seq
 \seq_new:N \g__nsk_threed_elevation_stack_seq
@@ -99,6 +101,7 @@
 {
 	\seq_gpush:NV \g__nsk_threed_plane_id_stack_seq \l__nsk_threed_plane_id_tl
 	\seq_gpush:NV \g__nsk_threed_plane_type_stack_seq \l__nsk_threed_plane_type_tl
+	\seq_gpush:Nx \g__nsk_threed_axes_swapped_stack_seq {\bool_if:NTF \l__nsk_threed_axes_swapped_bool {true} {false}}
 	\seq_gpush:Nx \g__nsk_threed_at_stack_seq {\dim_use:N \l__nsk_threed_at_dim}
 	\seq_gpush:Nx \g__nsk_threed_azimuth_stack_seq {\fp_use:N \l__nsk_threed_azimuth_fp}
 	\seq_gpush:Nx \g__nsk_threed_elevation_stack_seq {\fp_use:N \l__nsk_threed_elevation_fp}
@@ -111,6 +114,10 @@
 	\seq_gpop:NNTF \g__nsk_threed_plane_id_stack_seq \l__nsk_threed_plane_id_tl
 	{
 		\seq_gpop:NN \g__nsk_threed_plane_type_stack_seq \l__nsk_threed_plane_type_tl
+		\seq_gpop:NN \g__nsk_threed_axes_swapped_stack_seq \l_tmpa_tl
+		\str_if_eq:VnTF \l_tmpa_tl {true}
+			{ \bool_set_true:N \l__nsk_threed_axes_swapped_bool }
+			{ \bool_set_false:N \l__nsk_threed_axes_swapped_bool }
 		\seq_gpop:NN \g__nsk_threed_at_stack_seq \l_tmpa_tl
 		\dim_set:Nn \l__nsk_threed_at_dim {\l_tmpa_tl}
 		\seq_gpop:NN \g__nsk_threed_azimuth_stack_seq \l_tmpa_tl
@@ -126,6 +133,7 @@
 		% Stack empty - reset to defaults
 		\tl_clear:N \l__nsk_threed_plane_id_tl
 		\tl_set:Nn \l__nsk_threed_plane_type_tl {xy}
+		\bool_set_false:N \l__nsk_threed_axes_swapped_bool
 		\dim_set:Nn \l__nsk_threed_at_dim {0pt}
 		\fp_set:Nn \l__nsk_threed_azimuth_fp {\g__nsk_threed_azimuth_fp}
 		\fp_set:Nn \l__nsk_threed_elevation_fp {\g__nsk_threed_elevation_fp}
@@ -258,9 +266,30 @@
 
 	% Plane orientation
 	plane .choice:,
-	plane / xy .code:n = { \tl_set:Nn \l__nsk_threed_plane_type_tl {xy} },
-	plane / xz .code:n = { \tl_set:Nn \l__nsk_threed_plane_type_tl {xz} },
-	plane / yz .code:n = { \tl_set:Nn \l__nsk_threed_plane_type_tl {yz} },
+	plane / xy .code:n = {
+		\tl_set:Nn \l__nsk_threed_plane_type_tl {xy}
+		\bool_set_false:N \l__nsk_threed_axes_swapped_bool
+	},
+	plane / yx .code:n = {
+		\tl_set:Nn \l__nsk_threed_plane_type_tl {xy}
+		\bool_set_true:N \l__nsk_threed_axes_swapped_bool
+	},
+	plane / xz .code:n = {
+		\tl_set:Nn \l__nsk_threed_plane_type_tl {xz}
+		\bool_set_false:N \l__nsk_threed_axes_swapped_bool
+	},
+	plane / zx .code:n = {
+		\tl_set:Nn \l__nsk_threed_plane_type_tl {xz}
+		\bool_set_true:N \l__nsk_threed_axes_swapped_bool
+	},
+	plane / yz .code:n = {
+		\tl_set:Nn \l__nsk_threed_plane_type_tl {yz}
+		\bool_set_false:N \l__nsk_threed_axes_swapped_bool
+	},
+	plane / zy .code:n = {
+		\tl_set:Nn \l__nsk_threed_plane_type_tl {yz}
+		\bool_set_true:N \l__nsk_threed_axes_swapped_bool
+	},
 	plane .initial:n = {xy},
 
 	% Position along perpendicular axis
@@ -364,13 +393,27 @@
 		% y_offset = at * sin(azimuth) * sin(elevation)
 		\pgfmathsetmacro{\__nsk_xoff}{cos(\fp_use:N \l__nsk_threed_azimuth_fp)}
 		\pgfmathsetmacro{\__nsk_yoff}{sin(\fp_use:N \l__nsk_threed_azimuth_fp)*sin(\fp_use:N \l__nsk_threed_elevation_fp)}
-		\begin{scope}[
-			shift={(\__nsk_xoff*\dim_to_decimal_in_unit:nn { \l__nsk_threed_at_dim } { 1cm }, \__nsk_yoff*\dim_to_decimal_in_unit:nn { \l__nsk_threed_at_dim } { 1cm })},
-			rotate=\fp_use:N \l__nsk_threed_rotate_fp,
-			scale=\fp_use:N \l__nsk_threed_scale_fp,
-		]
-			#1
-		\end{scope}
+		% Apply axis swap (cm={0,1,1,0,(0,0)}) if needed
+		\bool_if:NTF \l__nsk_threed_axes_swapped_bool
+		{
+			\begin{scope}[
+				shift={(\__nsk_xoff*\dim_to_decimal_in_unit:nn { \l__nsk_threed_at_dim } { 1cm }, \__nsk_yoff*\dim_to_decimal_in_unit:nn { \l__nsk_threed_at_dim } { 1cm })},
+				cm={0,1,1,0,(0,0)},
+				rotate=\fp_use:N \l__nsk_threed_rotate_fp,
+				scale=\fp_use:N \l__nsk_threed_scale_fp,
+			]
+				#1
+			\end{scope}
+		}
+		{
+			\begin{scope}[
+				shift={(\__nsk_xoff*\dim_to_decimal_in_unit:nn { \l__nsk_threed_at_dim } { 1cm }, \__nsk_yoff*\dim_to_decimal_in_unit:nn { \l__nsk_threed_at_dim } { 1cm })},
+				rotate=\fp_use:N \l__nsk_threed_rotate_fp,
+				scale=\fp_use:N \l__nsk_threed_scale_fp,
+			]
+				#1
+			\end{scope}
+		}
 	}
 	{
 		% Full 3D: transform shapes onto plane (isometric projection)
@@ -379,12 +422,25 @@
 			\l_tmpa_tl = \dim_to_decimal_in_unit:nn { \l__nsk_threed_at_dim } { 1cm },
 			transform~shape,
 		]
-			\begin{scope}[
-				rotate=\fp_use:N \l__nsk_threed_rotate_fp,
-				scale=\fp_use:N \l__nsk_threed_scale_fp,
-			]
-				#1
-			\end{scope}
+			% Apply axis swap (cm={0,1,1,0,(0,0)}) if needed
+			\bool_if:NTF \l__nsk_threed_axes_swapped_bool
+			{
+				\begin{scope}[
+					cm={0,1,1,0,(0,0)},
+					rotate=\fp_use:N \l__nsk_threed_rotate_fp,
+					scale=\fp_use:N \l__nsk_threed_scale_fp,
+				]
+					#1
+				\end{scope}
+			}
+			{
+				\begin{scope}[
+					rotate=\fp_use:N \l__nsk_threed_rotate_fp,
+					scale=\fp_use:N \l__nsk_threed_scale_fp,
+				]
+					#1
+				\end{scope}
+			}
 		\end{scope}
 	}
 }
