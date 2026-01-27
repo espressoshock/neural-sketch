@@ -365,7 +365,7 @@
 		\pgfmathsetmacro{\__nsk_xoff}{cos(\fp_use:N \l__nsk_threed_azimuth_fp)}
 		\pgfmathsetmacro{\__nsk_yoff}{sin(\fp_use:N \l__nsk_threed_azimuth_fp)*sin(\fp_use:N \l__nsk_threed_elevation_fp)}
 		\begin{scope}[
-			shift={(\__nsk_xoff*\dim_use:N \l__nsk_threed_at_dim, \__nsk_yoff*\dim_use:N \l__nsk_threed_at_dim)},
+			shift={(\__nsk_xoff*\dim_to_decimal_in_unit:nn { \l__nsk_threed_at_dim } { 1cm }, \__nsk_yoff*\dim_to_decimal_in_unit:nn { \l__nsk_threed_at_dim } { 1cm })},
 			rotate=\fp_use:N \l__nsk_threed_rotate_fp,
 			scale=\fp_use:N \l__nsk_threed_scale_fp,
 		]
@@ -376,7 +376,7 @@
 		% Full 3D: transform shapes onto plane (isometric projection)
 		\begin{scope}[
 			tdplot_main_coords,
-			\l_tmpa_tl = \dim_use:N \l__nsk_threed_at_dim,
+			\l_tmpa_tl = \dim_to_decimal_in_unit:nn { \l__nsk_threed_at_dim } { 1cm },
 			transform~shape,
 		]
 			\begin{scope}[
