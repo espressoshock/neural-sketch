@@ -188,6 +188,11 @@ every~node/.append~style={text=c__nsk_principal},
 \int_new:N \l_nsk_grid_rows_int
 \int_new:N \l_nsk_grid_max_row_int
 \int_new:N \l_nsk_grid_max_col_int
+\dim_new:N \g_nsk_cell_width_dim
+\dim_new:N \g_nsk_cell_height_dim
+\def\nskCellWidth{\g_nsk_cell_width_dim}
+\def\nskCellHeight{\g_nsk_cell_height_dim}
+\def\nskBorderSize{\g__nsk_style_block_border_size_dim}
 \dim_new:N \l_nsk_block_border_radius_dim
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -424,13 +429,7 @@ every~node/.append~style={text=c__nsk_principal},
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 	border-type .code:n =
 		{
-			\tl_if_eq:nnTF {#1}{none}
-			{
-				\tl_set:Nn \l_nsk_block_border_type_tl {draw=none}
-			}
-			{
-				\tl_set:Nn \l_nsk_block_border_type_tl {#1}
-			}
+			\tl_set:Nn \l_nsk_block_border_type_tl {#1}
 
 		},
 
@@ -1070,6 +1069,10 @@ path~picture={
 		\int_set:Nn \l_nsk_grid_cols_int { \l_nsk_block_width_dim / \l_nsk_block_grid_stepx_dim }
 		\int_set:Nn \l_nsk_grid_rows_int { \l_nsk_block_height_dim / \l_nsk_block_grid_stepy_dim }
 
+		% Expose cell dimensions to users as \nskCellWidth and \nskCellHeight
+		\dim_gset:Nn \g_nsk_cell_width_dim { \l_nsk_block_grid_stepx_dim }
+		\dim_gset:Nn \g_nsk_cell_height_dim { \l_nsk_block_grid_stepy_dim }
+
 		% Pre-compute max indices (cols-1 and rows-1) for loop bounds
 		\int_set:Nn \l_nsk_grid_max_col_int { \l_nsk_grid_cols_int - 1 }
 		\int_set:Nn \l_nsk_grid_max_row_int { \l_nsk_grid_rows_int - 1 }
@@ -1080,11 +1083,13 @@ path~picture={
 			% Iterate columns (0 = left)
 			\int_step_inline:nnnn {0}{1}{ \int_use:N \l_nsk_grid_max_col_int }
 			{
-				% X: -width/2 + stepx/2 + col*stepx
-				\dim_set:Nn \l_tmpa_dim { -\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim/2 }
+				% X: -width/2 + stepx/2 + col*stepx - border_offset
+				% (subtract border_size/2 to compensate for reduced dimensions shifting right)
+				\dim_set:Nn \l_tmpa_dim { -\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim/2 - \l_nsk_block_border_size_dim/2 }
 				\dim_add:Nn \l_tmpa_dim { ####1\l_nsk_block_grid_stepx_dim }
-				% Y: +height/2 - stepy/2 - row*stepy (top-left origin)
-				\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim/2 - \l_nsk_block_grid_stepy_dim/2 }
+				% Y: +height/2 - stepy/2 - row*stepy + border_offset
+				% (add border_size/2 to compensate for reduced dimensions shifting down)
+				\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim/2 - \l_nsk_block_grid_stepy_dim/2 + \l_nsk_block_border_size_dim/2 }
 				\dim_sub:Nn \l_tmpb_dim { ##1\l_nsk_block_grid_stepy_dim }
 
 				% Create coordinate: <id>-<row>-<col>
@@ -1305,9 +1310,15 @@ path~picture={
 }
 {
 	% Standard mode: use existing border logic
-	\tl_if_eq:NnT \l_nsk_block_fade_tl { none }
-	{\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}}
-	\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
+	\tl_if_eq:NnTF \l_nsk_block_border_type_tl { none }
+	{
+		\tl_put_right:Nn \l_tmps_tl {draw=none,}
+	}
+	{
+		\tl_if_eq:NnT \l_nsk_block_fade_tl { none }
+		{\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}}
+		\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
+	}
 
 	\tl_if_in:nVTF {cylinder~cloud~signal~tape} \l_nsk_block_type_tl
 	{\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
@@ -2129,11 +2140,11 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__draw_percorner_rounded_rect:
 {
-	% Get node anchors for positioning
-	\path (\l_nsk_block_id_tl.north~west) coordinate (nsk@nw);
-	\path (\l_nsk_block_id_tl.north~east) coordinate (nsk@ne);
-	\path (\l_nsk_block_id_tl.south~west) coordinate (nsk@sw);
-	\path (\l_nsk_block_id_tl.south~east) coordinate (nsk@se);
+	% Get node anchors for positioning, inset by half border size so stroke doesn't extend beyond node
+	\path ([shift={(\l_nsk_block_border_size_dim/2, -\l_nsk_block_border_size_dim/2)}]\l_nsk_block_id_tl.north~west) coordinate (nsk@nw);
+	\path ([shift={(-\l_nsk_block_border_size_dim/2, -\l_nsk_block_border_size_dim/2)}]\l_nsk_block_id_tl.north~east) coordinate (nsk@ne);
+	\path ([shift={(\l_nsk_block_border_size_dim/2, \l_nsk_block_border_size_dim/2)}]\l_nsk_block_id_tl.south~west) coordinate (nsk@sw);
+	\path ([shift={(-\l_nsk_block_border_size_dim/2, \l_nsk_block_border_size_dim/2)}]\l_nsk_block_id_tl.south~east) coordinate (nsk@se);
 
 	% Build the path token list
 	\tl_clear_new:N \l__nsk_percorner_path_tl
@@ -2202,13 +2213,24 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	\tl_put_right:Nn \l__nsk_percorner_path_tl { -- cycle }
 
 	% Draw the path using tl_use for expansion
-	\draw [
-		fill=\l_nsk_block_fill_tl,
-		draw=\l_nsk_block_border_color_tl,
-		line~width=\l_nsk_block_border_size_dim,
-		opacity=\l_nsk_block_opacity_tl,
-		\l_nsk_block_border_type_tl
-	] \tl_use:N \l__nsk_percorner_path_tl ;
+	\tl_if_eq:NnTF \l_nsk_block_border_type_tl { none }
+	{
+		\draw [
+			fill=\l_nsk_block_fill_tl,
+			draw=none,
+			line~width=\l_nsk_block_border_size_dim,
+			opacity=\l_nsk_block_opacity_tl,
+		] \tl_use:N \l__nsk_percorner_path_tl ;
+	}
+	{
+		\draw [
+			fill=\l_nsk_block_fill_tl,
+			draw=\l_nsk_block_border_color_tl,
+			line~width=\l_nsk_block_border_size_dim,
+			opacity=\l_nsk_block_opacity_tl,
+			\l_nsk_block_border_type_tl
+		] \tl_use:N \l__nsk_percorner_path_tl ;
+	}
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
