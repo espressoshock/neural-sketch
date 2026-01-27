@@ -1310,22 +1310,29 @@ path~picture={
 }
 {
 	% Standard mode: use existing border logic
-	\tl_if_eq:NnTF \l_nsk_block_border_type_tl { none }
+	% type=text gets no border automatically
+	\tl_if_eq:NnTF \l_nsk_block_type_tl {text}
 	{
 		\tl_put_right:Nn \l_tmps_tl {draw=none,}
 	}
 	{
-		\tl_if_eq:NnT \l_nsk_block_fade_tl { none }
-		{\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}}
-		\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
-	}
+		\tl_if_eq:NnTF \l_nsk_block_border_type_tl { none }
+		{
+			\tl_put_right:Nn \l_tmps_tl {draw=none,}
+		}
+		{
+			\tl_if_eq:NnT \l_nsk_block_fade_tl { none }
+			{\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}}
+			\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
+		}
 
-	\tl_if_in:nVTF {cylinder~cloud~signal~tape} \l_nsk_block_type_tl
-	{\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
-	{
-		\tl_if_eq:NnTF \l_nsk_block_type_tl {rounded~rectangle}
+		\tl_if_in:nVTF {cylinder~cloud~signal~tape} \l_nsk_block_type_tl
 		{\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
-		{\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}}
+		{
+			\tl_if_eq:NnTF \l_nsk_block_type_tl {rounded~rectangle}
+			{\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
+			{\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}}
+		}
 	}
 }
 
@@ -1339,11 +1346,16 @@ path~picture={
 
 % fill ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 % Skip fill for node when in per-corner mode (custom draw handles it)
+% type=text gets no fill automatically
 \bool_if:NF \l_nsk_block_percorner_mode_bool
 {
-	\tl_if_eq:NnTF \l_nsk_block_fade_tl { none }
-	{\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}}
-	{\tl_put_right:No \l_tmps_tl {fill=nskBg,}}
+	\tl_if_eq:NnTF \l_nsk_block_type_tl {text}
+	{\tl_put_right:Nn \l_tmps_tl {fill=none,}}
+	{
+		\tl_if_eq:NnTF \l_nsk_block_fade_tl { none }
+		{\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}}
+		{\tl_put_right:No \l_tmps_tl {fill=nskBg,}}
+	}
 }
 
 
@@ -1371,6 +1383,9 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 }
 
 % shadow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+% type=text gets no shadow
+\tl_if_eq:NnT \l_nsk_block_type_tl {text}
+{ \bool_set_false:N \l_nsk_block_shadow_bool }
 \bool_if:NT \l_nsk_block_shadow_bool
 {
 	\tl_put_right:No \l_tmps_tl {nskShadow, }
