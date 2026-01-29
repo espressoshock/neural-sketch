@@ -54,6 +54,10 @@
 	auto-increment-duplicates .initial:n = {false},
 	auto-increment-duplicates .default:n = {false},
 
+	block-type .tl_gset:N = \g__nsk_style_block_type_tl,
+	block-type .initial:n = {rectangle},
+	block-type .default:n = {rectangle},
+
 	block-fill .tl_gset:N = \g__nsk_style_block_fill_tl,
 	block-fill .initial:n = { nskLightGray },
 	block-fill .default:n = { nskLightGray },
@@ -102,6 +106,10 @@
 	block-border-radius-se .dim_gset:N = \g__nsk_style_block_border_radius_se_dim,
 	block-border-radius-se .initial:V = \g__nsk_style_block_border_radius_dim,
 	block-border-radius-se .default:V = \g__nsk_style_block_border_radius_dim,
+
+	block-border-radius-scale .bool_gset:N = \g__nsk_style_block_border_radius_scale_bool,
+	block-border-radius-scale .initial:n = {true},
+	block-border-radius-scale .default:n = {true},
 
 	block-embed-border-radius .dim_gset:N = \g__nsk_style_block_embed_border_radius_dim,
 	block-embed-border-radius.initial:n = {1.3mm},

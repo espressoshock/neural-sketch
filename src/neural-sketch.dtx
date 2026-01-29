@@ -448,8 +448,8 @@ every~node/.append~style={text=c__nsk_principal},
 	border-radius .default:V = \g__nsk_style_block_border_radius_dim,
 
 	border-radius-scale .bool_set:N = \l_nsk_block_border_radius_scale_bool,
-  border-radius-scale .initial:n = {true},
-  border-radius-scale .default:n = {true},
+	border-radius-scale .initial:n = {true},
+	border-radius-scale .default:n = {true},
 
 	% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	% Per-corner border radius
@@ -1700,6 +1700,10 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 \NewDocumentCommand \nskBlockR { O{} }
 {
 	\group_begin:
+
+	% Initialize local settings from global style defaults
+	\bool_set_eq:NN \l_nsk_block_border_radius_scale_bool \g__nsk_style_block_border_radius_scale_bool
+	\tl_set_eq:NN \l_nsk_block_type_tl \g__nsk_style_block_type_tl
 
 	% # 1 -> k=v list
 	\keys_set:nn {nsk / block } {#1}
