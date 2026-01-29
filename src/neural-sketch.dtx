@@ -2091,22 +2091,45 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		% Scale the border radius by this factor
 		\dim_set:Nn \l_nsk_block_border_radius_dim { \fp_to_dim:n { \l_nsk_block_border_radius_dim * \l_tmpa_fp } }
 
+		% Clamp border radius to at most half the minimum dimension
+		\dim_set:Nn \l_tmpb_dim { \dim_min:nn { \l_nsk_block_width_dim } { \l_nsk_block_height_dim } / 2 }
+		\dim_compare:nNnT { \l_nsk_block_border_radius_dim } > { \l_tmpb_dim }
+		{
+			\dim_set_eq:NN \l_nsk_block_border_radius_dim \l_tmpb_dim
+		}
+
 		% Also scale per-corner radii if they were manually set
 		\bool_if:NT \l_nsk_block_border_radius_nw_mset_bool
 		{
 			\dim_set:Nn \l_nsk_block_border_radius_nw_dim { \fp_to_dim:n { \l_nsk_block_border_radius_nw_dim * \l_tmpa_fp } }
+			\dim_compare:nNnT { \l_nsk_block_border_radius_nw_dim } > { \l_tmpb_dim }
+			{
+				\dim_set_eq:NN \l_nsk_block_border_radius_nw_dim \l_tmpb_dim
+			}
 		}
 		\bool_if:NT \l_nsk_block_border_radius_ne_mset_bool
 		{
 			\dim_set:Nn \l_nsk_block_border_radius_ne_dim { \fp_to_dim:n { \l_nsk_block_border_radius_ne_dim * \l_tmpa_fp } }
+			\dim_compare:nNnT { \l_nsk_block_border_radius_ne_dim } > { \l_tmpb_dim }
+			{
+				\dim_set_eq:NN \l_nsk_block_border_radius_ne_dim \l_tmpb_dim
+			}
 		}
 		\bool_if:NT \l_nsk_block_border_radius_sw_mset_bool
 		{
 			\dim_set:Nn \l_nsk_block_border_radius_sw_dim { \fp_to_dim:n { \l_nsk_block_border_radius_sw_dim * \l_tmpa_fp } }
+			\dim_compare:nNnT { \l_nsk_block_border_radius_sw_dim } > { \l_tmpb_dim }
+			{
+				\dim_set_eq:NN \l_nsk_block_border_radius_sw_dim \l_tmpb_dim
+			}
 		}
 		\bool_if:NT \l_nsk_block_border_radius_se_mset_bool
 		{
 			\dim_set:Nn \l_nsk_block_border_radius_se_dim { \fp_to_dim:n { \l_nsk_block_border_radius_se_dim * \l_tmpa_fp } }
+			\dim_compare:nNnT { \l_nsk_block_border_radius_se_dim } > { \l_tmpb_dim }
+			{
+				\dim_set_eq:NN \l_nsk_block_border_radius_se_dim \l_tmpb_dim
+			}
 		}
 	}
 }
