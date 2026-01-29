@@ -2085,8 +2085,8 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		\fp_set:Nn \l_tmpa_fp { \l_nsk_block_width_dim / \g__nsk_style_block_width_dim }
 		\fp_set:Nn \l_tmpb_fp { \l_nsk_block_height_dim / \g__nsk_style_block_height_dim }
 
-		% Use the larger scaling factor
-		\fp_set:Nn \l_tmpa_fp { max(\l_tmpa_fp, \l_tmpb_fp) }
+		% Use geometric mean for balanced scaling proportional to area
+		\fp_set:Nn \l_tmpa_fp { sqrt(\l_tmpa_fp * \l_tmpb_fp) }
 
 		% Scale the border radius by this factor
 		\dim_set:Nn \l_nsk_block_border_radius_dim { \fp_to_dim:n { \l_nsk_block_border_radius_dim * \l_tmpa_fp } }
