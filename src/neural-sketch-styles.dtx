@@ -671,8 +671,13 @@
 % Utils
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 % expands and evaluates math op / works on int and float
-\NewExpandableDocumentCommand \e { r<> }
-  { \fp_to_decimal:n { \fp_eval:n {#1} } }
+% use \e*<...> for dimension expressions
+\NewExpandableDocumentCommand \e { s r<> }
+{
+  \IfBooleanTF {#1}
+  { \dim_eval:n {#2} }
+  { \fp_to_decimal:n { \fp_eval:n {#2} } }
+}
 
 % ─────────────────────────────────────────────────────────────────────────────
 % nskLerp: linear interpolation tool for drawing (supports [0–1] & [0–100])
@@ -736,6 +741,85 @@
 	      \csname \l__nsk_lerp_into_tl\endcsname
 	      { \fp_to_decimal:N \l__nsk_lerp_pct_fp }
 	  }
+}
+
+% ─────────────────────────────────────────────────────────────────────────────
+% nskRand: random value generator (numeric range or list selection)
+% ─────────────────────────────────────────────────────────────────────────────
+\fp_new:N \l__nsk_rand_min_fp
+\fp_new:N \l__nsk_rand_max_fp
+\fp_new:N \l__nsk_rand_min_scaled_fp
+\fp_new:N \l__nsk_rand_max_scaled_fp
+\fp_new:N \l__nsk_rand_result_fp
+\tl_new:N \l__nsk_rand_list_tl
+\tl_new:N \l__nsk_rand_into_tl
+\tl_new:N \l__nsk_rand_item_tl
+\seq_new:N \l__nsk_rand_seq
+\int_new:N \l__nsk_rand_count_int
+\int_new:N \l__nsk_rand_idx_int
+
+\keys_define:nn { nsk/rand }
+{
+  from .fp_set:N   = \l__nsk_rand_min_fp,
+  from .initial:n  = {0.0},
+
+  to .fp_set:N     = \l__nsk_rand_max_fp,
+  to .initial:n    = {100.0},
+
+  list .tl_set:N   = \l__nsk_rand_list_tl,
+  list .initial:n  = {},
+
+  into .tl_set:N   = \l__nsk_rand_into_tl,
+  into .initial:n  = {},
+}
+
+\NewDocumentCommand \nskRand { O{} }
+{
+  % Reset list to empty so each call starts fresh
+  \tl_clear:N \l__nsk_rand_list_tl
+  \keys_set:nn { nsk/rand } { #1 }
+
+  \tl_if_empty:NTF \l__nsk_rand_list_tl
+  {
+    % Numeric mode: random float in [from, to]
+    % scale [0–1] → [0–100] if needed (for color percentages)
+    \fp_set_eq:NN \l__nsk_rand_min_scaled_fp \l__nsk_rand_min_fp
+    \fp_set_eq:NN \l__nsk_rand_max_scaled_fp \l__nsk_rand_max_fp
+    \fp_compare:nNnTF { \l__nsk_rand_max_scaled_fp } < { 2 }
+    {
+      \fp_set:Nn \l__nsk_rand_min_scaled_fp { \l__nsk_rand_min_scaled_fp * 100 }
+      \fp_set:Nn \l__nsk_rand_max_scaled_fp { \l__nsk_rand_max_scaled_fp * 100 }
+    }
+    {}
+    \fp_set:Nn \l__nsk_rand_result_fp
+    {
+      \l__nsk_rand_min_scaled_fp + rand() * ( \l__nsk_rand_max_scaled_fp - \l__nsk_rand_min_scaled_fp )
+    }
+    \tl_if_empty:NF \l__nsk_rand_into_tl
+    {
+      \expandafter \tl_set:Nx
+        \csname \l__nsk_rand_into_tl \endcsname
+        { \fp_to_decimal:N \l__nsk_rand_result_fp }
+    }
+  }
+  {
+    % List mode: pick random item from comma-separated list
+    \seq_set_from_clist:NN \l__nsk_rand_seq \l__nsk_rand_list_tl
+    \int_set:Nn \l__nsk_rand_count_int { \seq_count:N \l__nsk_rand_seq }
+    \int_set:Nn \l__nsk_rand_idx_int
+      { 1 + \fp_to_int:n { floor( rand() * \l__nsk_rand_count_int ) } }
+    % Clamp to valid range (in case rand() returns exactly 1.0)
+    \int_compare:nNnT { \l__nsk_rand_idx_int } > { \l__nsk_rand_count_int }
+      { \int_set_eq:NN \l__nsk_rand_idx_int \l__nsk_rand_count_int }
+    \tl_if_empty:NF \l__nsk_rand_into_tl
+    {
+      \tl_set:Nx \l__nsk_rand_item_tl { \seq_item:Nn \l__nsk_rand_seq \l__nsk_rand_idx_int }
+      \tl_trim_spaces:N \l__nsk_rand_item_tl
+      \expandafter \tl_set_eq:NN
+        \csname \l__nsk_rand_into_tl \endcsname
+        \l__nsk_rand_item_tl
+    }
+  }
 }
 
 %\end{macrocode}
