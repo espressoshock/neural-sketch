@@ -193,6 +193,8 @@ every~node/.append~style={text=c__nsk_principal},
 \def\nskCellWidth{\g_nsk_cell_width_dim}
 \def\nskCellHeight{\g_nsk_cell_height_dim}
 \def\nskBorderSize{\g__nsk_style_block_border_size_dim}
+\int_new:N \l_nsk_block_grid_segx_int    % segment count X (0 = use spacing)
+\int_new:N \l_nsk_block_grid_segy_int    % segment count Y (0 = use spacing)
 \dim_new:N \l_nsk_block_border_radius_dim
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -257,9 +259,25 @@ every~node/.append~style={text=c__nsk_principal},
 			\tl_if_blank:VF \l_nsk_block_grid_args_tl {
 				\seq_set_split:Nnn \l_args_seq {,} {#1}
 
-				% set args -> [stepx], [stepy]
-				\seq_pop_left:NNT \l_args_seq \l_tmpa_tl { \dim_set:Nn \l_nsk_block_grid_stepx_dim {\l_tmpa_tl} }
-				\seq_pop_left:NNT \l_args_seq \l_tmpa_tl { \dim_set:Nn \l_nsk_block_grid_stepy_dim {\l_tmpa_tl} }
+				% Reset segment counts
+				\int_zero:N \l_nsk_block_grid_segx_int
+				\int_zero:N \l_nsk_block_grid_segy_int
+
+				% Parse first argument (X)
+				\seq_pop_left:NNT \l_args_seq \l_tmpa_tl {
+					\__nsk_parse_grid_value:NNN \l_tmpa_tl
+						\l_nsk_block_grid_stepx_dim \l_nsk_block_grid_segx_int
+				}
+
+				% Parse second argument (Y), default to X value if missing
+				\seq_pop_left:NNTF \l_args_seq \l_tmpa_tl {
+					\__nsk_parse_grid_value:NNN \l_tmpa_tl
+						\l_nsk_block_grid_stepy_dim \l_nsk_block_grid_segy_int
+				}{
+					% Copy X to Y
+					\dim_set_eq:NN \l_nsk_block_grid_stepy_dim \l_nsk_block_grid_stepx_dim
+					\int_set_eq:NN \l_nsk_block_grid_segy_int \l_nsk_block_grid_segx_int
+				}
 
 				% set some styles
 				\bool_set_false:N \l_nsk_block_shadow_bool
@@ -690,6 +708,28 @@ every~node/.append~style={text=c__nsk_principal},
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Parse grid value: if integer -> segment count, if dimension -> spacing
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected:Npn \__nsk_parse_grid_value:NNN #1 #2 #3
+{
+	% #1 = input token list
+	% #2 = dimension variable for spacing
+	% #3 = int variable for segment count
+
+	% Try to parse as integer (no unit)
+	\regex_match:nVTF { ^\s*\d+\s*$ } #1
+	{
+		% Pure integer: segment count
+		\int_set:Nn #3 { #1 }
+	}
+	{
+		% Has unit: dimension spacing
+		\dim_set:Nn #2 { #1 }
+		\int_zero:N #3
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Auto-generate an ID if user does not supply one
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__maybe_set_id:
@@ -1030,8 +1070,18 @@ every~node/.append~style={text=c__nsk_principal},
 % update width to account for border size
 \dim_set:Nn \l_nsk_block_width_dim {\l_nsk_block_width_dim - \l_nsk_block_border_size_dim}
 \dim_set:Nn \l_nsk_block_height_dim {\l_nsk_block_height_dim - \l_nsk_block_border_size_dim}
-% Calculate number of horizontal and vertical lines
 
+% Compute spacing from segment count if specified
+\int_compare:nNnT { \l_nsk_block_grid_segx_int } > { 0 }
+{
+	\dim_set:Nn \l_nsk_block_grid_stepx_dim { \l_nsk_block_width_dim / \l_nsk_block_grid_segx_int }
+}
+\int_compare:nNnT { \l_nsk_block_grid_segy_int } > { 0 }
+{
+	\dim_set:Nn \l_nsk_block_grid_stepy_dim { \l_nsk_block_height_dim / \l_nsk_block_grid_segy_int }
+}
+
+% Calculate number of horizontal and vertical lines
 \int_set:Nn \l_tmpa_int {  \l_nsk_block_width_dim / \l_nsk_block_grid_stepx_dim -2 }
 \int_set:Nn \l_tmpb_int {  \l_nsk_block_height_dim / \l_nsk_block_grid_stepy_dim  -2 }
 
