@@ -376,19 +376,19 @@
 			{south}       { \tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_dim } }
 			{east}        { \tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_dim } }
 			{west}        { \tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_dim } }
-			{north east}  {
+			{north~east}  {
 				\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_dim }
 				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_dim }
 			}
-			{north west}  {
+			{north~west}  {
 				\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_dim }
 				\tl_set:Nx \l_tmpb_tl { -\l_nsk_container_padding_dim }
 			}
-			{south east}  {
+			{south~east}  {
 				\tl_set:Nx \l_tmpa_tl { -\l_nsk_container_padding_dim }
 				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_dim }
 			}
-			{south west}  {
+			{south~west}  {
 				\tl_set:Nx \l_tmpa_tl { \l_nsk_container_padding_dim }
 				\tl_set:Nx \l_tmpb_tl { \l_nsk_container_padding_dim }
 			}
@@ -409,45 +409,44 @@
 	\dim_zero:N \l__nsk_anchor_dim_offset_x_dim
 	\dim_zero:N \l__nsk_anchor_dim_offset_y_dim
 
-	% Compute half dimensions
+	% Compute half dimensions (padding is handled separately by padding offset)
 	\dim_set:Nn \l_tmpa_dim { 0.5\g__nsk_group_measured_width_dim }
 	\dim_set:Nn \l_tmpb_dim { 0.5\g__nsk_group_measured_height_dim }
 
-	% Add padding to the half dimensions
-	\dim_add:Nn \l_tmpa_dim { \l_nsk_container_padding_dim }
-	\dim_add:Nn \l_tmpb_dim { \l_nsk_container_padding_dim }
+	% DO NOT add padding - it's handled by \nsk__container_compute_anchor_offsets:
 
 	% Set offsets based on anchor
-	% Offset = position of anchor relative to center
+	% To place anchor at target position P, center should be at P - anchor_offset
+	% So shift = -anchor_offset (from center to anchor)
 	\str_case:Vn \l_nsk_container_anchor_tl
 	{
 		{west}        {
-			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { -\l_tmpa_dim }
+			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { \l_tmpa_dim }
 		}
 		{east}        {
-			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { \l_tmpa_dim }
+			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { -\l_tmpa_dim }
 		}
 		{north}       {
-			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { \l_tmpb_dim }
+			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { -\l_tmpb_dim }
 		}
 		{south}       {
-			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { -\l_tmpb_dim }
+			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { \l_tmpb_dim }
 		}
 		{north~west}  {
-			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { -\l_tmpa_dim }
-			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { \l_tmpb_dim }
+			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { \l_tmpa_dim }
+			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { -\l_tmpb_dim }
 		}
 		{north~east}  {
-			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { \l_tmpa_dim }
-			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { \l_tmpb_dim }
-		}
-		{south~west}  {
 			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { -\l_tmpa_dim }
 			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { -\l_tmpb_dim }
 		}
-		{south~east}  {
+		{south~west}  {
 			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { \l_tmpa_dim }
-			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { -\l_tmpb_dim }
+			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { \l_tmpb_dim }
+		}
+		{south~east}  {
+			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { -\l_tmpa_dim }
+			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { \l_tmpb_dim }
 		}
 	}
 }
