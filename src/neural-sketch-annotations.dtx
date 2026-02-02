@@ -324,7 +324,11 @@
 	\nsk__annotate_draw_connector:
 
 	% Add to the block history so it can be found by \nskBlockIDLast, etc.
-	\seq_gput_right:NV \g_nsk_block_id_history_seq \l__nsk_annotate_this_id_tl
+	% Skip if in measurement mode to avoid duplicate registrations
+	\bool_if:NF \g__nsk_measurement_mode_bool
+	{
+		\seq_gput_right:NV \g_nsk_block_id_history_seq \l__nsk_annotate_this_id_tl
+	}
 
 	\group_end:
 }

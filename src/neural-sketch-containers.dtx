@@ -123,7 +123,10 @@
 		\seq_gpop:NN \g_nsk_container_border_type_stack_seq \l_nsk_container_border_type_tl
 		\seq_gpop:NN \g_nsk_container_border_color_stack_seq \l_nsk_container_border_color_tl
 		\seq_gpop:NN \g_nsk_container_fill_stack_seq \l_nsk_container_fill_tl
-		\seq_gpop:NN \g_nsk_container_padding_stack_seq \l_nsk_container_padding_dim
+
+		% Pop padding and convert back to dimension
+		\seq_gpop:NN \g_nsk_container_padding_stack_seq \l_tmpa_tl
+		\dim_set:Nn \l_nsk_container_padding_dim {\l_tmpa_tl}
 
 		% Pop numeric values and convert them back to their fp types
 		\seq_gpop:NN \g_nsk_container_x_stack_seq \l_tmpa_tl
@@ -184,6 +187,7 @@
 % store unkown keys to pass-through
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \prop_new:N \l_nsk_container_unknown_prop
+\cs_generate_variant:Nn \prop_put:Nnn { Nxn }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Position Parser
@@ -279,12 +283,12 @@
 	}
 }
 
-\tl_show:N \l_nsk_container_anchor_tl
-\tl_show:N \l_tmpd_tl
+% \tl_show:N \l_nsk_container_anchor_tl
+% \tl_show:N \l_tmpd_tl
 
 % Convert "1cm" to a dimension variable
 \dim_set:Nn \l__nsk_tmp_dim {\tl_use:N \l_tmpc_tl}
-\tl_show:N \l_tmpc_tl
+% \tl_show:N \l_tmpc_tl
 
 % we shouldn't need this anymore
 % todo: just double check r#13
@@ -379,6 +383,62 @@
 	}
 }
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Dimension-based anchor offset computation
+% Computes offset from center to anchor based on measured content dimensions
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\dim_new:N \l__nsk_anchor_dim_offset_x_dim
+\dim_new:N \l__nsk_anchor_dim_offset_y_dim
+\bool_new:N \l__nsk_needs_dim_offset_bool
+
+\cs_new_protected:Npn \nsk__container_compute_anchor_offset_from_dims:
+{
+	% Reset offsets to zero
+	\dim_zero:N \l__nsk_anchor_dim_offset_x_dim
+	\dim_zero:N \l__nsk_anchor_dim_offset_y_dim
+
+	% Compute half dimensions
+	\dim_set:Nn \l_tmpa_dim { 0.5\g__nsk_group_measured_width_dim }
+	\dim_set:Nn \l_tmpb_dim { 0.5\g__nsk_group_measured_height_dim }
+
+	% Add padding to the half dimensions
+	\dim_add:Nn \l_tmpa_dim { \l_nsk_container_padding_dim }
+	\dim_add:Nn \l_tmpb_dim { \l_nsk_container_padding_dim }
+
+	% Set offsets based on anchor
+	% Offset = position of anchor relative to center
+	\str_case:Vn \l_nsk_container_anchor_tl
+	{
+		{west}        {
+			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { -\l_tmpa_dim }
+		}
+		{east}        {
+			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { \l_tmpa_dim }
+		}
+		{north}       {
+			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { \l_tmpb_dim }
+		}
+		{south}       {
+			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { -\l_tmpb_dim }
+		}
+		{north~west}  {
+			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { -\l_tmpa_dim }
+			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { \l_tmpb_dim }
+		}
+		{north~east}  {
+			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { \l_tmpa_dim }
+			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { \l_tmpb_dim }
+		}
+		{south~west}  {
+			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { -\l_tmpa_dim }
+			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { -\l_tmpb_dim }
+		}
+		{south~east}  {
+			\dim_set:Nn \l__nsk_anchor_dim_offset_x_dim { \l_tmpa_dim }
+			\dim_set:Nn \l__nsk_anchor_dim_offset_y_dim { -\l_tmpb_dim }
+		}
+	}
+}
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % last-pos
@@ -468,7 +528,10 @@
 
   border-color .code:n = {
     \tl_set:Nn \l_nsk_container_border_color_tl {#1}
-    \tl_set:Nn \l_nsk_container_fill_tl {#1!60!nskBg}
+    % Only auto-set fill if border-color doesn't already contain color mixing (!)
+    \tl_if_in:nnTF {#1} {!}
+      { \tl_set:Nn \l_nsk_container_fill_tl {#1} }
+      { \tl_set:Nn \l_nsk_container_fill_tl {#1!60!nskBg} }
   },
 	border-color .initial:V = \g__nsk_style_container_border_color_tl,
 	border-color .default:V = \g__nsk_style_container_border_color_tl,
@@ -531,7 +594,7 @@
 	unknown .code:n =
 		{
 			% Store unknown key in the property list, using the content of \l_keys_key_tl as a string
-			\prop_put:Nxx \l_nsk_container_unknown_prop
+			\prop_put:Nxn \l_nsk_container_unknown_prop
 			{ \tl_use:N \l_keys_key_tl }
 			{ #1 }
 		},
@@ -580,7 +643,7 @@
 
 	% if no style, then no padding as well --
 	\bool_if:NF \l_nsk_container_draw_bool
-	{\tl_set:Nn \l_nsk_container_padding_dim {0mm}}
+	{\dim_zero:N \l_nsk_container_padding_dim}
 
 	% wrapping --
 	\bool_if:NTF \g_nsk_wrap_left_bool
@@ -612,17 +675,41 @@
 	{ \nsk__process_container_last_pos: }
 	{ \nsk__process_container_last_pos_s: }
 
-	% (c) Now call \nskGroup, passing the same #1 so that shift-x, rotate, etc.
-	%     get recognized by nsk / group (or remain unknown for that domain).
+	% Ensure anchor defaults to center if empty
+	\tl_if_empty:VT \l_nsk_container_anchor_tl
+	{\tl_set:Nn \l_nsk_container_anchor_tl {center}}
 
-	% % compute offsets
+	% (c) Check if dimension-based anchor offset is needed
+	%     Only when: position is specified AND anchor is non-center
+	\bool_set_false:N \l__nsk_needs_dim_offset_bool
+	\tl_if_blank:VF \l_nsk_container_pos_tl
+	{
+		\str_if_eq:VnF \l_nsk_container_anchor_tl {center}
+		{
+			\bool_set_true:N \l__nsk_needs_dim_offset_bool
+		}
+	}
+
+	% Pre-measure content if dimension-based offset is needed
+	\bool_if:NT \l__nsk_needs_dim_offset_bool
+	{
+		% Create unique measurement bounds name for this nesting level
+		\tl_set:Nx \l_tmpc_tl {__nsk_measure_\int_use:N \g_nsk_container_nesting_level_int}
+		\nsk__group_measure_content:nn {\l_tmpc_tl} {#2}
+		\nsk__container_compute_anchor_offset_from_dims:
+	}
+
+	% Compute padding-based offsets (stored in \l_tmpa_tl and \l_tmpb_tl)
 	\nsk__container_compute_anchor_offsets:
 
+	% Build total offset by combining padding offset and dimension-based offset
 	\tl_set:Nx \l_tmpx_tl
 	{
 		bounds-name=\l_nsk_group_bounds_name_tl,
-		shift-x=\fp_to_dim:n{\l_nsk_container_x_fp}+\l_tmpa_tl,
-		shift-y=\fp_to_dim:n{\l_nsk_container_y_fp}+\l_tmpb_tl,
+		shift-x=\fp_to_dim:n{\l_nsk_container_x_fp}+\l_tmpa_tl
+			\bool_if:NT \l__nsk_needs_dim_offset_bool {+\dim_use:N \l__nsk_anchor_dim_offset_x_dim},
+		shift-y=\fp_to_dim:n{\l_nsk_container_y_fp}+\l_tmpb_tl
+			\bool_if:NT \l__nsk_needs_dim_offset_bool {+\dim_use:N \l__nsk_anchor_dim_offset_y_dim},
 		rotate=\l_nsk_container_rotate_fp,
 		scale=\l_nsk_container_scale_fp,
 		pos={\l_nsk_container_pos_tl},
@@ -634,10 +721,6 @@
 	{
 		\tl_put_right:Nx \l_tmpx_tl {\l_nsk_group_extra_style_tl,}
 	}
-
-	\tl_if_empty:VTF \l_nsk_container_anchor_tl
-	{\tl_set:Nn \l_nsk_container_anchor_tl {center}}
-	{}
 
 	\nsk__expand_group_aux:Vn \l_tmpx_tl {#2}
 
@@ -710,15 +793,15 @@
 % unstyled if <!> ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \bool_if:NTF \l_nsk_container_draw_bool
 {
-	\tl_put_right:No \l_tmpa_tl { fill=\l_nsk_container_fill_tl, }
-	\tl_put_right:No \l_tmpa_tl { border-color=\l_nsk_container_border_color_tl, }
+	\tl_put_right:Nx \l_tmpa_tl { fill=\l_nsk_container_fill_tl, }
+	\tl_put_right:Nx \l_tmpa_tl { border-color=\l_nsk_container_border_color_tl, }
 }{
 	\tl_put_right:No \l_tmpa_tl { fill=none, }
 	\tl_put_right:No \l_tmpa_tl { border-type=none, }
 }
 % use tikz-ops keys with the current level's bounding box name
 \tl_put_right:Nx \l_tmpa_tl
-{ tikz-opts={fit=(\l_nsk_group_bounds_name_tl), inner\space sep=\l_nsk_container_padding_dim,
+{ tikz-opts={fit=(\l_nsk_group_bounds_name_tl), inner\space sep=\dim_use:N \l_nsk_container_padding_dim,
 			\l_nsk_container_border_type_tl}, }
 
 

@@ -1864,8 +1864,11 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	% actually draw the block
 	\nsk__draw_block:
 
-	% store id in history
-	\nsk__store_block_in_history:
+	% store id in history (skip if in measurement mode)
+	\bool_if:NF \g__nsk_measurement_mode_bool
+	{
+		\nsk__store_block_in_history:
+	}
 
 
 	\group_end:

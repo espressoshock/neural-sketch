@@ -315,11 +315,15 @@
 	% (4) Build the node style (this will now use \l_nsk_coord_pos_tl if set)
 	\nsk__build_coord_style:
 
-	% (5) Store the coordinate’s ID in the global history (shared with blocks)
-	\bool_if:NTF \l_nsk_coord_register_bool
+	% (5) Store the coordinate's ID in the global history (shared with blocks)
+	%     Skip if in measurement mode to avoid duplicate registrations
+	\bool_if:NF \g__nsk_measurement_mode_bool
 	{
-		\seq_gput_right:NV \g_nsk_block_id_history_seq \l_nsk_coord_id_tl
-  }{}
+		\bool_if:NT \l_nsk_coord_register_bool
+		{
+			\seq_gput_right:NV \g_nsk_block_id_history_seq \l_nsk_coord_id_tl
+		}
+	}
 
 	\group_end:
 }

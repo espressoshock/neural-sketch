@@ -37,6 +37,17 @@
 % 1) Global Data Structures
 % ---------------------------------------------------------------------
 \prop_new:N \l_nsk_group_unknown_prop
+
+% ---------------------------------------------------------------------
+% Measurement Mode Infrastructure
+% Used for pre-measuring container content to compute anchor offsets
+% ---------------------------------------------------------------------
+\bool_new:N \g__nsk_measurement_mode_bool
+\bool_gset_false:N \g__nsk_measurement_mode_bool
+
+% Global dimensions for measurement results (must be global to escape the savebox)
+\dim_new:N \g__nsk_group_measured_width_dim
+\dim_new:N \g__nsk_group_measured_height_dim
 \tl_set:Nn \l_nsk_group_refnode_id_tl {__nsk_phantom_refnode}
 
 % Stack implementation for nesting support
@@ -134,6 +145,55 @@
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Content Measurement Function
+% Pre-measures content in an isolated tikzpicture to determine bounding box dimensions
+% Uses pgfinterruptpicture to avoid polluting the main picture with measurement nodes
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\newsavebox{\nsk@measurebox}
+
+\cs_new_protected:Npn \nsk__group_measure_content:nn #1 #2
+{
+	% #1 = bounds name for measurement (unused, kept for API compatibility)
+	% #2 = content to measure
+
+	% Skip if already in measurement mode (prevent infinite recursion)
+	\bool_if:NT \g__nsk_measurement_mode_bool
+	{
+		\dim_gzero:N \g__nsk_group_measured_width_dim
+		\dim_gzero:N \g__nsk_group_measured_height_dim
+		\use_none:nn
+	}
+	\use:n
+	{
+		% Enter measurement mode (suppresses ID registration)
+		\bool_gset_true:N \g__nsk_measurement_mode_bool
+
+		% Interrupt the current picture and render into an isolated one
+		\pgfinterruptpicture
+			\savebox{\nsk@measurebox}{%
+				\begin{tikzpicture}
+					\begin{scope}[local~bounding~box=__nsk_measure_bb]
+						#2
+					\end{scope}
+					% Extract dimensions while still inside the tikzpicture
+					\pgfpointanchor{__nsk_measure_bb}{south~west}
+					\dim_gset:Nn \g__nsk_group_measured_width_dim { -\pgf@x }
+					\dim_gset:Nn \g__nsk_group_measured_height_dim { -\pgf@y }
+					\pgfpointanchor{__nsk_measure_bb}{north~east}
+					\dim_gadd:Nn \g__nsk_group_measured_width_dim { \pgf@x }
+					\dim_gadd:Nn \g__nsk_group_measured_height_dim { \pgf@y }
+				\end{tikzpicture}%
+			}%
+		\endpgfinterruptpicture
+
+		% Exit measurement mode
+		\bool_gset_false:N \g__nsk_measurement_mode_bool
+
+		% The savebox is discarded - we only needed it for measurement
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Positioning parsing and smart anchor detections
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__group_parse_pos:
@@ -141,7 +201,7 @@
 
 % "below right=0cm and 0cm of basics"
 \seq_set_split:Nnx \l_tmpa_seq {=}{\l_nsk_group_pos_tl}
-\seq_show:N \l_tmpa_seq
+% \seq_show:N \l_tmpa_seq
 
 % dira/b
 \tl_clear_new:N \l_nsk_group_ps_dira_tl
