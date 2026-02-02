@@ -978,36 +978,45 @@ every~node/.append~style={text=c__nsk_principal},
 	% Only proceed if the user gave 'last-pos'
 	\tl_if_blank:VF \l_nsk_block_last_pos_tl
 	{
-		\seq_if_empty:NTF \g_nsk_block_id_history_seq
+		% Check if this is the first block in a scoped container/group
+		\int_compare:nNnTF {\g_nsk_block_skip_pos_counter_int} = {0}
 		{
-			\msg_warning:nn {nsk}{No-previous-block-for-last-pos}
+			% First block in scope - skip positioning, increment counter
+			\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}
 		}
 		{
-			% exec last block id retrieval ~~~~~~~~~~~~~~~ <<<
-			% block is already registered, so get prev
-			\nsk__internal_get_nth_block_id:n{1}
-			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
-
-			\str_if_in:NnTF \l_nsk_block_last_pos_tl {=}
+			% Normal case - apply positioning
+			\seq_if_empty:NTF \g_nsk_block_id_history_seq
 			{
-				% case (a) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-				% There's at least one '='
-				% Next see if "of" is in there
-				% e.g. "below=0cm"
-				% => add " of <blockID>"
-				\tl_set:Nx \l_nsk_block_pos_tl
-				{
-					\exp_not:V \l_nsk_block_last_pos_tl\space of~\exp_not:V \l_tmpa_tl
-				}
+				\msg_warning:nn {nsk}{No-previous-block-for-last-pos}
 			}
 			{
-				% case (b) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-				% There's NO '=' in the user's string
-				% e.g. "below right"
-				% => produce "below right=of <blockID>"
-				\tl_set:Nx \l_nsk_block_pos_tl
+				% exec last block id retrieval ~~~~~~~~~~~~~~~ <<<
+				% block is already registered, so get prev
+				\nsk__internal_get_nth_block_id:n{1}
+				\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
+
+				\str_if_in:NnTF \l_nsk_block_last_pos_tl {=}
 				{
-					\exp_not:V \l_nsk_block_last_pos_tl =of~\exp_not:V \l_tmpa_tl
+					% case (a) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+					% There's at least one '='
+					% Next see if "of" is in there
+					% e.g. "below=0cm"
+					% => add " of <blockID>"
+					\tl_set:Nx \l_nsk_block_pos_tl
+					{
+						\exp_not:V \l_nsk_block_last_pos_tl\space of~\exp_not:V \l_tmpa_tl
+					}
+				}
+				{
+					% case (b) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+					% There's NO '=' in the user's string
+					% e.g. "below right"
+					% => produce "below right=of <blockID>"
+					\tl_set:Nx \l_nsk_block_pos_tl
+					{
+						\exp_not:V \l_nsk_block_last_pos_tl =of~\exp_not:V \l_tmpa_tl
+					}
 				}
 			}
 		}
@@ -1019,34 +1028,43 @@ every~node/.append~style={text=c__nsk_principal},
 	% Only proceed if the user gave 'last-pos'
 	\tl_if_blank:VF \l_nsk_block_last_pos_s_tl
 	{
-		\seq_if_empty:NTF \g_nsk_block_id_history_seq
-		{}
+		% Check if this is the first block in a scoped container/group
+		\int_compare:nNnTF {\g_nsk_block_skip_pos_counter_int} = {0}
 		{
-			% exec last block id retrieval ~~~~~~~~~~~~~~~ <<<
-			% block is already registered, so get prev
-			\nsk__internal_get_nth_block_id:n{1}
-			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
+			% First block in scope - skip positioning, increment counter
+			\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}
+		}
+		{
+			% Normal case - apply positioning
+			\seq_if_empty:NTF \g_nsk_block_id_history_seq
+			{}
+			{
+				% exec last block id retrieval ~~~~~~~~~~~~~~~ <<<
+				% block is already registered, so get prev
+				\nsk__internal_get_nth_block_id:n{1}
+				\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
 
-			\str_if_in:NnTF \l_nsk_block_last_pos_s_tl {=}
-			{
-				% case (a) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-				% There's at least one '='
-				% Next see if "of" is in there
-				% e.g. "below=0cm"
-				% => add " of <blockID>"
-				\tl_set:Nx \l_nsk_block_pos_tl
+				\str_if_in:NnTF \l_nsk_block_last_pos_s_tl {=}
 				{
-					\exp_not:V \l_nsk_block_last_pos_s_tl\space of~\exp_not:V \l_tmpa_tl
+					% case (a) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+					% There's at least one '='
+					% Next see if "of" is in there
+					% e.g. "below=0cm"
+					% => add " of <blockID>"
+					\tl_set:Nx \l_nsk_block_pos_tl
+					{
+						\exp_not:V \l_nsk_block_last_pos_s_tl\space of~\exp_not:V \l_tmpa_tl
+					}
 				}
-			}
-			{
-				% case (b) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-				% There's NO '=' in the user's string
-				% e.g. "below right"
-				% => produce "below right=of <blockID>"
-				\tl_set:Nx \l_nsk_block_pos_tl
 				{
-					\exp_not:V \l_nsk_block_last_pos_s_tl =of~\exp_not:V \l_tmpa_tl
+					% case (b) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+					% There's NO '=' in the user's string
+					% e.g. "below right"
+					% => produce "below right=of <blockID>"
+					\tl_set:Nx \l_nsk_block_pos_tl
+					{
+						\exp_not:V \l_nsk_block_last_pos_s_tl =of~\exp_not:V \l_tmpa_tl
+					}
 				}
 			}
 		}

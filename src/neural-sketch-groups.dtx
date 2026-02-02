@@ -68,6 +68,8 @@
 \seq_new:N \g_nsk_group_bounds_name_stack_seq
 \seq_new:N \g_nsk_group_ps_dira_stack_seq
 \seq_new:N \g_nsk_group_ps_dirb_stack_seq
+\seq_new:N \g_nsk_group_skip_pos_counter_stack_seq
+\bool_new:N \l_nsk_group_scope_first_pos_bool
 
 % Helper functions to push and pop from stacks
 \cs_new_protected:Npn \nsk__group_push_to_stack:
@@ -85,6 +87,10 @@
 	\seq_gpush:Nx \g_nsk_group_scale_stack_seq {\fp_use:N \l_nsk_group_scale_fp}
 	\seq_gpush:NV \g_nsk_group_ps_dira_stack_seq \l_nsk_group_ps_dira_tl
 	\seq_gpush:NV \g_nsk_group_ps_dirb_stack_seq \l_nsk_group_ps_dirb_tl
+
+	% Save skip-pos counter state
+	\seq_gpush:Nx \g_nsk_group_skip_pos_counter_stack_seq
+		{\int_use:N \g_nsk_block_skip_pos_counter_int}
 
 	% Create a unique refnode ID for this level
 	\tl_set:Nx \l_nsk_group_refnode_id_tl {__nsk_phantom_refnode_\int_use:N \g_nsk_group_stack_level_int}
@@ -141,6 +147,10 @@
 			\seq_gpop:NN \g_nsk_group_scale_stack_seq \l_tmpa_tl
 			\seq_gpop:NN \g_nsk_group_ps_dira_stack_seq \l_tmpa_tl
 			\seq_gpop:NN \g_nsk_group_ps_dirb_stack_seq \l_tmpa_tl
+
+			% Restore skip-pos counter state
+			\seq_gpop:NN \g_nsk_group_skip_pos_counter_stack_seq \l_tmpa_tl
+			\int_gset:Nn \g_nsk_block_skip_pos_counter_int {\l_tmpa_tl}
 		}
 }
 
@@ -150,6 +160,8 @@
 % Uses pgfinterruptpicture to avoid polluting the main picture with measurement nodes
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \newsavebox{\nsk@measurebox}
+
+\int_new:N \l__nsk_measure_saved_skip_counter_int
 
 \cs_new_protected:Npn \nsk__group_measure_content:nn #1 #2
 {
@@ -165,6 +177,9 @@
 	}
 	\use:n
 	{
+		% Save skip-pos counter before measurement (measurement pass shouldn't consume it)
+		\int_set:Nn \l__nsk_measure_saved_skip_counter_int {\g_nsk_block_skip_pos_counter_int}
+
 		% Enter measurement mode (suppresses ID registration)
 		\bool_gset_true:N \g__nsk_measurement_mode_bool
 
@@ -188,6 +203,9 @@
 
 		% Exit measurement mode
 		\bool_gset_false:N \g__nsk_measurement_mode_bool
+
+		% Restore skip-pos counter after measurement
+		\int_gset:Nn \g_nsk_block_skip_pos_counter_int {\l__nsk_measure_saved_skip_counter_int}
 
 		% The savebox is discarded - we only needed it for measurement
 	}
@@ -368,6 +386,11 @@
 	scale .initial:n = {1},
 	scale .default:n = {1},
 
+	% Scope first child positioning within group
+	scope-first-pos .bool_set:N = \l_nsk_group_scope_first_pos_bool,
+	scope-first-pos .initial:n = {true},
+	scope-first-pos .default:n = {true},
+
 	% forward unknown props to scope
 	unknown .code:n =
 		{
@@ -493,6 +516,15 @@
 	\keys_set:nn { nsk / group } {#1}
 
 	\nsk__process_last_pos_for_group:
+
+	% Auto-scope first pos if group has last-pos
+	\bool_if:NT \l_nsk_group_scope_first_pos_bool
+	{
+		\tl_if_blank:VF \l_nsk_group_last_pos_tl
+		{
+			\int_gset:Nn \g_nsk_block_skip_pos_counter_int {0}
+		}
+	}
 
 	% maybe detect anchor pos
 	\nsk__detect_anchor_pos:

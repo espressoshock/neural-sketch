@@ -71,11 +71,13 @@
 \seq_new:N \g_nsk_container_rotate_stack_seq
 \seq_new:N \g_nsk_container_scale_stack_seq
 \seq_new:N \g_nsk_block_id_stack_seq
+\seq_new:N \g_nsk_container_skip_pos_counter_stack_seq
 % --
 \tl_new:N \l_nsk_group_ps_dira_tl
 \tl_new:N \l_nsk_group_ps_dirb_tl
 % --
 \bool_new:N \l_nsk_container_draw_bool
+\bool_new:N \l_nsk_container_scope_first_pos_bool
 
 % Temporary variables for position parsing
 \tl_new:N \l_tmpp_pos_tl
@@ -109,6 +111,10 @@
 	% Clear position direction token lists for new level
 	\tl_clear:N \l_nsk_group_ps_dira_tl
 	\tl_clear:N \l_nsk_group_ps_dirb_tl
+
+	% Save skip-pos counter state
+	\seq_gpush:Nx \g_nsk_container_skip_pos_counter_stack_seq
+		{\int_use:N \g_nsk_block_skip_pos_counter_int}
 }
 
 \cs_new_protected:Npn \nsk__container_pop_from_stack:
@@ -146,6 +152,10 @@
 		\seq_gpop:NN \g_nsk_group_bounds_name_stack_seq \l_nsk_group_bounds_name_tl
 		\seq_gpop:NN \g_nsk_group_ps_dira_stack_seq \l_nsk_group_ps_dira_tl
 		\seq_gpop:NN \g_nsk_group_ps_dirb_stack_seq \l_nsk_group_ps_dirb_tl
+
+		% Restore skip-pos counter state
+		\seq_gpop:NN \g_nsk_container_skip_pos_counter_stack_seq \l_tmpa_tl
+		\int_gset:Nn \g_nsk_block_skip_pos_counter_int {\l_tmpa_tl}
 	}
 	{
 		% If the pop failed, stack is empty, reset to defaults
@@ -166,6 +176,8 @@
 		\tl_set:Nn \l_nsk_group_bounds_name_tl {__nsk_container_bounds}
 		\tl_clear:N \l_nsk_group_ps_dira_tl
 		\tl_clear:N \l_nsk_group_ps_dirb_tl
+
+		\int_gset:Nn \g_nsk_block_skip_pos_counter_int {0}
 	}
 }
 
@@ -589,6 +601,11 @@
 	group-opts .initial:n = {},
 	group-opts .default:n = {},
 
+	% Scope first child positioning within container
+	scope-first-pos .bool_set:N = \l_nsk_container_scope_first_pos_bool,
+	scope-first-pos .initial:n = {true},
+	scope-first-pos .default:n = {true},
+
 	% -- The special pass-through key for arbitrary options.
 	% forward unknown props to nsblocks
 	unknown .code:n =
@@ -674,6 +691,17 @@
 	\tl_if_blank:VTF \l_nsk_container_last_pos_s_tl
 	{ \nsk__process_container_last_pos: }
 	{ \nsk__process_container_last_pos_s: }
+
+	% Auto-scope first pos if container has last-pos
+	\bool_if:NT \l_nsk_container_scope_first_pos_bool
+	{
+		\bool_lazy_or:nnT
+			{ ! \tl_if_blank_p:V \l_nsk_container_last_pos_tl }
+			{ ! \tl_if_blank_p:V \l_nsk_container_last_pos_s_tl }
+		{
+			\int_gset:Nn \g_nsk_block_skip_pos_counter_int {0}
+		}
+	}
 
 	% Ensure anchor defaults to center if empty
 	\tl_if_empty:VT \l_nsk_container_anchor_tl
