@@ -39,14 +39,13 @@
 		border-color=nskSecondaryAccent,
     last-pos={below=}
 	]{
-		\foreach \a in {180, 120, 90}{
+		\foreach \a in {2mm, 4mm, 6mm}{
 				\nskBlock*[
           type=crect[\a],
 					text-center={hello},
 					width=2cm, height=1cm,
 					border-radius=.6mm,
-          id=a,
-					pos={right=.8cm of a},
+					last-pos-s={right=.8cm},
 				]
 			}
 	}
@@ -62,30 +61,26 @@
 		\nskBlock[
 			type=chamfered rectangle,
 			text-center={hello},
-			id=cblock,
 			width=2cm, height=1cm,
 			border-radius=.6mm,
-			pos={right=.8cm of cblock},
 			tikz-opts={chamfered rectangle corners={north east, south east}},
+			last-pos-s={right=.8cm},
 		]
 		\nskBlock[
 			type=chamfered rectangle,
 			text-center={hello},
-			id=cblock,
 			width=2cm, height=1cm,
 			border-radius=.6mm,
-			pos={right=.8cm of cblock},
 			tikz-opts={chamfered rectangle corners={north west, south west}},
+			last-pos-s={right=.8cm},
 		]
-
 		\nskBlock[
 			type=chamfered rectangle,
 			text-center={hello},
-			id=cblock,
 			width=2cm, height=1cm,
 			border-radius=.6mm,
-			pos={right=.8cm of cblock},
 			tikz-opts={chamfered rectangle corners={north east, south west}},
+			last-pos-s={right=.8cm},
 		]
 	}
 \end{nskFigure}

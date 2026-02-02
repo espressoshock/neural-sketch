@@ -1679,55 +1679,108 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 		},
 }
 
-\tl_new:N \l__nsk_block_type_e_tl
-\tl_new:N \l__nsk_block_type_args_e_tl
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-% Parse and extract block type args
+% Unified Block Type Parsing
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\cs_new_protected_nopar:Npn \nsk__parse_block_type_args
-{
-  % Extract the args
-  % 1. full string, 2. type, 3. type args
-  \regex_extract_once:nVN {^(\w+)(?:\[([^\]]+)\])?} \l_nsk_block_type_tl \l_tmpa_seq
-	{
-    % extract --v
-		\tl_set:Nx \l__nsk_block_type_e_tl {\seq_item:Nn \l_tmpa_seq {2}}
-		\tl_set:Nx \l__nsk_block_type_args_e_tl {\seq_item:Nn \l_tmpa_seq {3}}
+% Temporary variables for parsed type components
+\tl_new:N \l__nsk_parsed_base_type_tl
+\tl_new:N \l__nsk_parsed_args_tl
+\seq_new:N \l__nsk_parsed_args_seq
+\seq_new:N \l__nsk_parse_result_seq
 
-    % proxy args
-    \nsk__proxy_type_args
-  }
+% Append to extra_style with proper comma handling
+\cs_new_protected:Npn \nsk__append_extra_style:n #1
+{
+    \tl_if_empty:NTF \l_nsk_block_extra_style_tl
+    { \tl_set:Nn \l_nsk_block_extra_style_tl { #1 } }
+    { \tl_put_right:Nn \l_nsk_block_extra_style_tl { ,~ #1 } }
+}
+\cs_generate_variant:Nn \nsk__append_extra_style:n { x, V }
+
+% Standard shape handler: #1 = tikz-shape, #2 = tikz-option-key, #3 = default
+\cs_new_protected:Npn \nsk__apply_shape:nnn #1 #2 #3
+{
+    \tl_set:Nn \l_nsk_block_type_tl { #1 }
+    \tl_if_empty:NTF \l__nsk_parsed_args_tl
+    { \nsk__append_extra_style:n { #2 = #3 } }
+    { \nsk__append_extra_style:x { #2 = \l__nsk_parsed_args_tl } }
 }
 
-\cs_new_protected_nopar:Npn \nsk__proxy_type_args
+% Squircle handler
+\cs_new_protected:Npn \nsk__handle_squircle_args:
 {
+    \tl_set:Nn \l_nsk_block_type_tl { superellipse }
 
-  \tl_show:N \l__nsk_block_type_e_tl
-  \str_case:Vn \l__nsk_block_type_e_tl
-  {
-    {text}
-    {
-        \tl_show:N \l__nsk_block_type_e_tl
-				\tl_set:Nn \l_nsk_block_type_tl {rectangle}
-				\tl_set:Nn \l_nsk_block_border_type_tl {draw=none}
-				\bool_set_false:N \l_nsk_block_shadow_bool
-				\tl_set:Nn \l_nsk_block_fill_tl {none}
-				% auto width
-				\dim_set:Nn \l_nsk_block_width_dim {0cm}
-				\dim_set:Nn \l_nsk_block_padding_x_dim {0mm}
-    }
-    {icon}
-    {
-				\tl_set:Nn \l_nsk_block_type_tl {rectangle}
-				\tl_set:Nn \l_nsk_block_border_type_tl {draw=none}
-				\bool_set_false:N \l_nsk_block_shadow_bool
-				\tl_set:Nn \l_nsk_block_fill_tl {none}
-				% auto width
-				\dim_set:Nn \l_nsk_block_width_dim {0cm}
-				\dim_set:Nn \l_nsk_block_padding_x_dim {0mm}
-    }
-  }
+    % Defaults
+    \tl_set:Nn \l_nsk_block_squircle_ex_tl { 4 }
+    \tl_set:Nn \l_nsk_block_squircle_ey_tl { 4 }
+    \tl_set:Nn \l_nsk_block_squircle_step_tl { 5 }
 
+    \tl_if_empty:NF \l__nsk_parsed_args_tl
+    {
+        \seq_set_split:NnV \l__nsk_parsed_args_seq { , } \l__nsk_parsed_args_tl
+        \int_compare:nNnTF { \seq_count:N \l__nsk_parsed_args_seq } > { 1 }
+        {
+            \seq_pop_left:NNT \l__nsk_parsed_args_seq \l_tmpa_tl
+                { \tl_set:NV \l_nsk_block_squircle_ex_tl \l_tmpa_tl }
+            \seq_pop_left:NNT \l__nsk_parsed_args_seq \l_tmpa_tl
+                { \tl_set:NV \l_nsk_block_squircle_ey_tl \l_tmpa_tl }
+            \seq_pop_left:NNT \l__nsk_parsed_args_seq \l_tmpa_tl
+                { \tl_set:NV \l_nsk_block_squircle_step_tl \l_tmpa_tl }
+        }
+        {
+            \seq_pop_left:NNT \l__nsk_parsed_args_seq \l_tmpa_tl
+            {
+                \tl_set:NV \l_nsk_block_squircle_ex_tl \l_tmpa_tl
+                \tl_set_eq:NN \l_nsk_block_squircle_ey_tl \l_nsk_block_squircle_ex_tl
+            }
+        }
+    }
+
+    \nsk__append_extra_style:x { superellipse~x~exponent = \l_nsk_block_squircle_ex_tl }
+    \nsk__append_extra_style:x { superellipse~y~exponent = \l_nsk_block_squircle_ey_tl }
+    \nsk__append_extra_style:x { superellipse~step = \l_nsk_block_squircle_step_tl }
+    \dim_set:Nn \l_nsk_block_border_radius_dim { 0mm }
+    \dim_set:Nn \l_nsk_block_embed_border_radius_dim { 0mm }
+}
+
+% Text/Icon handler
+\cs_new_protected:Npn \nsk__handle_text_type:
+{
+    \tl_set:Nn \l_nsk_block_type_tl { rectangle }
+    \tl_set:Nn \l_nsk_block_border_type_tl { draw=none }
+    \bool_set_false:N \l_nsk_block_shadow_bool
+    \tl_set:Nn \l_nsk_block_fill_tl { none }
+    \dim_set:Nn \l_nsk_block_width_dim { 0cm }
+    \dim_set:Nn \l_nsk_block_padding_x_dim { 0mm }
+}
+
+% Unified parse and dispatch function
+\cs_new_protected:Npn \nsk__parse_and_dispatch_type:
+{
+    % Single regex: ^(\w+)(?:\[([^\]]*)\])?
+    \regex_extract_once:nVNTF
+        { ^(\w+)(?:\[([^\]]*)\])? }
+        \l_nsk_block_type_tl
+        \l__nsk_parse_result_seq
+    {
+        \tl_set:Nx \l__nsk_parsed_base_type_tl { \seq_item:Nn \l__nsk_parse_result_seq {2} }
+        \tl_set:Nx \l__nsk_parsed_args_tl { \seq_item:Nn \l__nsk_parse_result_seq {3} }
+
+        % Dispatch with early exit
+        \str_case:VnF \l__nsk_parsed_base_type_tl
+        {
+            { polygon }  { \nsk__apply_shape:nnn { regular~polygon } { regular~polygon~sides } { 5 } }
+            { star }     { \nsk__apply_shape:nnn { star } { star~points } { 5 } }
+            { rrect }    { \nsk__apply_shape:nnn { rounded~rectangle } { rounded~rectangle~arc~length } { 90 } }
+            { crect }    { \nsk__apply_shape:nnn { chamfered~rectangle } { chamfered~rectangle~xsep } { 3mm } }
+            { squircle } { \nsk__handle_squircle_args: }
+            { text }     { \nsk__handle_text_type: }
+            { icon }     { \nsk__handle_text_type: }
+        }
+        { } % No match - type passes through unchanged
+    }
+    { } % No regex match - type used as-is
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1793,16 +1846,8 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	}
 
 
-	% check if type is ...[n]
-  % TODO: refactor this --
-	\nsk__check_polygon_type:
-	\nsk__check_star_type:
-	\nsk__check_rrect_type:
-	\nsk__check_crect_type:
-  \nsk__check_squircle_type:
-
-  % extract args --
-  \nsk__parse_block_type_args
+	% Parse block type and dispatch to appropriate handler
+	\nsk__parse_and_dispatch_type:
 
 	% process last-pos -> set cpos if neeeded
 	% if last-pos-s is given, use it (without error); otherwise use last-pos
@@ -2323,188 +2368,6 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 			\l_nsk_block_border_type_tl
 		] \tl_use:N \l__nsk_percorner_path_tl ;
 	}
-}
-
-% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-% Squircle
-% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\cs_new_protected_nopar:Npn \nsk__check_squircle_type:
-{
-	% extract args if any
-	\regex_match:nVTF {squircle\[(.*?)\]} \l_nsk_block_type_tl
-	{
-		% Extract the args
-		\regex_extract_once:nVN {squircle\[(.*?)\]} \l_nsk_block_type_tl \l_tmpa_seq
-		\tl_set:Nx \l_args_tl {\seq_item:Nn \l_tmpa_seq {2}}
-    \tl_if_blank:VF \l_args_tl {
-      \seq_set_split:Nnx \l_args_seq {,} {\l_args_tl}
-      \seq_show:N \l_args_seq
-
-      % set to default
-      \tl_clear_new:N \l_nsk_block_squircle_ex_tl
-      \tl_clear_new:N \l_nsk_block_squircle_ey_tl
-      \tl_clear_new:N \l_nsk_block_squircle_step_tl
-      \tl_set:Nn \l_nsk_block_squircle_ex_tl {4}
-      \tl_set:Nn \l_nsk_block_squircle_ey_tl {4}
-      \tl_set:Nn \l_nsk_block_squircle_step_tl {5}
-
-
-      % set args -> [[x],[y]]/[e],[step]
-      % [4, 4, 15]
-      % [4, 2]
-      % [4,]
-
-      \int_compare:nNnTF {\seq_count:N \l_args_seq} > {1}
-      {
-        \seq_pop_left:NNT \l_args_seq \l_tmpa_tl
-        { \tl_set:No \l_nsk_block_squircle_ex_tl {\l_tmpa_tl} }
-        % ey
-        \seq_pop_left:NNT \l_args_seq \l_tmpa_tl
-        { \tl_set:No \l_nsk_block_squircle_ey_tl {\l_tmpa_tl} }
-        % step
-        \seq_pop_left:NNT \l_args_seq \l_tmpa_tl
-        { \tl_set:No \l_nsk_block_squircle_step_tl {\l_tmpa_tl} }
-      }
-      {
-        \seq_pop_left:NNT \l_args_seq \l_tmpa_tl
-        { \tl_set:No \l_nsk_block_squircle_ex_tl {\l_tmpa_tl} }
-        \tl_set:No \l_nsk_block_squircle_ey_tl {\l_nsk_block_squircle_ex_tl}
-      }
-    }
-   \tl_set:Nn \l_nsk_block_type_tl {superellipse} 
-	}
-	{
-    % check if just squircle or squircle[]
-    \tl_if_in:NnT \l_nsk_block_type_tl {squircle}
-    { \tl_set:Nn \l_nsk_block_type_tl {superellipse} }
-
-    % set to default
-    % TODO: rework this as well with the new more robust shape args sys
-    \tl_clear_new:N \l_nsk_block_squircle_ex_tl
-    \tl_clear_new:N \l_nsk_block_squircle_ey_tl
-    \tl_clear_new:N \l_nsk_block_squircle_step_tl
-    \tl_set:Nn \l_nsk_block_squircle_ex_tl {4}
-    \tl_set:Nn \l_nsk_block_squircle_ey_tl {4}
-    \tl_set:Nn \l_nsk_block_squircle_step_tl {5}
-  }
-
-  \tl_if_eq:NnT \l_nsk_block_type_tl {superellipse}
-  {
-    % Append to tikz-opts
-    \tl_put_left:No \l_nsk_block_extra_style_tl
-    {superellipse~x~exponent=\l_nsk_block_squircle_ex_tl, }
-    \tl_put_left:No \l_nsk_block_extra_style_tl
-    {superellipse~y~exponent=\l_nsk_block_squircle_ey_tl, }
-    \tl_put_left:No \l_nsk_block_extra_style_tl
-    {superellipse~step=\l_nsk_block_squircle_step_tl, }
-
-    % set block type
-    \tl_set:Nn \l_nsk_block_type_tl {superellipse}
-
-    % set some styles
-    \dim_set:Nn \l_nsk_block_border_radius_dim {0mm}
-    \dim_set:Nn \l_nsk_block_embed_border_radius_dim {0mm}
-  }
-
-}
-
-% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-% Check if type is polygon[n] and process accordingly
-% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\cs_new_protected_nopar:Npn \nsk__check_polygon_type:
-{
-	% Check if type matches polygon[n] pattern
-	\regex_match:nVTF {polygon\[[0-9]+\]} \l_nsk_block_type_tl
-	{
-		% Extract the number of sides using regex
-		\regex_extract_once:nVN {polygon\[([0-9]+)\]} \l_nsk_block_type_tl \l_tmpa_seq
-		\tl_set:Nx \l_poly_n_tl {\seq_item:Nn \l_tmpa_seq {2}}
-
-		% Set the type to "regular polygon"
-		\tl_set:Nn \l_nsk_block_type_tl {regular~polygon}
-
-		% Append "regular polygon sides=n" to tikz-opts
-		\tl_if_empty:VTF \l_nsk_block_extra_style_tl
-		{
-			\tl_set:Nx \l_nsk_block_extra_style_tl {regular~polygon~sides=\l_poly_n_tl}
-		}
-		{
-			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, regular~polygon~sides=\l_poly_n_tl}
-		}
-	}
-	{ }
-}
-
-\cs_new_protected_nopar:Npn \nsk__check_star_type:
-{
-	% Check if type matches polygon[n] pattern
-	\regex_match:nVTF {star\[[0-9]+\]} \l_nsk_block_type_tl
-	{
-		% Extract the number of sides using regex
-		\regex_extract_once:nVN {star\[([0-9]+)\]} \l_nsk_block_type_tl \l_tmpa_seq
-		\tl_set:Nx \l_poly_n_tl {\seq_item:Nn \l_tmpa_seq {2}}
-
-		% strip the []
-		\tl_set:Nn \l_nsk_block_type_tl {star}
-
-		% Append "star points=n" to tikz-opts
-		\tl_if_empty:VTF \l_nsk_block_extra_style_tl
-		{
-			\tl_set:Nx \l_nsk_block_extra_style_tl {star~points=\l_poly_n_tl}
-		}
-		{
-			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, star~points=\l_poly_n_tl}
-		}
-	}
-	{ }
-}
-
-\cs_new_protected_nopar:Npn \nsk__check_rrect_type:
-{
-	% Check if type matches polygon[n] pattern
-	\regex_match:nVTF {rrect\[[0-9]+\]} \l_nsk_block_type_tl
-	{
-		% Extract the number of sides using regex
-		\regex_extract_once:nVN {rrect\[([0-9]+)\]} \l_nsk_block_type_tl \l_tmpa_seq
-		\tl_set:Nx \l_poly_n_tl {\seq_item:Nn \l_tmpa_seq {2}}
-
-		% strip the []
-		\tl_set:Nn \l_nsk_block_type_tl {rounded~rectangle}
-
-		% Append to tikz-opts
-		\tl_if_empty:VTF \l_nsk_block_extra_style_tl
-		{
-			\tl_set:Nx \l_nsk_block_extra_style_tl {rounded~rectangle~arc~length=\l_poly_n_tl}
-		}
-		{
-			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, rounded~rectangle~arc~length=\l_poly_n_tl}
-		}
-	}
-	{ }
-}
-
-\cs_new_protected_nopar:Npn \nsk__check_crect_type:
-{
-	% Check if type matches polygon[n] pattern
-	\regex_match:nVTF {crect\[[0-9]+\]} \l_nsk_block_type_tl
-	{
-		% Extract the number of sides using regex
-		\regex_extract_once:nVN {crect\[([0-9]+)\]} \l_nsk_block_type_tl \l_tmpa_seq
-		\tl_set:Nx \l_poly_n_tl {\seq_item:Nn \l_tmpa_seq {2}}
-
-		% strip the []
-		\tl_set:Nn \l_nsk_block_type_tl {chamfered~rectangle}
-
-		% Append to tikz-opts
-		\tl_if_empty:VTF \l_nsk_block_extra_style_tl
-		{
-			\tl_set:Nx \l_nsk_block_extra_style_tl {rounded~rectangle~arc~length=\l_poly_n_tl}
-		}
-		{
-			\tl_put_right:Nx \l_nsk_block_extra_style_tl {, rounded~rectangle~arc~length=\l_poly_n_tl}
-		}
-	}
-	{ }
 }
 
 \ExplSyntaxOff
