@@ -51,6 +51,12 @@
 \bool_new:N \g__nsk_threed_mode_active_bool
 \bool_gset_false:N \g__nsk_threed_mode_active_bool
 
+% Global focal length for perspective projection (0 = orthographic)
+% Higher values = less distortion, lower values = more distortion
+% Typical: 10 = wide-angle, 20 = normal, 50 = telephoto
+\fp_new:N \g__nsk_threed_focal_length_fp
+\fp_gset:Nn \g__nsk_threed_focal_length_fp {0}
+
 % Plane counter for auto-ID generation
 \int_new:N \g__nsk_threed_plane_count_int
 \int_gset:Nn \g__nsk_threed_plane_count_int {0}
@@ -82,6 +88,12 @@
 \bool_new:N \l__nsk_threed_billboard_bool
 \bool_new:N \l__nsk_threed_axes_swapped_bool
 
+% Focal length for perspective projection (0 = orthographic)
+\fp_new:N \l__nsk_threed_focal_length_fp
+\fp_new:N \l__nsk_threed_proj_factor_fp    % Projection scaling factor
+\fp_new:N \l__nsk_threed_depth_fp          % Plane depth for perspective calc
+\fp_new:N \l__nsk_threed_combined_scale_fp % Combined perspective + user scale
+
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Stack sequences for plane nesting
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -93,6 +105,7 @@
 \seq_new:N \g__nsk_threed_elevation_stack_seq
 \seq_new:N \g__nsk_threed_scale_stack_seq
 \seq_new:N \g__nsk_threed_rotate_stack_seq
+\seq_new:N \g__nsk_threed_focal_length_stack_seq
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Push/Pop helpers (following containers pattern)
@@ -107,6 +120,7 @@
 	\seq_gpush:Nx \g__nsk_threed_elevation_stack_seq {\fp_use:N \l__nsk_threed_elevation_fp}
 	\seq_gpush:Nx \g__nsk_threed_scale_stack_seq {\fp_use:N \l__nsk_threed_scale_fp}
 	\seq_gpush:Nx \g__nsk_threed_rotate_stack_seq {\fp_use:N \l__nsk_threed_rotate_fp}
+	\seq_gpush:Nx \g__nsk_threed_focal_length_stack_seq {\fp_use:N \l__nsk_threed_focal_length_fp}
 }
 
 \cs_new_protected:Npn \__nsk_threed_pop_from_stack:
@@ -128,6 +142,8 @@
 		\fp_set:Nn \l__nsk_threed_scale_fp {\l_tmpa_tl}
 		\seq_gpop:NN \g__nsk_threed_rotate_stack_seq \l_tmpa_tl
 		\fp_set:Nn \l__nsk_threed_rotate_fp {\l_tmpa_tl}
+		\seq_gpop:NN \g__nsk_threed_focal_length_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l__nsk_threed_focal_length_fp {\l_tmpa_tl}
 	}
 	{
 		% Stack empty - reset to defaults
@@ -139,6 +155,7 @@
 		\fp_set:Nn \l__nsk_threed_elevation_fp {\g__nsk_threed_elevation_fp}
 		\fp_set:Nn \l__nsk_threed_scale_fp {1}
 		\fp_set:Nn \l__nsk_threed_rotate_fp {0}
+		\fp_set:Nn \l__nsk_threed_focal_length_fp {\g__nsk_threed_focal_length_fp}
 	}
 }
 
@@ -253,6 +270,13 @@
 	phi .code:n = {
 		\fp_gset:Nn \g__nsk_threed_azimuth_fp {#1}
 	},
+
+	% Focal length for perspective projection (0 = orthographic)
+	% Higher values = less distortion (telephoto), lower values = more distortion (wide-angle)
+	% Typical: 10 = strong perspective, 20 = moderate, 50 = subtle
+	focal-length .code:n = {
+		\fp_gset:Nn \g__nsk_threed_focal_length_fp {#1}
+	},
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -331,6 +355,12 @@
 	billboard .bool_set:N = \l__nsk_threed_billboard_bool,
 	billboard .initial:n = {false},
 	billboard .default:n = {true},
+
+	% Focal length in cm for perspective projection (0 = orthographic)
+	% Higher values = less distortion (telephoto), lower values = more distortion (wide-angle)
+	% Typical: 10 = strong perspective, 20 = moderate, 50 = subtle
+	focal-length .fp_set:N = \l__nsk_threed_focal_length_fp,
+	focal-length .initial:n = {0},
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -373,9 +403,82 @@
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-% Main plane drawing function
+% Perspective plane drawing function (focal-length > 0)
+% Uses y-dependent shearing to create perspective distortion (trapezoid effect)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-\cs_new_protected:Npn \__nsk_threed_draw_plane:n #1
+\cs_new_protected:Npn \__nsk_threed_draw_plane_perspective:n #1
+{
+	% Apply tdplot view angles
+	\tdplotsetmaincoords
+		{\fp_use:N \l__nsk_threed_elevation_fp}
+		{\fp_use:N \l__nsk_threed_azimuth_fp}
+
+	% Build canvas transform string
+	\tl_set:Nx \l_tmpa_tl {\__nsk_threed_get_canvas_string:}
+
+	% Get plane depth in cm (add small offset so depth=0 still has some effect)
+	\fp_set:Nn \l__nsk_threed_depth_fp { \dim_to_decimal_in_unit:nn{\l__nsk_threed_at_dim}{1cm} }
+
+	% Compute base projection factor: focal / (focal + depth)
+	% This scales the entire plane based on its distance from the camera
+	\fp_set:Nn \l__nsk_threed_proj_factor_fp {
+		\l__nsk_threed_focal_length_fp / (\l__nsk_threed_focal_length_fp + \l__nsk_threed_depth_fp)
+	}
+
+	% Compute combined scale (perspective + user scale)
+	\fp_set:Nn \l__nsk_threed_combined_scale_fp {
+		\l__nsk_threed_proj_factor_fp * \l__nsk_threed_scale_fp
+	}
+
+	% Compute x-shear for perspective convergence (trapezoid effect)
+	% Points at higher y (further from camera) shift inward toward center
+	% Base strength is scaled by sin(elevation) and inversely by focal length
+	% focal-length=10: strong (multiplier ~2), focal-length=20: moderate (~1), focal-length=50: subtle (~0.4)
+	\fp_set:Nn \l_tmpa_fp {
+		-sind(\l__nsk_threed_elevation_fp) * 0.1 * (20 / \l__nsk_threed_focal_length_fp)
+	}
+
+	% Compute y-scale compression for perspective (top appears compressed)
+	% Approximates foreshortening: further elements appear smaller
+	\fp_set:Nn \l_tmpb_fp {
+		1 - (sind(\l__nsk_threed_elevation_fp) * 0.05 * (20 / \l__nsk_threed_focal_length_fp))
+	}
+
+	% Draw with perspective transformation
+	\begin{scope}[
+		tdplot_main_coords,
+		\l_tmpa_tl = \dim_to_decimal_in_unit:nn { \l__nsk_threed_at_dim } { 1cm },
+		transform~shape,
+	]
+		\bool_if:NTF \l__nsk_threed_axes_swapped_bool
+		{
+			\begin{scope}[
+				cm={0,1,1,0,(0,0)},
+				rotate=\fp_use:N \l__nsk_threed_rotate_fp,
+				scale=\fp_use:N \l__nsk_threed_combined_scale_fp,
+				% Apply perspective: x-shear for convergence, y-scale for compression
+				cm={1, 0, \fp_use:N \l_tmpa_fp, \fp_use:N \l_tmpb_fp, (0,0)},
+			]
+				#1
+			\end{scope}
+		}
+		{
+			\begin{scope}[
+				rotate=\fp_use:N \l__nsk_threed_rotate_fp,
+				scale=\fp_use:N \l__nsk_threed_combined_scale_fp,
+				% Apply perspective: x-shear for convergence, y-scale for compression
+				cm={1, 0, \fp_use:N \l_tmpa_fp, \fp_use:N \l_tmpb_fp, (0,0)},
+			]
+				#1
+			\end{scope}
+		}
+	\end{scope}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Orthographic plane drawing function (fov = 0, original behavior)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected:Npn \__nsk_threed_draw_plane_orthographic:n #1
 {
 	% Apply tdplot view angles
 	\tdplotsetmaincoords
@@ -446,6 +549,23 @@
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Main plane drawing function (dispatches based on focal-length)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected:Npn \__nsk_threed_draw_plane:n #1
+{
+	% Check if perspective mode is enabled (focal-length > 0)
+	\fp_compare:nNnTF {\l__nsk_threed_focal_length_fp} > {0}
+	{
+		% Use perspective projection
+		\__nsk_threed_draw_plane_perspective:n {#1}
+	}
+	{
+		% Use orthographic projection (original behavior)
+		\__nsk_threed_draw_plane_orthographic:n {#1}
+	}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Public Interface: \nskViewSetup (was \nsk3DSetup)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \NewDocumentCommand \nskViewSetup { O{} }
@@ -488,10 +608,11 @@
 
 	\group_begin:
 
-	% Initialize with global view angles
+	% Initialize with global view angles and focal length
 	\bool_set_true:N \l__nsk_threed_inherit_view_bool
 	\fp_set:Nn \l__nsk_threed_azimuth_fp {\g__nsk_threed_azimuth_fp}
 	\fp_set:Nn \l__nsk_threed_elevation_fp {\g__nsk_threed_elevation_fp}
+	\fp_set:Nn \l__nsk_threed_focal_length_fp {\g__nsk_threed_focal_length_fp}
 
 	% Parse keys
 	\keys_set:nn { nsk / plane } { #1 }
@@ -548,6 +669,7 @@
 	\bool_gset_false:N \g__nsk_threed_mode_active_bool
 	\fp_gset:Nn \g__nsk_threed_azimuth_fp {45}
 	\fp_gset:Nn \g__nsk_threed_elevation_fp {35}
+	\fp_gset:Nn \g__nsk_threed_focal_length_fp {0}
 	\int_gset:Nn \g__nsk_threed_plane_count_int {0}
 	\prop_gclear:N \g__nsk_threed_plane_registry_prop
 }
