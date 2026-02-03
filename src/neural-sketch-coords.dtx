@@ -228,7 +228,7 @@
 		{
 			\nsk__internal_get_nth_block_id:n {1}
 			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
-			\str_if_in:NnTF { \l_nsk_coord_last_pos_tl } { = }
+			\str_if_in:VnTF \l_nsk_coord_last_pos_tl { = }
 			{
 				\tl_set:Nx \l_nsk_coord_pos_tl
 				{ \exp_not:V \l_nsk_coord_last_pos_tl\space of~\exp_not:V \l_tmpa_tl }
@@ -253,7 +253,7 @@
 					\seq_item:Nn \g_nsk_block_id_history_seq
 					{ \int_eval:n { \l_tmpa_int - 0 } }
 				}
-				\str_if_in:NnTF { \l_nsk_coord_last_pos_s_tl } { = }
+				\str_if_in:VnTF \l_nsk_coord_last_pos_s_tl { = }
 				{
 					\tl_set:Nx \l_nsk_coord_pos_tl
 					{ \exp_not:V \l_nsk_coord_last_pos_s_tl\space of~\exp_not:V \l_tmpa_tl }

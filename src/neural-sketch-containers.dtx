@@ -475,7 +475,7 @@
 			% Retrieve the previous block ID
 			\nsk__internal_get_nth_block_id:n {1}
 			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
-			\str_if_in:NnTF \l_nsk_container_last_pos_tl {=}
+			\str_if_in:VnTF \l_nsk_container_last_pos_tl {=}
 			{
 				\tl_set:Nx \l_nsk_container_pos_tl
 				{ \exp_not:V \l_nsk_container_last_pos_tl\space of~\exp_not:V \l_tmpa_tl }
@@ -504,7 +504,7 @@
 			% Retrieve the previous block ID
 			\nsk__internal_get_nth_block_id:n {1}
 			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
-			\str_if_in:NnTF \l_nsk_container_last_pos_s_tl {=}
+			\str_if_in:VnTF \l_nsk_container_last_pos_s_tl {=}
 			{
 				\tl_set:Nx \l_nsk_container_pos_tl
 				{ \exp_not:V \l_nsk_container_last_pos_s_tl\space of~\exp_not:V \l_tmpa_tl }
@@ -800,6 +800,14 @@
 	% (a) Clear the property list so it doesn't retain any old unknown keys
 	\prop_clear_new:N \l_nsk_container_unknown_prop
 
+	% (a2) Reset position-related variables to defaults before parsing keys
+	%      This prevents nested containers from inheriting parent's position
+	\tl_clear:N \l_nsk_container_pos_tl
+	\tl_clear:N \l_nsk_container_last_pos_tl
+	\tl_clear:N \l_nsk_container_last_pos_s_tl
+	\tl_clear:N \l_nsk_container_anchor_tl
+	\tl_set:Nn \l_nsk_container_align_tl {none}
+
 	% (b) Parse recognized container keys + store unknown keys
 	\keys_set:nn {nsk / container}{#1}
 
@@ -913,7 +921,11 @@
 
 	% (d) Build an \nskBlock that fits the bounding box, plus any unknown keys
 	%     stored in \l_nsk_container_unknown_prop. We'll do a small helper:
-	\nsk__container_draw_block:
+	%     Skip during measurement mode to avoid creating spurious fit nodes
+	\bool_if:NF \g__nsk_measurement_mode_bool
+	{
+		\nsk__container_draw_block:
+	}
 
 	\group_end:
 

@@ -261,7 +261,7 @@
 }
 
 % prepend proper alignmet ~~~~~~~~~~~~~~~~~~~~~ <<<
-\str_if_in:NnTF \l_nsk_group_pos_tl {.}
+\str_if_in:VnTF \l_nsk_group_pos_tl {.}
 {}
 {
 	% not given --
@@ -297,7 +297,7 @@
 			\nsk__internal_get_nth_block_id:n{2}
 			\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
 
-			\str_if_in:NnTF \l_nsk_group_last_pos_tl {=}
+			\str_if_in:VnTF \l_nsk_group_last_pos_tl {=}
 			{
 				% case (a) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 				% There's at least one '='
@@ -605,26 +605,36 @@
 %-----------------------------------------------------------------
 \cs_new_protected:Npn \nsk__draw_group_scope_aux:nnn #1 #2 #3
 {
-	% phantom node ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\tl_if_blank:VF \l_nsk_group_pos_tl
+	% Skip positioning during measurement mode - we only need to measure dimensions
+	\bool_if:NTF \g__nsk_measurement_mode_bool
 	{
-		\node[
-			#1,
-			draw=none,
-			fill=none,
-			name=\l_nsk_group_refnode_id_tl,
-			anchor=center
-		] {};
+		% Measurement mode: just draw content in a simple scope for bounding box
+		\begin{scope}[local~bounding~box=\l_nsk_group_bounds_name_tl]
+			#3
+		\end{scope}
 	}
-
-
-	% actual draw ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
-	\begin{scope}[#2]
-		\pgftransformshift{
-			\pgfpoint{\fp_use:N \l_nsk_group_x_fp}{\fp_use:N \l_nsk_group_y_fp}
+	{
+		% Normal mode: create phantom node and position the scope
+		% phantom node ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+		\tl_if_blank:VF \l_nsk_group_pos_tl
+		{
+			\node[
+				#1,
+				draw=none,
+				fill=none,
+				name=\l_nsk_group_refnode_id_tl,
+				anchor=center
+			] {};
 		}
-		#3
-	\end{scope}
+
+		% actual draw ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+		\begin{scope}[#2]
+			\pgftransformshift{
+				\pgfpoint{\fp_use:N \l_nsk_group_x_fp}{\fp_use:N \l_nsk_group_y_fp}
+			}
+			#3
+		\end{scope}
+	}
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

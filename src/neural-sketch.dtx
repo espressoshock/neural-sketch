@@ -996,7 +996,7 @@ every~node/.append~style={text=c__nsk_principal},
 				\nsk__internal_get_nth_block_id:n{1}
 				\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
 
-				\str_if_in:NnTF \l_nsk_block_last_pos_tl {=}
+				\str_if_in:VnTF \l_nsk_block_last_pos_tl {=}
 				{
 					% case (a) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 					% There's at least one '='
@@ -1044,7 +1044,7 @@ every~node/.append~style={text=c__nsk_principal},
 				\nsk__internal_get_nth_block_id:n{1}
 				\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
 
-				\str_if_in:NnTF \l_nsk_block_last_pos_s_tl {=}
+				\str_if_in:VnTF \l_nsk_block_last_pos_s_tl {=}
 				{
 					% case (a) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 					% There's at least one '='
