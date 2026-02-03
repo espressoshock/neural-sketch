@@ -220,10 +220,10 @@ every~node/.append~style={text=c__nsk_principal},
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Global counter -
-% to track skipping pos
+% to track skipping pos (1=normal, 0=skip first last-pos in scope)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \int_new:N \g_nsk_block_skip_pos_counter_int
-\int_gset:Nn \g_nsk_block_skip_pos_counter_int {0}
+\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Main nsk / Block Primitive
@@ -2122,10 +2122,11 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 \NewDocumentCommand {\nskReset} {o} {
   \str_case:nnF {#1}
   {
-    {pos} {\int_gset:Nn \g_nsk_block_skip_pos_counter_int {0}}
+    {pos} {\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}}
   }{
-    % reset all
-    \int_gset:Nn \g_nsk_block_skip_pos_counter_int {0}
+    % reset all - counter=1 means normal last-pos works
+    % (counter=0 is only set by containers/groups with scope-first-pos)
+    \int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}
   }
 }
 

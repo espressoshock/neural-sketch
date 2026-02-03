@@ -1,0 +1,1925 @@
+%%
+%% This is file `neural-sketch.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% neural-sketch.dtx  (with options: `package')
+%% 
+%% IMPORTANT NOTICE:
+%% 
+%% For the copyright see the source file.
+%% 
+%% Any modified versions of this file must be renamed
+%% with new filenames distinct from neural-sketch.sty.
+%% 
+%% For distribution of the original source see the terms
+%% for copying and modification in the file neural-sketch.dtx.
+%% 
+%% This generated file may be distributed as long as the
+%% original source files, as listed above, are part of the
+%% same distribution. (The sources need not necessarily be
+%% in the same archive or directory.)
+
+\ProvidesFile{neural-sketch.dtx}%
+[2025/01/22 v0.1 neural-sketch main code]
+
+
+
+
+\RequirePackage{tikz}
+\RequirePackage{expl3}
+\usetikzlibrary{
+calc, fit,
+shapes.geometric,
+shapes.symbols,
+shapes.misc,
+arrows.meta,
+positioning,
+arrows.meta,
+shadows,
+shadings,
+patterns, patterns.meta,
+backgrounds,
+tikzmark,
+math,
+  ext.shapes.superellipse
+}
+
+\ExplSyntaxOn
+
+\cs_new_protected:Npn \__nsk_set_coord_dim:Nn #1 #2
+{
+\tl_if_in:nnTF {#2} {pt}
+{ \dim_set:Nn #1 {#2} }
+{
+\tl_if_in:nnTF {#2} {cm}
+{ \dim_set:Nn #1 {#2} }
+{
+\tl_if_in:nnTF {#2} {mm}
+{ \dim_set:Nn #1 {#2} }
+{
+\tl_if_in:nnTF {#2} {in}
+{ \dim_set:Nn #1 {#2} }
+{
+\tl_if_in:nnTF {#2} {em}
+{ \dim_set:Nn #1 {#2} }
+{
+\tl_if_in:nnTF {#2} {ex}
+{ \dim_set:Nn #1 {#2} }
+{ \dim_set:Nn #1 {#2 cm} }
+}
+}
+}
+}
+}
+}
+
+\prop_new:N \l__nsk_pkgopts_opts_prop
+\keys_define:nn { nsk / pkgopts }
+{
+dark-mode .bool_gset:N = \g__nsk_dark_mode_bool,
+dark-mode .initial:n   = {false},
+dark-mode .default:n   = {false},
+
+unknown .code:n =
+{
+\prop_put:Nxx \l__nsk_pkgopts_opts_prop
+{ \tl_use:N \l_keys_key_tl }
+{ #1 }
+},
+
+}
+\ProcessKeysOptions { nsk / pkgopts }
+
+\tl_new:N \l__nsk_pkgopts_opts_tl
+\tl_clear:N \l__nsk_pkgopts_opts_tl
+
+\prop_map_inline:Nn \l__nsk_pkgopts_opts_prop
+{
+\tl_put_right:Nx \l__nsk_pkgopts_opts_tl
+{
+#1 = {#2},
+}
+}
+
+\bool_if:NTF \g__nsk_dark_mode_bool
+{
+\definecolor{ c__nsk_dark_bg_clr }      {HTML}{1d2021}
+\definecolor{ c__nsk_principal } {HTML}{ebdbb2}
+\pagecolor{c__nsk_dark_bg_clr}
+\colorlet{nskBg}{c__nsk_dark_bg_clr}
+\colorlet{nskFg}{c__nsk_principal}
+\colorlet{nskDarker}{c__nsk_dark_bg_clr}
+\colorlet{nskLighter}{c__nsk_principal}
+\tikzset{
+every~node/.append~style={text=c__nsk_principal},
+}
+}
+{
+\definecolor{ c__nsk_principal } {HTML}{000000}
+\pagecolor{white}
+\colorlet{nskBg}{white}
+\colorlet{nskFg}{black}
+\colorlet{nskDarker}{nskFg}
+\colorlet{nskLighter}{nskBg}
+}
+
+\ExplSyntaxOff
+
+\RequirePackage{neural-sketch-colors}
+\RequirePackage{neural-sketch-styles}
+\RequirePackage{neural-sketch-loader}
+
+\ExplSyntaxOn
+
+\keys_set:nx { nsk / style } { \l__nsk_pkgopts_opts_tl }
+
+\prop_new:N \g_nsk_block_stored_style_prop
+
+\prop_new:N \g_nsk_block_counters_prop
+\seq_new:N \g_nsk_block_id_history_seq
+\bool_new:N \g_nsk_wrap_right_bool
+\bool_new:N \g_nsk_wrap_left_bool
+
+\dim_new:N \l_nsk_block_grid_stepx_dim
+\dim_new:N \l_nsk_block_grid_stepy_dim
+\int_new:N \l_nsk_grid_cols_int
+\int_new:N \l_nsk_grid_rows_int
+\int_new:N \l_nsk_grid_max_row_int
+\int_new:N \l_nsk_grid_max_col_int
+\dim_new:N \g_nsk_cell_width_dim
+\dim_new:N \g_nsk_cell_height_dim
+\def\nskCellWidth{\g_nsk_cell_width_dim}
+\def\nskCellHeight{\g_nsk_cell_height_dim}
+\def\nskBorderSize{\g__nsk_style_block_border_size_dim}
+\int_new:N \l_nsk_block_grid_segx_int    % segment count X (0 = use spacing)
+\int_new:N \l_nsk_block_grid_segy_int    % segment count Y (0 = use spacing)
+\dim_new:N \l_nsk_block_border_radius_dim
+
+\dim_new:N \l_nsk_block_border_radius_nw_dim
+\dim_new:N \l_nsk_block_border_radius_ne_dim
+\dim_new:N \l_nsk_block_border_radius_sw_dim
+\dim_new:N \l_nsk_block_border_radius_se_dim
+
+\bool_new:N \l_nsk_block_border_radius_nw_mset_bool
+\bool_new:N \l_nsk_block_border_radius_ne_mset_bool
+\bool_new:N \l_nsk_block_border_radius_sw_mset_bool
+\bool_new:N \l_nsk_block_border_radius_se_mset_bool
+\bool_new:N \l_nsk_block_percorner_mode_bool
+
+\dim_new:N \l_nsk_block_x_dim
+\dim_new:N \l_nsk_block_y_dim
+
+\int_new:N \g_nsk_block_skip_pos_counter_int
+\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}
+
+\keys_define:nn {nsk / block}
+{
+type .code:n =
+{
+      \tl_set:Nn \l_nsk_block_type_tl {#1}
+},
+type .initial:n = {rectangle},
+type .default:n = {rectangle},
+
+grid .code:n = {
+\tl_set:Nn \l_nsk_block_grid_args_tl {#1}
+\tl_if_blank:VF \l_nsk_block_grid_args_tl {
+\seq_set_split:Nnn \l_args_seq {,} {#1}
+
+\int_zero:N \l_nsk_block_grid_segx_int
+\int_zero:N \l_nsk_block_grid_segy_int
+
+\seq_pop_left:NNT \l_args_seq \l_tmpa_tl {
+\__nsk_parse_grid_value:NNN \l_tmpa_tl
+\l_nsk_block_grid_stepx_dim \l_nsk_block_grid_segx_int
+}
+
+\seq_pop_left:NNTF \l_args_seq \l_tmpa_tl {
+\__nsk_parse_grid_value:NNN \l_tmpa_tl
+\l_nsk_block_grid_stepy_dim \l_nsk_block_grid_segy_int
+}{
+\dim_set_eq:NN \l_nsk_block_grid_stepy_dim \l_nsk_block_grid_stepx_dim
+\int_set_eq:NN \l_nsk_block_grid_segy_int \l_nsk_block_grid_segx_int
+}
+
+\bool_set_false:N \l_nsk_block_shadow_bool
+\tl_set:Nn \l_nsk_block_fill_tl {none}
+}
+},
+grid .default:n = {},
+grid .initial:n = {},
+
+grid-on .tl_set:N = \l_nsk_block_grid_on_tl,
+grid-on .default:n = {},
+grid-on .initial:n = {},
+
+grid-line-size-x .dim_set:N = \l_nsk_block_grid_sizex_dim,
+grid-line-size-x .default:n = {.4mm},
+grid-line-size-x .initial:n = {.4mm},
+
+grid-line-size-y .dim_set:N = \l_nsk_block_grid_sizey_dim,
+grid-line-size-y .default:n = {.4mm},
+grid-line-size-y .initial:n = {.4mm},
+
+grid-line-size .code:n = {
+\seq_set_split:Nnn \l_args_seq {,} {#1}
+
+\seq_pop_left:NNT \l_args_seq \l_tmpa_tl { \dim_set:Nn \l_nsk_block_grid_sizex_dim {\l_tmpa_tl} }
+\seq_pop_left:NNTF \l_args_seq \l_tmpa_tl
+{\dim_set:Nn \l_nsk_block_grid_sizey_dim {\l_tmpa_tl}}
+{\dim_set_eq:NN \l_nsk_block_grid_sizey_dim \l_nsk_block_grid_sizex_dim}
+},
+
+grid-outer-border .bool_set:N = \l_nsk_block_grid_outerb_tl,
+grid-outer-border .default:n = {true},
+grid-outer-border .initial:n = {true},
+
+grid-refs .bool_set:N = \l_nsk_block_grid_refs_bool,
+grid-refs .default:n = {true},
+grid-refs .initial:n = {false},
+
+store-style .bool_set:N = \l_nsk_block_store_style_bool,
+store-style .default:n = {true},
+store-style .initial:n = {false},
+
+padding-x .dim_set:N = \l_nsk_block_padding_x_dim,
+padding-x .initial:V = \g__nsk_style_block_padding_x_dim,
+padding-x .default:V = \g__nsk_style_block_padding_x_dim,
+
+padding-y .dim_set:N = \l_nsk_block_padding_y_dim,
+padding-y .initial:V = \g__nsk_style_block_padding_y_dim,
+padding-y .default:V = \g__nsk_style_block_padding_y_dim,
+
+id .tl_set:N = \l_nsk_block_id_tl,
+id .initial:n = { },
+
+x .code:n = { \__nsk_set_coord_dim:Nn \l_nsk_block_x_dim {#1} },
+x .initial:n = {0pt},
+x .default:n = {0pt},
+
+y .code:n = { \__nsk_set_coord_dim:Nn \l_nsk_block_y_dim {#1} },
+y .initial:n = {0pt},
+y .default:n = {0pt},
+
+shift-x .tl_set:N = \l_nsk_block_shiftx_tl,
+shift-x .initial:n = {0},
+shift-x .default:n = {0},
+
+shift-y .tl_set:N = \l_nsk_block_shifty_tl,
+shift-y .initial:n = {0},
+shift-y .default:n = {0},
+
+anchor .tl_set:N = \l_nsk_block_anchor_tl,
+anchor .initial:V = \g__nsk_style_block_anchor_tl,
+anchor .default:V = \g__nsk_style_block_anchor_tl,
+
+rotate .tl_set:N = \l_nsk_block_rotate_tl,
+rotate .initial:V = \g__nsk_style_block_rotate_tl,
+rotate .default:V = \g__nsk_style_block_rotate_tl,
+
+opacity .tl_set:N = \l_nsk_block_opacity_tl,
+opacity .initial:V = \g__nsk_style_block_opacity_tl,
+opacity .default:V = \g__nsk_style_block_opacity_tl,
+
+pos .tl_set:N = \l_nsk_block_pos_tl,
+pos .initial:n = { },
+
+  pos^ .code:n = {
+    \int_compare:nNnTF {\g_nsk_block_skip_pos_counter_int} = {0}
+    {\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}}
+    {
+      \tl_set:Nn \l_nsk_block_pos_tl {#1}
+    }
+
+  },
+pos^ .initial:n = { },
+pos^ .default:n = { },
+
+last-pos .tl_set:N = \l_nsk_block_last_pos_tl,
+last-pos .initial:n = { },
+last-pos .default:n = { },
+
+  last-pos^ .code:n = {
+    \int_compare:nNnTF {\g_nsk_block_skip_pos_counter_int} = {0}
+    {\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}}
+    {
+      \tl_set:Nn \l_nsk_block_last_pos_tl {#1}
+    }
+
+  },
+last-pos^ .initial:n = { },
+last-pos^ .default:n = { },
+
+last-pos-s .tl_set:N = \l_nsk_block_last_pos_s_tl,
+last-pos-s .initial:n = { },
+last-pos-s .default:n = { },
+
+  last-pos-s^ .code:n = {
+    \int_compare:nNnTF {\g_nsk_block_skip_pos_counter_int} = {0}
+    {\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}}
+    {
+      \tl_set:Nn \l_nsk_block_last_pos_s_tl {#1}
+    }
+
+  },
+last-pos-s^ .initial:n = { },
+last-pos-s^ .default:n = { },
+
+align .choice:,
+align / top .code:n = { \tl_set:Nn \l_nsk_block_align_tl { top } },
+align / bottom .code:n = { \tl_set:Nn \l_nsk_block_align_tl { bottom } },
+align / center .code:n = { \tl_set:Nn \l_nsk_block_align_tl { center } },
+align / none .code:n = { \tl_set:Nn \l_nsk_block_align_tl { none } },
+align .initial:n = {none},
+align .default:n = {none},
+
+width .dim_set:N =  \l_nsk_block_width_dim,
+width .initial:V = \g__nsk_style_block_width_dim,
+width .default:V = \g__nsk_style_block_width_dim,
+
+height .dim_set:N = \l_nsk_block_height_dim,
+height .default:V = \g__nsk_style_block_height_dim,
+height .initial:V = \g__nsk_style_block_height_dim,
+
+size .code:n = {
+\dim_set:Nn \l_nsk_block_width_dim {#1}
+\dim_set:Nn \l_nsk_block_height_dim {#1}
+},
+
+border-type .code:n =
+{
+\tl_set:Nn \l_nsk_block_border_type_tl {#1}
+
+},
+
+border-type .initial:n = {solid},
+border-type .default:n = {solid},
+
+border-color .tl_set:N = \l_nsk_block_border_color_tl,
+border-color .initial:V = \g__nsk_style_block_border_color_tl,
+border-color .default:V = \g__nsk_style_block_border_color_tl,
+
+border-radius .code:n = {
+\dim_set:Nn \l_nsk_block_border_radius_dim {#1}
+\bool_set_true:N \l_nsk_block_border_radius_mset_bool
+},
+border-radius .initial:V = \g__nsk_style_block_border_radius_dim,
+border-radius .default:V = \g__nsk_style_block_border_radius_dim,
+
+border-radius-scale .bool_set:N = \l_nsk_block_border_radius_scale_bool,
+border-radius-scale .initial:n = {true},
+border-radius-scale .default:n = {true},
+
+border-radius-nw .code:n = {
+\dim_set:Nn \l_nsk_block_border_radius_nw_dim {#1}
+\bool_set_true:N \l_nsk_block_border_radius_nw_mset_bool
+},
+
+border-radius-ne .code:n = {
+\dim_set:Nn \l_nsk_block_border_radius_ne_dim {#1}
+\bool_set_true:N \l_nsk_block_border_radius_ne_mset_bool
+},
+
+border-radius-sw .code:n = {
+\dim_set:Nn \l_nsk_block_border_radius_sw_dim {#1}
+\bool_set_true:N \l_nsk_block_border_radius_sw_mset_bool
+},
+
+border-radius-se .code:n = {
+\dim_set:Nn \l_nsk_block_border_radius_se_dim {#1}
+\bool_set_true:N \l_nsk_block_border_radius_se_mset_bool
+},
+
+border-size .dim_set:N = \l_nsk_block_border_size_dim,
+border-size .initial:V = \g__nsk_style_block_border_size_dim,
+border-size .default:V = \g__nsk_style_block_border_size_dim,
+
+
+outer-border-type .code:n =
+{
+\tl_if_eq:nnTF {#1}{none}
+{
+\tl_set:Nn \l_nsk_block_outer_border_type_tl {draw=none}
+}
+{
+\tl_set:Nn \l_nsk_block_outer_border_type_tl {#1}
+}
+
+},
+
+outer-border-type .initial:V = \g__nsk_style_block_outer_border_type_tl,
+outer-border-type .default:V = \g__nsk_style_block_outer_border_type_tl,
+
+outer-border-color .tl_set:N = \l_nsk_block_outer_border_color_tl,
+outer-border-color .initial:V = \g__nsk_style_block_outer_border_color_tl,
+outer-border-color .default:V = \g__nsk_style_block_outer_border_color_tl,
+
+outer-border-radius .dim_set:N = \l_nsk_block_outer_border_radius_dim,
+outer-border-radius .initial:V = \g__nsk_style_block_outer_border_radius_dim,
+outer-border-radius .default:V = \g__nsk_style_block_outer_border_radius_dim,
+
+outer-border-size .dim_set:N = \l_nsk_block_outer_border_size_dim,
+outer-border-size .initial:V = \g__nsk_style_block_outer_border_size_dim,
+outer-border-size .default:V = \g__nsk_style_block_outer_border_size_dim,
+
+fill .tl_set:N = \l_nsk_block_fill_tl,
+fill .initial:V = \g__nsk_style_block_fill_tl,
+fill .default:V = \g__nsk_style_block_fill_tl,
+
+shadow .bool_set:N = \l_nsk_block_shadow_bool,
+shadow .initial:n = {true},
+shadow .default:n = {true},
+
+importance .fp_set:N = \l_nsk_block_importance_fp,
+importance .initial:V = \g__nsk_style_block_importance_fp,
+importance .default:V = \g__nsk_style_block_importance_fp,
+
+tikz-opts  .code:n =
+{
+\tl_set:Nn \l_nsk_block_extra_style_tl {#1}
+},
+tikz-opts  .initial:n = {},
+tikz-opts  .default:n = {},
+
+text-size .tl_set:N = \l_nsk_block_text_size_tl,
+text-size .initial:V = \g__nsk_style_text_size_tl,
+text-size .default:V = \g__nsk_style_text_size_tl,
+
+text-north .tl_set:N = \l_nsk_text_north_tl,
+text-north .initial:n = { },
+
+text-north-loc .tl_set:N = \l_nsk_text_north_loc_tl,
+text-north-loc .initial:V = \g__nsk_style_text_north_loc_tl,
+
+text-north-style .tl_set:N = \l_nsk_text_north_style_tl,
+text-north-style .initial:V = \g__nsk_style_text_north_style_tl,
+
+text-south .tl_set:N = \l_nsk_text_south_tl,
+text-south .initial:n = { },
+
+text-south-loc .tl_set:N = \l_nsk_text_south_loc_tl,
+text-south-loc .initial:V = \g__nsk_style_text_south_loc_tl,
+
+text-south-style .tl_set:N = \l_nsk_text_south_style_tl,
+text-south-style .initial:V = \g__nsk_style_text_south_style_tl,
+
+text-east .tl_set:N = \l_nsk_text_east_tl,
+text-east .initial:n = { },
+
+text-east-loc .tl_set:N = \l_nsk_text_east_loc_tl,
+text-east-loc .initial:V = \g__nsk_style_text_east_loc_tl,
+
+text-east-style .tl_set:N = \l_nsk_text_east_style_tl,
+text-east-style .initial:V = \g__nsk_style_text_east_style_tl,
+
+text-west .tl_set:N = \l_nsk_text_west_tl,
+text-west .initial:n = { },
+
+text-west-loc .tl_set:N = \l_nsk_text_west_loc_tl,
+text-west-loc .initial:V = \g__nsk_style_text_west_loc_tl,
+
+text-west-style .tl_set:N = \l_nsk_text_west_style_tl,
+text-west-style .initial:V = \g__nsk_style_text_west_style_tl,
+
+text-center .tl_set:N = \l_nsk_text_center_tl,
+text-center .initial:n = { },
+
+text-center-loc .tl_set:N = \l_nsk_text_center_loc_tl,
+text-center-loc .initial:V = \g__nsk_style_text_center_loc_tl,
+
+text-center-style .tl_set:N = \l_nsk_text_center_style_tl,
+text-center-style .initial:V = \g__nsk_style_text_center_style_tl,
+
+embed .tl_set:N = \l_nsk_embed_tl,
+embed .default:n = {},
+embed .initial:n = {},
+
+embed-gfx .tl_set:N = \l_nsk_embed_gfx_tl,
+embed-gfx .default:n = {},
+embed-gfx .initial:n = {},
+
+embed-padding .dim_set:N = \l_nsk_block_embed_padding_dim,
+embed-padding .default:n = \g__nsk_style_block_embed_padding_dim,
+embed-padding .initial:n = \g__nsk_style_block_embed_padding_dim,
+
+embed-border-radius .dim_set:N = \l_nsk_block_embed_border_radius_dim,
+embed-border-radius .initial:V = \g__nsk_style_block_embed_border_radius_dim,
+embed-border-radius .default:V = \g__nsk_style_block_embed_border_radius_dim,
+
+embed-border-size .dim_set:N = \l_nsk_block_embed_border_size_dim,
+embed-border-size .initial:V = \g__nsk_style_block_embed_border_size_dim,
+embed-border-size .default:V = \g__nsk_style_block_embed_border_size_dim,
+
+embed-border-color .tl_set:N = \l_nsk_block_embed_border_color_tl,
+embed-border-color .initial:V = \g__nsk_style_block_embed_border_color_tl,
+embed-border-color .default:V = \g__nsk_style_block_embed_border_color_tl,
+
+pattern .tl_set:N = \l_nsk_block_pattern_tl,
+pattern .initial:n = { },
+pattern .default:n = { },
+
+pattern-color .tl_set:N = \l_nsk_block_pattern_color_tl,
+pattern-color .initial:n = {nskDarkGray},
+pattern-color .default:n = {nskDarkGray},
+
+pattern-opacity .tl_set:N = \l_nsk_block_pattern_opacity_tl,
+pattern-opacity .initial:n = {.3},
+pattern-opacity .default:n = {.3},
+
+  pattern-line-type .tl_set:N = \l_nsk_block_pattern_line_type_tl,
+pattern-line-type .initial:n = {solid},
+pattern-line-type .default:n = {solid},
+
+fade .choice:,
+fade / none .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { none } },
+fade / left .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { left } },
+fade / right .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { right } },
+fade / up .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { up } },
+fade / down .code:n = { \tl_set:Nn \l_nsk_block_fade_tl { down } },
+fade .initial:n = { none },
+fade .default:n = { none },
+
+stack .bool_set:N            = \l_nsk_block_stack_bool,
+stack .initial:n             = {false},
+stack .default:n             = {false},
+
+stack-opts .tl_set:N         = \l_nsk_block_stack_opts_tl,
+stack-opts .initial:V        = \g__nsk_style_block_stack_opts_tl,
+stack-opts .default:V        = \g__nsk_style_block_stack_opts_tl,
+
+stack-xoffset .dim_set:N     = \l_nsk_block_stack_xoffset_dim,
+stack-xoffset .initial:V     = \g__nsk_style_block_stack_xoffset_dim,
+stack-xoffset .default:V     = \g__nsk_style_block_stack_xoffset_dim,
+
+stack-yoffset .dim_set:N     = \l_nsk_block_stack_yoffset_dim,
+stack-yoffset .initial:V     = \g__nsk_style_block_stack_yoffset_dim,
+stack-yoffset .default:V     = \g__nsk_style_block_stack_yoffset_dim,
+
+stack-count .choice:,
+stack-count / single .code:n = { \tl_set:Nn \l_nsk_block_stack_count_tl {single} },
+stack-count / double .code:n = { \tl_set:Nn \l_nsk_block_stack_count_tl {double} },
+stack-count .initial:V       = \g__nsk_style_block_stack_count_tl,
+stack-count .default:V       = \g__nsk_style_block_stack_count_tl,
+
+}
+
+\cs_new_protected:Npn \__nsk_parse_grid_value:NNN #1 #2 #3
+{
+
+\regex_match:nVTF { ^\s*\d+\s*$ } #1
+{
+\int_set:Nn #3 { #1 }
+}
+{
+\dim_set:Nn #2 { #1 }
+\int_zero:N #3
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__maybe_set_id:
+{
+\tl_if_blank:VTF \l_nsk_block_id_tl
+{ \nsk__assign_autogenerated_id: }
+{
+\bool_if:NTF \g__nsk_style_block_auto_duplicates_bool
+{\nsk__check_and_handle_duplicate_id:}
+{}
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__check_and_handle_duplicate_id:
+{
+\bool_set_false:N \l_tmpa_bool
+\seq_map_inline:Nn \g_nsk_block_id_history_seq
+{
+\tl_if_eq:nVT {##1} \l_nsk_block_id_tl
+{
+\bool_set_true:N \l_tmpa_bool
+}
+}
+
+\bool_if:NT \l_tmpa_bool
+{
+\regex_match:nVTF {^(.+)(\d+)$} \l_nsk_block_id_tl
+{
+\regex_extract_once:nVN {^(.+)(\d+)$} \l_nsk_block_id_tl \l_tmpa_seq
+\tl_set:Nx \l_tmpb_tl {\seq_item:Nn \l_tmpa_seq {2}} % base
+\tl_set:Nx \l_tmpc_tl {\seq_item:Nn \l_tmpa_seq {3}} % number
+
+\int_set:Nn \l_tmpa_int {\l_tmpc_tl + 1}
+
+\tl_set:Nx \l_nsk_block_id_tl {\l_tmpb_tl\int_use:N \l_tmpa_int}
+}
+{
+\tl_put_right:Nn \l_nsk_block_id_tl {2}
+}
+
+\nsk__check_and_handle_duplicate_id:
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__assign_autogenerated_id:
+{
+\prop_if_in:NVF \g_nsk_block_counters_prop \l_nsk_block_type_tl
+{
+\prop_gput:NVn \g_nsk_block_counters_prop \l_nsk_block_type_tl { 0 }
+}
+
+\prop_get:NVN \g_nsk_block_counters_prop \l_nsk_block_type_tl \l_tmpa_tl
+
+\int_set:Nn \l_tmpa_int { \l_tmpa_tl + 1 }
+
+\prop_gput:NVx \g_nsk_block_counters_prop \l_nsk_block_type_tl { \int_use:N \l_tmpa_int }
+
+\tl_set:No \l_nsk_block_id_tl
+{
+\tl_use:N \l_nsk_block_type_tl
+\int_use:N \l_tmpa_int
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__maybe_scale_border_by_importance:
+{
+\fp_compare:nT {\l_nsk_block_importance_fp > 1.0}
+{
+\fp_set:Nn \l_tmpa_fp { \l_nsk_block_border_size_dim }
+
+\fp_set:Nn \l_tmpa_fp { \l_tmpa_fp * \l_nsk_block_importance_fp }
+
+\dim_set:Nn \l_nsk_block_border_size_dim { \fp_to_dim:N \l_tmpa_fp }
+}
+}
+
+\cs_generate_variant:Nn \nsk__render_one_text_aux:nnnn { nVVV }
+\cs_generate_variant:Nn \nsk__draw_block_aux:n { V }
+
+\cs_new:Npn \nsk_compute_text_node_anchor:nn #1 #2
+{
+\str_case:nn {#1}
+{
+{north}{\str_case:nnF {#2}{ {west}{south~west} {east}{south~east} }{south}}
+{south}{\str_case:nnF {#2}{ {west}{north~west} {east}{north~east} }{north}}
+{east}{\str_case:nnF {#2}{ {north}{north~west} {south}{south~west} }{west}}
+{west}{\str_case:nnF {#2}{ {north}{north~east} {south}{south~east} }{east}}
+{center}{center}
+}
+}
+
+\cs_new:Npn \nsk_compute_text_node_rotate:nn #1 #2
+{
+\tl_set:Nn \l_tmpb_tl {#2}
+\tl_trim_spaces:N \l_tmpb_tl
+
+\str_case:nn {#1}
+{
+{north}{
+\tl_if_in:NnT \l_tmpb_tl {rotate=90}{\tl_set:Nn \l_tmpa_tl {west}}
+\tl_if_in:NnT \l_tmpb_tl {rotate=-90}{\tl_set:Nn \l_tmpa_tl {east}}
+}
+{south}{
+\tl_if_in:NnT \l_tmpb_tl {rotate=90}{\tl_set:Nn \l_tmpa_tl {east}}
+\tl_if_in:NnT \l_tmpb_tl {rotate=-90}{\tl_set:Nn \l_tmpa_tl {west}}
+}
+{east}{
+\tl_if_in:NnT \l_tmpb_tl {rotate=90}{\tl_set:Nn \l_tmpa_tl {north}}
+\tl_if_in:NnT \l_tmpb_tl {rotate=-90}{\tl_set:Nn \l_tmpa_tl {south}}
+}
+{west}{
+\tl_if_in:NnT \l_tmpb_tl {rotate=90}{\tl_set:Nn \l_tmpa_tl {south}}
+\tl_if_in:NnT \l_tmpb_tl {rotate=-90}{\tl_set:Nn \l_tmpa_tl {north}}
+}
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__render_one_text_aux:nnnn #1 #2 #3 #4
+{
+\tl_set:Nx \l_tmpa_tl { \nsk_compute_text_node_anchor:nn {#1} {#3} }
+
+\nsk_compute_text_node_rotate:nn {#1} {#4}
+
+\tl_if_blank:nTF {#3}
+{
+\draw[shift=(\l_nsk_block_id_tl.#1)]
+node[font=\l_nsk_block_text_size_tl, align=center, anchor=\l_tmpa_tl, #4]  {#2};
+}{
+\str_if_eq:nnTF {#3}{north}
+{
+\draw[shift=(\l_nsk_block_id_tl.#3~#1)]
+node[align=center, anchor=\l_tmpa_tl, #4] {#2};
+}
+{
+\str_if_eq:nnTF {#3}{south}
+{
+\draw[shift=(\l_nsk_block_id_tl.#3~#1)]
+node[align=center, anchor=\l_tmpa_tl, #4] {#2};
+}
+{
+\draw[shift=(\l_nsk_block_id_tl.#1~#3)]
+node[align=center, anchor=\l_tmpa_tl, #4] {#2};
+}
+}
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__render_one_text:nnnn #1 #2 #3 #4
+{
+\tl_if_blank:VTF {#2}
+{
+}
+{
+\nsk__render_one_text_aux:nVVV {#1} {#2} {#3} {#4}
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__render_all_text:
+{
+\nsk__render_one_text:nnnn {north}
+{ \l_nsk_text_north_tl }
+{ \l_nsk_text_north_loc_tl }
+{ \l_nsk_text_north_style_tl }
+
+\nsk__render_one_text:nnnn {south}
+{ \l_nsk_text_south_tl }
+{ \l_nsk_text_south_loc_tl }
+{ \l_nsk_text_south_style_tl }
+
+\nsk__render_one_text:nnnn {east}
+{ \l_nsk_text_east_tl }
+{ \l_nsk_text_east_loc_tl }
+{ \l_nsk_text_east_style_tl }
+
+\nsk__render_one_text:nnnn {west}
+{ \l_nsk_text_west_tl }
+{ \l_nsk_text_west_loc_tl }
+{ \l_nsk_text_west_style_tl }
+
+\nsk__render_one_text:nnnn {center}
+{ \l_nsk_text_center_tl }
+{ \l_nsk_text_center_loc_tl }
+{ \l_nsk_text_center_style_tl }
+}
+
+\cs_new_protected_nopar:Npn \nsk__block_debug:
+{
+\iow_term:x {type   = \tl_use:N \l_nsk_block_type_tl}
+\iow_term:x {x      = \dim_use:N \l_nsk_block_x_dim}
+\iow_term:x {y      = \dim_use:N \l_nsk_block_y_dim}
+\iow_term:x {width  = \dim_use:N \l_nsk_block_width_dim}
+\iow_term:x {height = \dim_use:N \l_nsk_block_height_dim}
+}
+
+\cs_new_protected_nopar:Npn \nsk__process_last_pos:
+{
+\tl_if_blank:VF \l_nsk_block_last_pos_tl
+{
+\int_compare:nNnTF {\g_nsk_block_skip_pos_counter_int} = {0}
+{
+\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}
+}
+{
+\seq_if_empty:NTF \g_nsk_block_id_history_seq
+{
+\msg_warning:nn {nsk}{No-previous-block-for-last-pos}
+}
+{
+\nsk__internal_get_nth_block_id:n{1}
+\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
+
+\str_if_in:VnTF \l_nsk_block_last_pos_tl {=}
+{
+\tl_set:Nx \l_nsk_block_pos_tl
+{
+\exp_not:V \l_nsk_block_last_pos_tl\space of~\exp_not:V \l_tmpa_tl
+}
+}
+{
+\tl_set:Nx \l_nsk_block_pos_tl
+{
+\exp_not:V \l_nsk_block_last_pos_tl =of~\exp_not:V \l_tmpa_tl
+}
+}
+}
+}
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__process_last_pos_s:
+{
+\tl_if_blank:VF \l_nsk_block_last_pos_s_tl
+{
+\int_compare:nNnTF {\g_nsk_block_skip_pos_counter_int} = {0}
+{
+\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}
+}
+{
+\seq_if_empty:NTF \g_nsk_block_id_history_seq
+{}
+{
+\nsk__internal_get_nth_block_id:n{1}
+\tl_set:Nx \l_tmpa_tl { \g_nsk_block_last_requested_block_id }
+
+\str_if_in:VnTF \l_nsk_block_last_pos_s_tl {=}
+{
+\tl_set:Nx \l_nsk_block_pos_tl
+{
+\exp_not:V \l_nsk_block_last_pos_s_tl\space of~\exp_not:V \l_tmpa_tl
+}
+}
+{
+\tl_set:Nx \l_nsk_block_pos_tl
+{
+\exp_not:V \l_nsk_block_last_pos_s_tl =of~\exp_not:V \l_tmpa_tl
+}
+}
+}
+}
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__draw_block_aux:n #1
+{
+
+\tl_if_blank:VTF \l_nsk_block_grid_args_tl
+{
+\node [
+spath/save~global=\l_nsk_block_id_tl,
+#1,
+] {};
+}
+{
+\dim_set:Nn \l_nsk_block_width_dim {\l_nsk_block_width_dim - \l_nsk_block_border_size_dim}
+\dim_set:Nn \l_nsk_block_height_dim {\l_nsk_block_height_dim - \l_nsk_block_border_size_dim}
+
+\int_compare:nNnT { \l_nsk_block_grid_segx_int } > { 0 }
+{
+\dim_set:Nn \l_nsk_block_grid_stepx_dim { \l_nsk_block_width_dim / \l_nsk_block_grid_segx_int }
+}
+\int_compare:nNnT { \l_nsk_block_grid_segy_int } > { 0 }
+{
+\dim_set:Nn \l_nsk_block_grid_stepy_dim { \l_nsk_block_height_dim / \l_nsk_block_grid_segy_int }
+}
+
+\int_set:Nn \l_tmpa_int {  \l_nsk_block_width_dim / \l_nsk_block_grid_stepx_dim -2 }
+\int_set:Nn \l_tmpb_int {  \l_nsk_block_height_dim / \l_nsk_block_grid_stepy_dim  -2 }
+
+\node [
+spath/save~global=\l_nsk_block_id_tl, #1,
+path~picture={
+\int_step_inline:nnnn {0}{1}{\l_tmpb_int}
+{
+\draw[draw=\l_nsk_block_border_color_tl, draw~opacity=\l_nsk_block_opacity_tl, line~width=\l_nsk_block_grid_sizex_dim]
+(-\l_nsk_block_width_dim/2, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2 + \l_nsk_block_grid_stepy_dim)
+-- (\l_nsk_block_width_dim, ########1 * \l_nsk_block_grid_stepy_dim-\l_nsk_block_height_dim/2 + \l_nsk_block_grid_stepy_dim);
+}
+
+\int_step_inline:nnnn {0}{1}{\l_tmpa_int}
+{
+\draw[draw=\l_nsk_block_border_color_tl, draw~opacity=\l_nsk_block_opacity_tl, line~width=\l_nsk_block_grid_sizey_dim]
+(########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, -\l_nsk_block_height_dim/2)
+-- (########1 * \l_nsk_block_grid_stepx_dim-\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim, \l_nsk_block_height_dim);
+}
+}
+] {};
+}
+
+\bool_if:NT \l_nsk_block_grid_refs_bool
+{
+\tl_if_blank:VF \l_nsk_block_grid_args_tl
+{
+\int_set:Nn \l_nsk_grid_cols_int { \l_nsk_block_width_dim / \l_nsk_block_grid_stepx_dim }
+\int_set:Nn \l_nsk_grid_rows_int { \l_nsk_block_height_dim / \l_nsk_block_grid_stepy_dim }
+
+\dim_gset:Nn \g_nsk_cell_width_dim { \l_nsk_block_grid_stepx_dim }
+\dim_gset:Nn \g_nsk_cell_height_dim { \l_nsk_block_grid_stepy_dim }
+
+\int_set:Nn \l_nsk_grid_max_col_int { \l_nsk_grid_cols_int - 1 }
+\int_set:Nn \l_nsk_grid_max_row_int { \l_nsk_grid_rows_int - 1 }
+
+\int_step_inline:nnnn {0}{1}{ \int_use:N \l_nsk_grid_max_row_int }
+{
+\int_step_inline:nnnn {0}{1}{ \int_use:N \l_nsk_grid_max_col_int }
+{
+\dim_set:Nn \l_tmpa_dim { -\l_nsk_block_width_dim/2 + \l_nsk_block_grid_stepx_dim/2 - \l_nsk_block_border_size_dim/2 }
+\dim_add:Nn \l_tmpa_dim { ####1\l_nsk_block_grid_stepx_dim }
+\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim/2 - \l_nsk_block_grid_stepy_dim/2 + \l_nsk_block_border_size_dim/2 }
+\dim_sub:Nn \l_tmpb_dim { ##1\l_nsk_block_grid_stepy_dim }
+
+\coordinate (\l_nsk_block_id_tl-##1-####1)
+at ($(\l_nsk_block_id_tl.center) + (\l_tmpa_dim, \l_tmpb_dim)$);
+}
+}
+}
+}
+
+\tl_if_blank:VF {\l_nsk_embed_tl}
+{
+\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim }
+\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
+
+\begin{scope}
+\pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
+\pgfset{minimum\space width=\l_tmpa_dim, minimum\space height=\l_tmpb_dim}
+\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
+\dim_compare:nNnTF {\l_nsk_block_embed_border_size_dim} = {0pt}
+{
+\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{clip}}
+}
+{
+\pgfsetlinewidth{\l_nsk_block_embed_border_size_dim}
+\pgfsetstrokecolor{\l_nsk_block_embed_border_color_tl}
+\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
+}
+\tl_use:N \l_nsk_embed_tl
+\end{scope}
+
+}
+
+\tl_if_blank:VF {\l_nsk_embed_gfx_tl}
+{
+\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim - 2\l_nsk_block_embed_padding_dim }
+\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim - 2\l_nsk_block_embed_padding_dim }
+
+\begin{scope}
+\pgftransformshift{\pgfpointanchor{\tl_use:N \l_nsk_block_id_tl}{center}}
+\pgfset{minimum~width=\l_tmpa_dim, minimum~height=\l_tmpb_dim}
+\pgfsetcornersarced{\pgfpoint{\l_nsk_block_embed_border_radius_dim}{\l_nsk_block_embed_border_radius_dim}}%
+
+\dim_compare:nNnTF {\l_nsk_block_embed_border_size_dim} = {0pt}
+{
+    % TODO: rework this, quick workaround rn
+    \tl_if_eq:NnT \l_nsk_block_type_tl {superellipse}
+    {
+      \pgfkeys{/pgf/superellipse~x~exponent=\l_nsk_block_squircle_ex_tl}
+      \pgfkeys{/pgf/superellipse~y~exponent=\l_nsk_block_squircle_ex_tl}
+      \pgfkeys{/pgf/superellipse~step=\l_nsk_block_squircle_step_tl}
+    }
+
+\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{clip}}
+}
+{
+\pgfsetlinewidth{\l_nsk_block_embed_border_size_dim}
+\pgfsetstrokecolor{\l_nsk_block_embed_border_color_tl}
+    % TODO: rework this, quick workaround rn
+    \tl_if_eq:NnT \l_nsk_block_type_tl {superellipse}
+    {
+      \pgfkeys{/pgf/superellipse~x~exponent=\l_nsk_block_squircle_ex_tl}
+      \pgfkeys{/pgf/superellipse~y~exponent=\l_nsk_block_squircle_ex_tl}
+      \pgfkeys{/pgf/superellipse~step=\l_nsk_block_squircle_step_tl}
+    }
+\pgfnode{\l_nsk_block_type_tl}{center}{}{nodename}{\pgfusepath{stroke,clip}}
+}
+
+\node[]
+{\includegraphics[width=\l_tmpa_dim+1.2pt, height=\l_tmpb_dim+1.2pt]{\tl_use:N \l_nsk_embed_gfx_tl}};
+\end{scope}
+
+}
+
+}
+
+\cs_new_protected_nopar:Npn \nsk__resolve_pattern_alias:
+{
+\tl_if_blank:VTF \l_nsk_block_pattern_tl
+{ }
+{
+\prop_if_in:NVTF \g_nsk_pattern_aliases_prop \l_nsk_block_pattern_tl
+{
+\prop_get:NVN \g_nsk_pattern_aliases_prop \l_nsk_block_pattern_tl \l_tmpa_tl
+\tl_set:NV \l_nsk_block_pattern_tl \l_tmpa_tl
+}
+{
+}
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__build_block_style:
+{
+\tl_clear_new:N \l_tmps_tl
+
+\tl_set:Nn \l_tmp_pre_acts {}
+\tl_set:Nn \l_tmp_post_acts {}
+
+\nsk__resolve_pattern_alias:
+
+\tl_if_eq:NnF \l_nsk_block_fade_tl { none }
+{
+\bool_set_false:N \l_nsk_block_shadow_bool
+\tl_put_right:Nx \l_tmps_tl {fade~\l_nsk_block_fade_tl ,}
+
+\bool_if:NTF \g__nsk_dark_mode_bool
+{}
+{
+\str_case:Vn \l_nsk_block_fade_tl
+{
+{down} {\tl_put_right:Nn \l_tmps_tl {top~color=transparent!0, bottom~color=nskBg,}}
+{up} {\tl_put_right:Nn \l_tmps_tl {bottom~color=transparent!0, top~color=nskBg,}}
+{left} {\tl_put_right:Nn \l_tmps_tl {right~color=transparent!0, left~color=nskBg,}}
+{right} {\tl_put_right:Nn \l_tmps_tl {left~color=transparent!0, right~color=nskBg,}}
+}
+}
+}
+
+\nsk__maybe_scale_border_by_importance:
+\nsk__maybe_uniform_border_scaling:
+
+\tl_put_right:No \l_tmps_tl { name=\l_nsk_block_id_tl,}
+
+\bool_if:NTF \g_nsk_wrap_left_bool
+{
+\tl_set:Nn \l_nsk_block_anchor_tl {\l__nsk_wrap_anchor_tl\space west}
+\tl_set:Nn \l_nsk_block_pos_tl {\l__nsk_wrap_direction_tl\space left=0mm~and~-.5mm~of~\nskID{1}}
+
+\bool_gset_false:N \g_nsk_wrap_left_bool
+}{
+\bool_if:NTF \g_nsk_wrap_right_bool
+{
+\tl_set:Nn \l_nsk_block_anchor_tl {\l__nsk_wrap_anchor_tl\space east}
+\tl_set:Nn \l_nsk_block_pos_tl {\l__nsk_wrap_direction_tl~right=0mm~and~.5mm~of~\nskID{1}}
+
+\bool_gset_false:N \g_nsk_wrap_right_bool
+}{}
+}
+
+\tl_if_blank:VTF \l_nsk_block_pos_tl
+{
+\tl_put_right:Nx \l_tmps_tl
+{ at={(\dim_use:N \l_nsk_block_x_dim,\dim_use:N \l_nsk_block_y_dim)}, }
+}
+{
+\tl_put_right:No \l_tmps_tl { \l_nsk_block_pos_tl, }
+}
+\tl_put_right:Nx \l_tmps_tl
+{ rotate=\l_nsk_block_rotate_tl, }
+\tl_put_right:Nx \l_tmps_tl
+{ opacity=\l_nsk_block_opacity_tl, }
+
+\tl_put_right:No \l_tmps_tl { xshift=\l_nsk_block_shiftx_tl,}
+\tl_put_right:No \l_tmps_tl { yshift=\l_nsk_block_shifty_tl,}
+
+\tl_if_blank:VF \l_nsk_block_anchor_tl
+{
+\tl_put_right:No \l_tmps_tl {anchor=\l_nsk_block_anchor_tl,}
+}
+
+\tl_if_eq:NnF \l_nsk_block_type_tl {text}{
+\tl_if_eq:NnF \l_nsk_block_type_tl {icon}
+{\tl_put_right:No \l_tmps_tl {shape=\l_nsk_block_type_tl,}}
+}
+\tl_put_right:No \l_tmps_tl {minimum\space width=\l_nsk_block_width_dim,}
+\tl_put_right:No \l_tmps_tl {minimum\space height=\l_nsk_block_height_dim,}
+
+\tl_if_blank:VF \l_nsk_block_grid_args_tl
+{
+\bool_if:NF \l_nsk_block_grid_outerb_tl
+{\tl_put_right:No \l_tmps_tl {draw~opacity=0,}}
+}
+
+\nsk__determine_percorner_mode:
+
+\bool_if:NTF \l_nsk_block_percorner_mode_bool
+{
+\tl_put_right:No \l_tmps_tl {draw=none, fill=none,}
+\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}
+}
+{
+\tl_if_eq:NnTF \l_nsk_block_type_tl {text}
+{
+\tl_put_right:Nn \l_tmps_tl {draw=none,}
+}
+{
+\tl_if_eq:NnTF \l_nsk_block_border_type_tl { none }
+{
+\tl_put_right:Nn \l_tmps_tl {draw=none,}
+}
+{
+\tl_if_eq:NnT \l_nsk_block_fade_tl { none }
+{\tl_put_right:No \l_tmps_tl {draw=\l_nsk_block_border_color_tl,}}
+\tl_put_right:No \l_tmps_tl {\l_nsk_block_border_type_tl,}
+}
+
+\tl_if_in:nVTF {cylinder~cloud~signal~tape} \l_nsk_block_type_tl
+{\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
+{
+\tl_if_eq:NnTF \l_nsk_block_type_tl {rounded~rectangle}
+{\tl_put_right:No \l_tmps_tl {rounded\space corners=0,}}
+{\tl_put_right:No \l_tmps_tl {rounded\space corners=\l_nsk_block_border_radius_dim,}}
+}
+}
+}
+
+\tl_put_right:No \l_tmps_tl {line\space width=\l_nsk_block_border_size_dim,}
+\tl_put_right:No \l_tmp_pre_acts {draw=\l_nsk_block_outer_border_color_tl,}
+\tl_put_right:No \l_tmp_pre_acts {\l_nsk_block_outer_border_type_tl,}
+\tl_put_right:No \l_tmp_pre_acts {rounded\space corners=\l_nsk_block_outer_border_radius_dim,}
+\tl_put_right:No \l_tmp_pre_acts {line\space width=\l_nsk_block_outer_border_size_dim,}
+
+\bool_if:NF \l_nsk_block_percorner_mode_bool
+{
+\tl_if_eq:NnTF \l_nsk_block_type_tl {text}
+{\tl_put_right:Nn \l_tmps_tl {fill=none,}}
+{
+\tl_if_eq:NnTF \l_nsk_block_fade_tl { none }
+{\tl_put_right:No \l_tmps_tl {fill=\l_nsk_block_fill_tl,}}
+{\tl_put_right:No \l_tmps_tl {fill=nskBg,}}
+}
+}
+
+\bool_if:NT \l_nsk_block_stack_bool
+{
+\str_case:Vn \l_nsk_block_stack_count_tl
+{
+{single}{\tl_put_right:Nx \l_tmps_tl {
+copy~shadow={
+shadow~xshift=\l_nsk_block_stack_xoffset_dim,
+shadow~yshift=\l_nsk_block_stack_yoffset_dim,
+\l_nsk_block_stack_opts_tl
+},
+}}
+{double}{\tl_put_right:Nx \l_tmps_tl {
+double~copy~shadow={
+shadow~xshift=\l_nsk_block_stack_xoffset_dim,
+shadow~yshift=\l_nsk_block_stack_yoffset_dim,
+\l_nsk_block_stack_opts_tl,
+},
+}},
+}
+\bool_set_false:N \l_nsk_block_shadow_bool
+}
+
+\tl_if_eq:NnT \l_nsk_block_type_tl {text}
+{ \bool_set_false:N \l_nsk_block_shadow_bool }
+\bool_if:NT \l_nsk_block_shadow_bool
+{
+\tl_put_right:No \l_tmps_tl {nskShadow, }
+\tl_put_left:Nn \l_nsk_text_south_style_tl {yshift=-1mm, }
+}
+
+\tl_if_blank:VTF \l_nsk_block_pattern_tl
+{ }
+{
+
+\tl_if_blank:VTF \l_nsk_text_center_style_tl
+{
+\tl_put_right:No \l_nsk_text_center_style_tl {
+fill=\l_nsk_block_fill_tl, fill~opacity=.7, text~opacity=1, rounded~corners,
+inner~sep=.5mm,
+}
+}
+{}
+
+\tl_clear_new:N \l_tmpb_tl
+  \tl_put_right:Nx \l_tmpb_tl { pattern={\l_nsk_block_pattern_tl}, }
+\tl_put_right:Nx \l_tmpb_tl { \l_nsk_block_pattern_line_type_tl, }
+\tl_if_blank:VTF \l_nsk_block_pattern_color_tl
+{ }
+{
+\tl_put_right:Nx \l_tmpb_tl { pattern~color=\l_nsk_block_pattern_color_tl, }
+}
+
+\tl_put_right:Nx \l_tmpb_tl {opacity=\l_nsk_block_pattern_opacity_tl, }
+
+\tl_put_right:Nx \l_tmp_post_acts {\l_tmpb_tl}
+}
+
+\tl_if_empty:VTF \l_nsk_block_extra_style_tl
+{ }
+{
+\tl_put_right:NV \l_tmps_tl {\l_nsk_block_extra_style_tl,}
+}
+
+\tl_put_right:Nx \l_tmps_tl { preaction={\tl_use:N \l_tmp_pre_acts}, }
+\tl_put_right:Nx \l_tmps_tl { postaction={\tl_use:N \l_tmp_post_acts}, }
+
+\nsk__draw_block_aux:V
+\l_tmps_tl
+}
+
+\cs_new_protected_nopar:Npn \nsk__store_block_in_history:
+{
+\seq_gput_right:Nx \g_nsk_block_id_history_seq \l_nsk_block_id_tl
+}
+
+\cs_new_protected_nopar:Npn \nsk__internal_get_nth_block_id:n #1
+{
+
+\seq_if_empty:NTF \g_nsk_block_id_history_seq
+{
+\tl_set:Nn \l_tmpa_tl {ERROR-NoBlocks}
+\GenericError{}{No block in the history!}{}{%
+Attempted~to~reference~\string\nskBlockIDLast[#1],~but~no~blocks~exist.%
+}
+}
+{
+\int_compare:nNnTF {#1} > { \seq_count:N \g_nsk_block_id_history_seq }
+{
+\tl_set:Nn \l_tmpa_tl {ERROR-BadIndex}
+\GenericError{}{Block~index~out~of~bounds~}{}{%
+\string\nskBlockIDLast[#1] exceeds the number of existing blocks.%
+}
+}
+{
+\tl_set:No \l_tmpa_tl
+{
+\seq_item:Nn
+\g_nsk_block_id_history_seq
+{ \int_eval:n{ \seq_count:N \g_nsk_block_id_history_seq - #1 + 1} }
+}
+}
+}
+
+\tl_gset:Nx \g_nsk_block_last_requested_block_id {\l_tmpa_tl}
+
+}
+
+\cs_new_protected_nopar:Npn \nsk__maybe_resize_block_to_text:
+{
+\tl_if_blank:VF \l_nsk_text_center_tl
+{
+\node[
+inner~sep=0pt,outer~sep=0,draw=none,fill=none,text~opacity=0, opacity=0
+] (temp) {\l_nsk_text_center_tl};
+
+\pgfextractx{\l_tmpa_dim}{\pgfpointdiff{\pgfpointanchor{temp}{west}}{\pgfpointanchor{temp}{east}}}
+\pgfextracty{\l_tmpb_dim}{\pgfpointdiff{\pgfpointanchor{temp}{south}}{\pgfpointanchor{temp}{north}}}
+\dim_set:Nn \l_nsk_block_width_dim {\l_tmpa_dim + 2\l_nsk_block_padding_x_dim}
+\dim_set:Nn \l_nsk_block_height_dim {\l_tmpb_dim + 2\l_nsk_block_padding_y_dim}
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__process_align:
+{
+
+\seq_set_split:Nnx \l_tmpa_seq {=}{\l_nsk_block_pos_tl}
+
+\tl_clear_new:N \l_tmp_hdirc_tl
+\tl_clear_new:N \l_tmp_hdira_tl
+
+\int_compare:nNnT { \seq_count:N \l_tmpa_seq } > {1}
+{
+\tl_set:Nx \l_tmpa_lx_tl { \seq_item:Nn \l_tmpa_seq {1} }
+\tl_set:Nx \l_tmpa_rx_tl { \seq_item:Nn \l_tmpa_seq {2} }
+
+\tl_if_in:nVT {right} \l_tmpa_lx_tl
+{
+\tl_set:Nn \l_tmp_hdirc_tl {east}
+\tl_set:Nn \l_tmp_hdira_tl {west}
+}
+\tl_if_in:nVT {left} \l_tmpa_lx_tl
+{
+\tl_set:Nn \l_tmp_hdirc_tl {west}
+\tl_set:Nn \l_tmp_hdira_tl {east}
+}
+}
+
+\str_case:Vn \l_nsk_block_align_tl
+{
+{top}
+{
+\tl_put_right:No \l_nsk_block_pos_tl {.north~\l_tmp_hdirc_tl}
+\tl_set:No \l_nsk_block_anchor_tl {north~\l_tmp_hdira_tl}
+}
+{bottom}
+{
+\tl_put_right:No \l_nsk_block_pos_tl {.south~\l_tmp_hdirc_tl}
+\tl_set:No \l_nsk_block_anchor_tl {south~\l_tmp_hdira_tl}
+}
+{center}
+{
+\tl_put_right:No \l_nsk_block_pos_tl {.\l_tmp_hdirc_tl}
+\tl_set:No \l_nsk_block_anchor_tl {\l_tmp_hdira_tl}
+}
+{none}{}
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__draw_block:
+{
+\dim_compare:nNnT {\l_nsk_block_width_dim} = {0pt}
+{
+\nsk__maybe_resize_block_to_text:
+}
+
+\nsk__build_block_style:
+
+\bool_if:NT \l_nsk_block_percorner_mode_bool
+{
+\tl_if_eq:NnT \l_nsk_block_type_tl {rectangle}
+{
+\nsk__draw_percorner_rounded_rect:
+}
+}
+
+\nsk__render_all_text:
+}
+
+
+\keys_define:nn { nsk / figure }
+{
+center .bool_set:N = \l_nsk_figure_center_bool,
+center .initial:n  = { false },
+center .default:n  = { true },
+
+block-distance .tl_set:N = \l_nsk_figure_block_distance_tl,
+block-distance .initial:V = \g__nsk_style_figure_block_distance_tl,
+block-distance .default:V = \g__nsk_style_figure_block_distance_tl,
+
+unknown .code:n =
+{
+\prop_put:Nxx \l_nsk_figure_unknown_prop
+{ \tl_use:N \l_keys_key_tl }
+{ #1 }
+},
+}
+
+\tl_new:N \l__nsk_parsed_base_type_tl
+\tl_new:N \l__nsk_parsed_args_tl
+\seq_new:N \l__nsk_parsed_args_seq
+\seq_new:N \l__nsk_parse_result_seq
+
+\cs_new_protected:Npn \nsk__append_extra_style:n #1
+{
+    \tl_if_empty:NTF \l_nsk_block_extra_style_tl
+    { \tl_set:Nn \l_nsk_block_extra_style_tl { #1 } }
+    { \tl_put_right:Nn \l_nsk_block_extra_style_tl { ,~ #1 } }
+}
+\cs_generate_variant:Nn \nsk__append_extra_style:n { x, V }
+
+\cs_new_protected:Npn \nsk__apply_shape:nnn #1 #2 #3
+{
+    \tl_set:Nn \l_nsk_block_type_tl { #1 }
+    \tl_if_empty:NTF \l__nsk_parsed_args_tl
+    { \nsk__append_extra_style:n { #2 = #3 } }
+    { \nsk__append_extra_style:x { #2 = \l__nsk_parsed_args_tl } }
+}
+
+\cs_new_protected:Npn \nsk__handle_squircle_args:
+{
+    \tl_set:Nn \l_nsk_block_type_tl { superellipse }
+
+    % Defaults
+    \tl_set:Nn \l_nsk_block_squircle_ex_tl { 4 }
+    \tl_set:Nn \l_nsk_block_squircle_ey_tl { 4 }
+    \tl_set:Nn \l_nsk_block_squircle_step_tl { 5 }
+
+    \tl_if_empty:NF \l__nsk_parsed_args_tl
+    {
+        \seq_set_split:NnV \l__nsk_parsed_args_seq { , } \l__nsk_parsed_args_tl
+        \int_compare:nNnTF { \seq_count:N \l__nsk_parsed_args_seq } > { 1 }
+        {
+            \seq_pop_left:NNT \l__nsk_parsed_args_seq \l_tmpa_tl
+                { \tl_set:NV \l_nsk_block_squircle_ex_tl \l_tmpa_tl }
+            \seq_pop_left:NNT \l__nsk_parsed_args_seq \l_tmpa_tl
+                { \tl_set:NV \l_nsk_block_squircle_ey_tl \l_tmpa_tl }
+            \seq_pop_left:NNT \l__nsk_parsed_args_seq \l_tmpa_tl
+                { \tl_set:NV \l_nsk_block_squircle_step_tl \l_tmpa_tl }
+        }
+        {
+            \seq_pop_left:NNT \l__nsk_parsed_args_seq \l_tmpa_tl
+            {
+                \tl_set:NV \l_nsk_block_squircle_ex_tl \l_tmpa_tl
+                \tl_set_eq:NN \l_nsk_block_squircle_ey_tl \l_nsk_block_squircle_ex_tl
+            }
+        }
+    }
+
+    \nsk__append_extra_style:x { superellipse~x~exponent = \l_nsk_block_squircle_ex_tl }
+    \nsk__append_extra_style:x { superellipse~y~exponent = \l_nsk_block_squircle_ey_tl }
+    \nsk__append_extra_style:x { superellipse~step = \l_nsk_block_squircle_step_tl }
+    \dim_set:Nn \l_nsk_block_border_radius_dim { 0mm }
+    \dim_set:Nn \l_nsk_block_embed_border_radius_dim { 0mm }
+}
+
+\cs_new_protected:Npn \nsk__handle_text_type:
+{
+    \tl_set:Nn \l_nsk_block_type_tl { rectangle }
+    \tl_set:Nn \l_nsk_block_border_type_tl { draw=none }
+    \bool_set_false:N \l_nsk_block_shadow_bool
+    \tl_set:Nn \l_nsk_block_fill_tl { none }
+    \dim_set:Nn \l_nsk_block_width_dim { 0cm }
+    \dim_set:Nn \l_nsk_block_padding_x_dim { 0mm }
+}
+
+\cs_new_protected:Npn \nsk__parse_and_dispatch_type:
+{
+    % Single regex: ^(\w+)(?:\[([^\]]*)\])?
+    \regex_extract_once:nVNTF
+        { ^(\w+)(?:\[([^\]]*)\])? }
+        \l_nsk_block_type_tl
+        \l__nsk_parse_result_seq
+    {
+        \tl_set:Nx \l__nsk_parsed_base_type_tl { \seq_item:Nn \l__nsk_parse_result_seq {2} }
+        \tl_set:Nx \l__nsk_parsed_args_tl { \seq_item:Nn \l__nsk_parse_result_seq {3} }
+
+        % Dispatch with early exit
+        \str_case:VnF \l__nsk_parsed_base_type_tl
+        {
+            { polygon }  { \nsk__apply_shape:nnn { regular~polygon } { regular~polygon~sides } { 5 } }
+            { star }     { \nsk__apply_shape:nnn { star } { star~points } { 5 } }
+            { rrect }    { \nsk__apply_shape:nnn { rounded~rectangle } { rounded~rectangle~arc~length } { 90 } }
+            { crect }    { \nsk__apply_shape:nnn { chamfered~rectangle } { chamfered~rectangle~xsep } { 3mm } }
+            { squircle } { \nsk__handle_squircle_args: }
+            { text }     { \nsk__handle_text_type: }
+            { icon }     { \nsk__handle_text_type: }
+        }
+        { } % No match - type passes through unchanged
+    }
+    { } % No regex match - type used as-is
+}
+
+\NewDocumentCommand \nskBlock { sO{} }
+{
+\IfBooleanTF{#1}
+{
+\edef\l_tmpa_tl{#2}
+\expandafter\nskBlockR\expandafter[\l_tmpa_tl]
+}
+{
+\nskBlockR[#2]
+}
+}
+
+\NewDocumentCommand \nskBlockR { O{} }
+{
+\group_begin:
+
+\bool_set_eq:NN \l_nsk_block_border_radius_scale_bool \g__nsk_style_block_border_radius_scale_bool
+\tl_set_eq:NN \l_nsk_block_type_tl \g__nsk_style_block_type_tl
+
+\keys_set:nn {nsk / block } {#1}
+
+\nsk__maybe_set_id:
+
+\bool_if:NT \l_nsk_block_store_style_bool
+{
+\prop_clear:N \l_tmpa_prop
+\prop_set_from_keyval:Nn \l_tmpa_prop {#1}
+\prop_remove:Nn \l_tmpa_prop {id}
+\prop_remove:Nn \l_tmpa_prop {pos}
+\prop_remove:Nn \l_tmpa_prop {last-pos}
+\prop_remove:Nn \l_tmpa_prop {last-pos-s}
+\prop_remove:Nn \l_tmpa_prop {x}
+\prop_remove:Nn \l_tmpa_prop {y}
+\prop_remove:Nn \l_tmpa_prop {border-type}
+\prop_remove:Nn \l_tmpa_prop {text-north}
+\prop_remove:Nn \l_tmpa_prop {text-south}
+\prop_remove:Nn \l_tmpa_prop {text-east}
+\prop_remove:Nn \l_tmpa_prop {text-west}
+
+\prop_gput:NVx \g_nsk_block_stored_style_prop \l_nsk_block_id_tl {\prop_to_keyval:N \l_tmpa_prop}
+}
+\tl_if_blank:VF \l_nsk_block_grid_on_tl
+{
+\prop_get:NVN \g_nsk_block_stored_style_prop \l_nsk_block_grid_on_tl \l_tmps_tl
+\keys_set:nx {nsk / block } {\l_tmps_tl}
+\tl_set:Nx \l_nsk_block_pos_tl {at=(\l_nsk_block_grid_on_tl)}
+\tl_set:Nx \l_nsk_block_anchor_tl {center}
+}
+
+\nsk__parse_and_dispatch_type:
+
+\tl_if_blank:VTF \l_nsk_block_last_pos_s_tl
+{ \nsk__process_last_pos: }
+{ \nsk__process_last_pos_s: }
+
+\tl_if_blank:VF \l_nsk_block_pos_tl
+{ \nsk__process_align: }
+
+\nsk__block_debug:
+
+\nsk__draw_block:
+
+\bool_if:NF \g__nsk_measurement_mode_bool
+{
+\nsk__store_block_in_history:
+}
+
+\group_end:
+}
+
+\NewDocumentEnvironment{nskFigure}{O{}}
+{
+
+\prop_gclear:N \g_nsk_block_counters_prop
+\prop_clear:N \l_nsk_figure_unknown_prop
+
+\keys_set:nn { nsk / figure } { #1 }
+
+\seq_clear:N \g__nsk_bridging_info_seq
+\int_gset:Nn \g__nsk_connect_counter_int {0}
+
+\tl_clear_new:N \l_nsk_figure_opts_tl
+\prop_map_inline:Nn \l_nsk_figure_unknown_prop
+{
+\tl_put_right:Nn \l_nsk_figure_opts_tl
+{
+##1 = ##2,
+}
+}
+
+\tl_put_right:Nx \l_nsk_figure_opts_tl {node~distance=\l_nsk_figure_block_distance_tl}
+
+\bool_if:NTF \l_nsk_figure_center_bool
+{
+\begin{center}
+    \nskReset[]
+\nsk__render_figure:V \l_nsk_figure_opts_tl
+\begin{scope}[spy~using~outlines]
+}
+{
+  \nskReset[]
+\nsk__render_figure:V \l_nsk_figure_opts_tl
+\begin{scope}[spy~using~outlines]
+}
+}{
+\end{scope}
+\bool_if:NTF \g__nsk_style_icon_clean_bool
+{
+\nskCleanUnusedIcons
+}{}
+\end{tikzpicture}
+\bool_if:NT \l_nsk_figure_center_bool
+{
+\end{center}
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__render_figure:n #1
+{
+\begin{tikzpicture}[#1]
+
+}
+
+\cs_generate_variant:Nn \nsk__render_figure:n { V }
+
+
+\NewDocumentCommand \nskBlockID {}
+{
+\tl_use:N \l_nsk_block_id_tl
+}
+
+\NewDocumentCommand \nskRBlockIDLast { O{1} }
+{
+\nsk__internal_get_nth_block_id:n {#1}
+\tl_use:N \g_nsk_block_last_requested_block_id
+}
+
+\NewDocumentCommand \nskRLastBlockID {} {
+\nskRBlockIDLast[2]
+}
+
+\NewExpandableDocumentCommand {\nskID} { t!m }
+{
+\IfBooleanTF{#1}
+{
+\tl_if_blank:nTF {#2} {
+\seq_item:Nn \g_nsk_block_id_history_seq
+{ \int_eval:n { 1 } }
+}
+{
+\seq_item:Nn \g_nsk_block_id_history_seq
+{ \int_eval:n { #2 } }
+}
+}
+{
+\tl_if_blank:nTF {#2} {
+\seq_item:Nn \g_nsk_block_id_history_seq
+{ \int_eval:n { \seq_count:N \g_nsk_block_id_history_seq - 0 } }
+}
+{
+\seq_item:Nn \g_nsk_block_id_history_seq
+{ \int_eval:n { \seq_count:N \g_nsk_block_id_history_seq - #2 + 1 } }
+}
+}
+}
+
+\NewExpandableDocumentCommand {\nskBlockIDLast} { m }
+{
+\seq_item:Nn \g_nsk_block_id_history_seq
+{ \int_eval:n { \seq_count:N \g_nsk_block_id_history_seq - #1 + 1 } }
+}
+
+\NewExpandableDocumentCommand {\nskLastBlockID} { m }
+{
+\nskBlockIDLast{2}
+}
+
+
+\keys_define:nn { nsk / efadings }
+{
+edge .tl_set:N = \l_nsk_efadings_type_tl,
+edge .initial:n   = {down},
+edge .default:n   = {down},
+
+size .dim_set:N = \l_nsk_efadings_size_dim,
+size .initial:n   = {10mm},
+size .default:n   = {10mm},
+
+offset .dim_set:N = \l_nsk_efadings_offset_dim,
+offset .initial:n   = {1mm},
+offset .default:n   = {1mm},
+
+}
+
+\NewDocumentCommand {\nskEdgeFade} { O{} }{
+
+\keys_set:nn { nsk / efadings } { #1 }
+
+\tl_clear_new:N \l_tmpefpos_tl
+\str_case:Vn \l_nsk_efadings_type_tl
+{
+{down}{\tl_set:Nx \l_tmpefpos_tl {above~right=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.south~west}}
+{up}{\tl_set:Nx \l_tmpefpos_tl {below~right=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.north~west}}
+{left}{\tl_set:Nx \l_tmpefpos_tl {above~right=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.south~west}}
+{right}{\tl_set:Nx \l_tmpefpos_tl {above~left=-\dim_use:N \l_nsk_efadings_offset_dim\space of~current~bounding~box.south~east}}
+}
+
+\tl_clear_new:N \l_tmpw_tl
+\tl_clear_new:N \l_tmph_tl
+\str_case:Vn \l_nsk_efadings_type_tl
+{
+{down}{
+\nskMeasure[from=current~bounding~box.south~west, to=current~bounding~box.south~east]
+\tl_set:Nx \l_tmpw_tl {\nskDistance + \l_nsk_efadings_offset_dim}
+\tl_set:Nx \l_tmph_tl {\l_nsk_efadings_size_dim}
+}
+{up}{
+\nskMeasure[from=current~bounding~box.south~west, to=current~bounding~box.south~east]
+\tl_set:Nx \l_tmpw_tl {\nskDistance + \l_nsk_efadings_offset_dim}
+\tl_set:Nx \l_tmph_tl {\l_nsk_efadings_size_dim}
+}
+{left}{
+\nskMeasure[
+from=current~bounding~box.south~west, to=current~bounding~box.north~west,
+axis=vertical
+]
+\tl_set:Nx \l_tmph_tl {\nskDistance + \l_nsk_efadings_offset_dim}
+\tl_set:Nx \l_tmpw_tl {\l_nsk_efadings_size_dim}
+}
+{right}{
+\nskMeasure[
+from=current~bounding~box.south~east, to=current~bounding~box.north~east,
+axis=vertical
+]
+\tl_set:Nx \l_tmph_tl {\nskDistance + \l_nsk_efadings_offset_dim}
+\tl_set:Nx \l_tmpw_tl {\l_nsk_efadings_size_dim}
+}
+
+}
+
+\nsk__render_edge_fading:VVVV
+\l_tmpefpos_tl
+\l_tmpw_tl
+\l_tmph_tl
+\l_nsk_efadings_type_tl
+
+}
+\cs_new_protected_nopar:Npn \nsk__render_edge_fading:nnnn #1 #2 #3 #4
+{
+\nskBlock[
+pos={#1},
+width=#2, height=#3,
+    border-radius=0mm,
+fade=#4,
+]
+}
+
+\cs_generate_variant:Nn \nsk__render_edge_fading:nnnn { VVVV }
+
+\NewDocumentCommand {\nskReset} {o} {
+  \str_case:nnF {#1}
+  {
+    {pos} {\int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}}
+  }{
+    % reset all - counter=1 means normal last-pos works
+    % (counter=0 is only set by containers/groups with scope-first-pos)
+    \int_gset:Nn \g_nsk_block_skip_pos_counter_int {1}
+  }
+}
+
+\keys_define:nn { nsk / wrap }
+{
+under .code:n  = {
+\tl_set:Nn \l__nsk_wrap_ref_tl {#1}
+\tl_set:Nn \l__nsk_wrap_direction_tl {below}
+\tl_set:Nn \l__nsk_wrap_anchor_tl {north}
+},
+under .initial:n = {},
+
+over .code:n  = {
+\tl_set:Nn \l__nsk_wrap_ref_tl {#1}
+\tl_set:Nn \l__nsk_wrap_direction_tl {above}
+\tl_set:Nn \l__nsk_wrap_anchor_tl {south}
+},
+over .initial:n = {},
+
+target .tl_set:N = \l__nsk_wrap_ref_tl,
+target .initial:n = {},
+
+direction .tl_set:N = \l__nsk_wrap_direction_tl,
+direction .initial:n = {},
+
+anchor .tl_set:N = \l__nsk_wrap_anchor_tl,
+anchor .initial:n = {},
+
+shift-x .dim_set:N = \l__nsk_wrap_shift_x_dim,
+shift-x .initial:n = 0cm,
+shift-x .default:n = 0cm,
+shift-y .dim_set:N = \l__nsk_wrap_shift_y_dim,
+shift-y .initial:n = 0cm,
+shift-y .default:n = 0cm,
+}
+
+\NewDocumentCommand {\nskWrap} { t! O{} } {
+\keys_set:nn { nsk / wrap } {#2}
+
+\IfBooleanTF{#1}{
+\nskMark[pos={
+\l__nsk_wrap_direction_tl\space right=\tl_use:N \g__nsk_style_figure_block_distance_tl~and~0cm~of~\tl_use:N \l__nsk_wrap_ref_tl,
+}, shift-x=\dim_use:N \l__nsk_wrap_shift_x_dim,
+, shift-y=\dim_use:N \l__nsk_wrap_shift_y_dim
+]
+
+\bool_gset_true:N \g_nsk_wrap_right_bool
+}{
+\nskMark[pos={\l__nsk_wrap_direction_tl\space left=\tl_use:N \g__nsk_style_figure_block_distance_tl~and~0cm~of~\tl_use:N \l__nsk_wrap_ref_tl,
+}, shift-x=\dim_use:N \l__nsk_wrap_shift_x_dim,
+, shift-y=\dim_use:N \l__nsk_wrap_shift_y_dim
+]
+
+\bool_gset_true:N \g_nsk_wrap_left_bool
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__maybe_uniform_border_scaling:
+{
+\bool_if:nT { \l_nsk_block_border_radius_mset_bool && \l_nsk_block_border_radius_scale_bool }
+{
+\fp_set:Nn \l_tmpa_fp { \l_nsk_block_width_dim / \g__nsk_style_block_width_dim }
+\fp_set:Nn \l_tmpb_fp { \l_nsk_block_height_dim / \g__nsk_style_block_height_dim }
+
+\fp_set:Nn \l_tmpa_fp { sqrt(\l_tmpa_fp * \l_tmpb_fp) }
+
+\dim_set:Nn \l_nsk_block_border_radius_dim { \fp_to_dim:n { \l_nsk_block_border_radius_dim * \l_tmpa_fp } }
+
+\dim_set:Nn \l_tmpb_dim { \dim_min:nn { \l_nsk_block_width_dim } { \l_nsk_block_height_dim } / 2 }
+\dim_compare:nNnT { \l_nsk_block_border_radius_dim } > { \l_tmpb_dim }
+{
+\dim_set_eq:NN \l_nsk_block_border_radius_dim \l_tmpb_dim
+}
+
+\bool_if:NT \l_nsk_block_border_radius_nw_mset_bool
+{
+\dim_set:Nn \l_nsk_block_border_radius_nw_dim { \fp_to_dim:n { \l_nsk_block_border_radius_nw_dim * \l_tmpa_fp } }
+\dim_compare:nNnT { \l_nsk_block_border_radius_nw_dim } > { \l_tmpb_dim }
+{
+\dim_set_eq:NN \l_nsk_block_border_radius_nw_dim \l_tmpb_dim
+}
+}
+\bool_if:NT \l_nsk_block_border_radius_ne_mset_bool
+{
+\dim_set:Nn \l_nsk_block_border_radius_ne_dim { \fp_to_dim:n { \l_nsk_block_border_radius_ne_dim * \l_tmpa_fp } }
+\dim_compare:nNnT { \l_nsk_block_border_radius_ne_dim } > { \l_tmpb_dim }
+{
+\dim_set_eq:NN \l_nsk_block_border_radius_ne_dim \l_tmpb_dim
+}
+}
+\bool_if:NT \l_nsk_block_border_radius_sw_mset_bool
+{
+\dim_set:Nn \l_nsk_block_border_radius_sw_dim { \fp_to_dim:n { \l_nsk_block_border_radius_sw_dim * \l_tmpa_fp } }
+\dim_compare:nNnT { \l_nsk_block_border_radius_sw_dim } > { \l_tmpb_dim }
+{
+\dim_set_eq:NN \l_nsk_block_border_radius_sw_dim \l_tmpb_dim
+}
+}
+\bool_if:NT \l_nsk_block_border_radius_se_mset_bool
+{
+\dim_set:Nn \l_nsk_block_border_radius_se_dim { \fp_to_dim:n { \l_nsk_block_border_radius_se_dim * \l_tmpa_fp } }
+\dim_compare:nNnT { \l_nsk_block_border_radius_se_dim } > { \l_tmpb_dim }
+{
+\dim_set_eq:NN \l_nsk_block_border_radius_se_dim \l_tmpb_dim
+}
+}
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__determine_percorner_mode:
+{
+\bool_set_false:N \l_nsk_block_percorner_mode_bool
+
+\bool_if:nT {
+\l_nsk_block_border_radius_nw_mset_bool ||
+\l_nsk_block_border_radius_ne_mset_bool ||
+\l_nsk_block_border_radius_sw_mset_bool ||
+\l_nsk_block_border_radius_se_mset_bool
+}
+{
+\bool_set_true:N \l_nsk_block_percorner_mode_bool
+
+\bool_if:NF \l_nsk_block_border_radius_nw_mset_bool
+{
+\dim_set_eq:NN \l_nsk_block_border_radius_nw_dim \l_nsk_block_border_radius_dim
+}
+\bool_if:NF \l_nsk_block_border_radius_ne_mset_bool
+{
+\dim_set_eq:NN \l_nsk_block_border_radius_ne_dim \l_nsk_block_border_radius_dim
+}
+\bool_if:NF \l_nsk_block_border_radius_sw_mset_bool
+{
+\dim_set_eq:NN \l_nsk_block_border_radius_sw_dim \l_nsk_block_border_radius_dim
+}
+\bool_if:NF \l_nsk_block_border_radius_se_mset_bool
+{
+\dim_set_eq:NN \l_nsk_block_border_radius_se_dim \l_nsk_block_border_radius_dim
+}
+}
+}
+
+\cs_new_protected_nopar:Npn \nsk__draw_percorner_rounded_rect:
+{
+\path ([shift={(\l_nsk_block_border_size_dim/2, -\l_nsk_block_border_size_dim/2)}]\l_nsk_block_id_tl.north~west) coordinate (nsk@nw);
+\path ([shift={(-\l_nsk_block_border_size_dim/2, -\l_nsk_block_border_size_dim/2)}]\l_nsk_block_id_tl.north~east) coordinate (nsk@ne);
+\path ([shift={(\l_nsk_block_border_size_dim/2, \l_nsk_block_border_size_dim/2)}]\l_nsk_block_id_tl.south~west) coordinate (nsk@sw);
+\path ([shift={(-\l_nsk_block_border_size_dim/2, \l_nsk_block_border_size_dim/2)}]\l_nsk_block_id_tl.south~east) coordinate (nsk@se);
+
+\tl_clear_new:N \l__nsk_percorner_path_tl
+
+\tl_put_right:Nx \l__nsk_percorner_path_tl
+{ ([xshift=\dim_use:N \l_nsk_block_border_radius_nw_dim]nsk@nw) }
+
+\tl_put_right:Nx \l__nsk_percorner_path_tl
+{ -- ([xshift=-\dim_use:N \l_nsk_block_border_radius_ne_dim]nsk@ne) }
+
+\dim_compare:nNnTF {\l_nsk_block_border_radius_ne_dim} > {0pt}
+{
+\tl_put_right:Nx \l__nsk_percorner_path_tl
+{ arc[start~angle=90, end~angle=0, radius=\dim_use:N \l_nsk_block_border_radius_ne_dim] }
+}
+{
+\tl_put_right:Nn \l__nsk_percorner_path_tl { -- (nsk@ne) }
+}
+
+\tl_put_right:Nx \l__nsk_percorner_path_tl
+{ -- ([yshift=\dim_use:N \l_nsk_block_border_radius_se_dim]nsk@se) }
+
+\dim_compare:nNnTF {\l_nsk_block_border_radius_se_dim} > {0pt}
+{
+\tl_put_right:Nx \l__nsk_percorner_path_tl
+{ arc[start~angle=0, end~angle=-90, radius=\dim_use:N \l_nsk_block_border_radius_se_dim] }
+}
+{
+\tl_put_right:Nn \l__nsk_percorner_path_tl { -- (nsk@se) }
+}
+
+\tl_put_right:Nx \l__nsk_percorner_path_tl
+{ -- ([xshift=\dim_use:N \l_nsk_block_border_radius_sw_dim]nsk@sw) }
+
+\dim_compare:nNnTF {\l_nsk_block_border_radius_sw_dim} > {0pt}
+{
+\tl_put_right:Nx \l__nsk_percorner_path_tl
+{ arc[start~angle=-90, end~angle=-180, radius=\dim_use:N \l_nsk_block_border_radius_sw_dim] }
+}
+{
+\tl_put_right:Nn \l__nsk_percorner_path_tl { -- (nsk@sw) }
+}
+
+\tl_put_right:Nx \l__nsk_percorner_path_tl
+{ -- ([yshift=-\dim_use:N \l_nsk_block_border_radius_nw_dim]nsk@nw) }
+
+\dim_compare:nNnTF {\l_nsk_block_border_radius_nw_dim} > {0pt}
+{
+\tl_put_right:Nx \l__nsk_percorner_path_tl
+{ arc[start~angle=180, end~angle=90, radius=\dim_use:N \l_nsk_block_border_radius_nw_dim] }
+}
+{
+\tl_put_right:Nn \l__nsk_percorner_path_tl { -- (nsk@nw) }
+}
+
+\tl_put_right:Nn \l__nsk_percorner_path_tl { -- cycle }
+
+\tl_if_eq:NnTF \l_nsk_block_border_type_tl { none }
+{
+\draw [
+fill=\l_nsk_block_fill_tl,
+draw=none,
+line~width=\l_nsk_block_border_size_dim,
+opacity=\l_nsk_block_opacity_tl,
+] \tl_use:N \l__nsk_percorner_path_tl ;
+}
+{
+\draw [
+fill=\l_nsk_block_fill_tl,
+draw=\l_nsk_block_border_color_tl,
+line~width=\l_nsk_block_border_size_dim,
+opacity=\l_nsk_block_opacity_tl,
+\l_nsk_block_border_type_tl
+] \tl_use:N \l__nsk_percorner_path_tl ;
+}
+}
+
+\ExplSyntaxOff
+
+\endinput
+%%
+%% End of file `neural-sketch.sty'.
