@@ -226,6 +226,21 @@ every~node/.append~style={text=c__nsk_principal},
 \dim_new:N \l__nsk_ne_x_dim  \dim_new:N \l__nsk_ne_y_dim
 \dim_new:N \l__nsk_nw_x_dim  \dim_new:N \l__nsk_nw_y_dim
 
+% Additional perspective dims for shape renderers
+\dim_new:N \l__nsk_n_x_dim   \dim_new:N \l__nsk_n_y_dim   % diamond north
+\dim_new:N \l__nsk_e_x_dim   \dim_new:N \l__nsk_e_y_dim   % diamond east
+\dim_new:N \l__nsk_s_x_dim   \dim_new:N \l__nsk_s_y_dim   % diamond south
+\dim_new:N \l__nsk_w_x_dim   \dim_new:N \l__nsk_w_y_dim   % diamond west
+\dim_new:N \l__nsk_persp_radius_dim                        % polygon/star radius
+\dim_new:N \l__nsk_persp_inner_radius_dim                  % star inner radius
+\dim_new:N \l__nsk_persp_outer_radius_dim                  % star outer radius
+\dim_new:N \l__nsk_persp_r_dim                             % current radius
+\tl_new:N  \l__nsk_persp_path_tl                           % path accumulator
+\int_new:N \l__nsk_persp_sides_int                         % polygon sides / star points
+\dim_new:N \l__nsk_persp_expand_dim                        % expansion for outer border
+\dim_new:N \l__nsk_saved_width_dim                         % saved width for expansion
+\dim_new:N \l__nsk_saved_height_dim                        % saved height for expansion
+
 % Additional temp dims (l_tmpc_dim and l_tmpd_dim are not standard)
 \dim_new:N \l__nsk_tmpc_dim
 \dim_new:N \l__nsk_tmpd_dim
@@ -1084,21 +1099,279 @@ every~node/.append~style={text=c__nsk_principal},
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-% Perspective block renderer (trapezoid path)
-% Renders blocks as custom paths with 4 perspective-transformed corners
+% Perspective block renderer (dispatches by shape type)
+% Renders blocks as custom paths with perspective-transformed points
 % Used when \g__nsk_threed_perspective_active_bool is true
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \tl_new:N \l__nsk_persp_style_tl
+\bool_new:N \l__nsk_persp_use_rounded_corners_bool
 
-\cs_new_protected:Npn \__nsk_block_render_perspective:
+% ------------------------------------------------------------------------------
+% Helper: Build style options for perspective shapes
+% Sets \l__nsk_persp_style_tl with fill, border, opacity, pattern, fade, extra
+% ------------------------------------------------------------------------------
+\cs_new_protected:Npn \__nsk_persp_build_style:
 {
-	% 1. Get block bounds (relative to center)
+	\tl_clear:N \l__nsk_persp_style_tl
+	\bool_set_true:N \l__nsk_persp_use_rounded_corners_bool
+
+	% Fade effect (must come before fill handling)
+	\tl_if_eq:NnF \l_nsk_block_fade_tl { none }
+	{
+		\bool_set_false:N \l_nsk_block_shadow_bool
+		\tl_put_right:Nx \l__nsk_persp_style_tl { fade~\l_nsk_block_fade_tl, }
+		\bool_if:NTF \g__nsk_dark_mode_bool
+		{ }
+		{
+			\str_case:Vn \l_nsk_block_fade_tl
+			{
+				{down}  { \tl_put_right:Nn \l__nsk_persp_style_tl { top~color=transparent!0, bottom~color=nskBg, } }
+				{up}    { \tl_put_right:Nn \l__nsk_persp_style_tl { bottom~color=transparent!0, top~color=nskBg, } }
+				{left}  { \tl_put_right:Nn \l__nsk_persp_style_tl { right~color=transparent!0, left~color=nskBg, } }
+				{right} { \tl_put_right:Nn \l__nsk_persp_style_tl { left~color=transparent!0, right~color=nskBg, } }
+			}
+		}
+	}
+
+	% Fill (skip if fade is active - fade handles fill)
+	\tl_if_eq:NnTF \l_nsk_block_fade_tl { none }
+	{
+		\tl_if_eq:NnTF \l_nsk_block_fill_tl {none}
+		{ \tl_put_right:Nn \l__nsk_persp_style_tl {fill=none,} }
+		{ \tl_put_right:Nx \l__nsk_persp_style_tl {fill=\l_nsk_block_fill_tl,} }
+	}
+	{ \tl_put_right:Nn \l__nsk_persp_style_tl {fill=nskBg,} }
+
+	% Border/draw
+	\tl_if_eq:NnTF \l_nsk_block_border_type_tl {none}
+	{ \tl_put_right:Nn \l__nsk_persp_style_tl {draw=none,} }
+	{
+		\tl_put_right:Nx \l__nsk_persp_style_tl {draw=\l_nsk_block_border_color_tl,}
+		\tl_put_right:Nx \l__nsk_persp_style_tl {\l_nsk_block_border_type_tl,}
+	}
+
+	% Line width
+	\tl_put_right:Nx \l__nsk_persp_style_tl {line~width=\dim_use:N \l_nsk_block_border_size_dim,}
+
+	% Opacity
+	\tl_put_right:Nx \l__nsk_persp_style_tl {fill~opacity=\l_nsk_block_opacity_tl,}
+	\tl_put_right:Nx \l__nsk_persp_style_tl {draw~opacity=\l_nsk_block_opacity_tl,}
+
+	% Rounded corners (border radius) - only for rectangle shapes
+	\bool_if:NT \l__nsk_persp_use_rounded_corners_bool
+	{
+		\dim_compare:nNnT {\l_nsk_block_border_radius_dim} > {0pt}
+		{ \tl_put_right:Nx \l__nsk_persp_style_tl {rounded~corners=\dim_use:N \l_nsk_block_border_radius_dim,} }
+	}
+
+	% Pattern (if specified)
+	\tl_if_blank:VF \l_nsk_block_pattern_tl
+	{
+		\tl_put_right:Nx \l__nsk_persp_style_tl {
+			postaction={
+				pattern=\l_nsk_block_pattern_tl,
+				pattern~color=\l_nsk_block_pattern_color_tl,
+			},
+		}
+	}
+
+	% Extra style pass-through (tikz-opts)
+	\tl_if_empty:NF \l_nsk_block_extra_style_tl
+	{
+		\tl_put_right:NV \l__nsk_persp_style_tl \l_nsk_block_extra_style_tl
+		\tl_put_right:Nn \l__nsk_persp_style_tl { , }
+	}
+}
+
+% ------------------------------------------------------------------------------
+% Helper: Draw outer border with perspective-correct expanded shape
+% Builds a larger shape, transforms it through perspective, then draws
+% ------------------------------------------------------------------------------
+\cs_new_protected:Npn \__nsk_persp_draw_outer_border:
+{
+	\dim_compare:nNnT { \l_nsk_block_outer_border_size_dim } > { 0pt }
+	{
+		% Save current path (built by shape renderer)
+		\tl_set_eq:NN \l__nsk_saved_path_tl \l__nsk_persp_path_tl
+
+		% Save original dimensions
+		\dim_set_eq:NN \l__nsk_saved_width_dim \l_nsk_block_width_dim
+		\dim_set_eq:NN \l__nsk_saved_height_dim \l_nsk_block_height_dim
+
+		% Expand dimensions by outer border size (on each side, so 2x total)
+		\dim_add:Nn \l_nsk_block_width_dim { \l_nsk_block_outer_border_size_dim }
+		\dim_add:Nn \l_nsk_block_width_dim { \l_nsk_block_outer_border_size_dim }
+		\dim_add:Nn \l_nsk_block_height_dim { \l_nsk_block_outer_border_size_dim }
+		\dim_add:Nn \l_nsk_block_height_dim { \l_nsk_block_outer_border_size_dim }
+
+		% Rebuild path with expanded dimensions (dispatch by type)
+		\str_case:VnF \l_nsk_block_type_tl
+		{
+			{ rectangle }        { \__nsk_persp_build_rect_path: }
+			{ circle }           { \__nsk_persp_build_ellipse_path: }
+			{ ellipse }          { \__nsk_persp_build_ellipse_path: }
+			{ diamond }          { \__nsk_persp_build_diamond_path: }
+			{ regular~polygon }  { \__nsk_persp_build_polygon_path: }
+			{ star }             { \__nsk_persp_build_star_path: }
+		}
+		{ \__nsk_persp_build_rect_path: }
+
+		% Draw outer border with expanded path
+		\tl_clear:N \l_tmpa_tl
+		\bool_if:NT \l__nsk_persp_use_rounded_corners_bool
+		{
+			\tl_set:Nx \l_tmpa_tl { rounded~corners=\dim_use:N \l_nsk_block_outer_border_radius_dim, }
+		}
+		\use:x {
+			\exp_not:N \draw [
+				draw=\l_nsk_block_outer_border_color_tl,
+				\l_nsk_block_outer_border_type_tl,
+				line~width=\dim_use:N \l_nsk_block_outer_border_size_dim,
+				\l_tmpa_tl
+				fill=none,
+			]
+			\l__nsk_persp_path_tl ;
+		}
+
+		% Restore original dimensions and path
+		\dim_set_eq:NN \l_nsk_block_width_dim \l__nsk_saved_width_dim
+		\dim_set_eq:NN \l_nsk_block_height_dim \l__nsk_saved_height_dim
+		\tl_set_eq:NN \l__nsk_persp_path_tl \l__nsk_saved_path_tl
+	}
+}
+
+% Token list to save path temporarily
+\tl_new:N \l__nsk_saved_path_tl
+
+% ------------------------------------------------------------------------------
+% Helper: Draw shadow using current path
+% Offsets the path downward for shadow effect
+% ------------------------------------------------------------------------------
+\cs_new_protected:Npn \__nsk_persp_draw_shadow:
+{
+	\bool_if:NT \l_nsk_block_shadow_bool
+	{
+		% Pre-compute rounded corners option
+		\tl_clear:N \l_tmpa_tl
+		\bool_if:NT \l__nsk_persp_use_rounded_corners_bool
+		{
+			\tl_set:Nx \l_tmpa_tl { rounded~corners=\dim_use:N \l_nsk_block_border_radius_dim, }
+		}
+		\use:x {
+			\exp_not:N \begin{scope}[yshift=-3mm]
+			\exp_not:N \draw [
+				fill=nskShadow,
+				draw=none,
+				\l_tmpa_tl
+			]
+			\l__nsk_persp_path_tl ;
+			\exp_not:N \end{scope}
+		}
+	}
+}
+
+% ------------------------------------------------------------------------------
+% Helper: Draw stack copies behind main shape
+% Creates offset copies before the main shape is drawn
+% ------------------------------------------------------------------------------
+\cs_new_protected:Npn \__nsk_persp_draw_stack:
+{
+	\bool_if:NT \l_nsk_block_stack_bool
+	{
+		% Pre-compute rounded corners option
+		\tl_clear:N \l_tmpa_tl
+		\bool_if:NT \l__nsk_persp_use_rounded_corners_bool
+		{
+			\tl_set:Nx \l_tmpa_tl { rounded~corners=\dim_use:N \l_nsk_block_border_radius_dim, }
+		}
+		\str_case:Vn \l_nsk_block_stack_count_tl
+		{
+			{single}
+			{
+				\use:x {
+					\exp_not:N \begin{scope}[
+						xshift=\dim_use:N \l_nsk_block_stack_xoffset_dim,
+						yshift=\dim_use:N \l_nsk_block_stack_yoffset_dim,
+					]
+					\exp_not:N \draw [
+						fill=\l_nsk_block_fill_tl,
+						\l_nsk_block_stack_opts_tl,
+						\l_tmpa_tl
+					]
+					\l__nsk_persp_path_tl ;
+					\exp_not:N \end{scope}
+				}
+			}
+			{double}
+			{
+				% Pre-compute 2x offsets
+				\dim_set:Nn \l_tmpb_dim { \l_nsk_block_stack_xoffset_dim + \l_nsk_block_stack_xoffset_dim }
+				\dim_set:Nn \l__nsk_tmpc_dim { \l_nsk_block_stack_yoffset_dim + \l_nsk_block_stack_yoffset_dim }
+				% First (back) copy
+				\use:x {
+					\exp_not:N \begin{scope}[
+						xshift=\dim_use:N \l_tmpb_dim,
+						yshift=\dim_use:N \l__nsk_tmpc_dim,
+					]
+					\exp_not:N \draw [
+						fill=\l_nsk_block_fill_tl,
+						\l_nsk_block_stack_opts_tl,
+						\l_tmpa_tl
+					]
+					\l__nsk_persp_path_tl ;
+					\exp_not:N \end{scope}
+				}
+				% Second copy
+				\use:x {
+					\exp_not:N \begin{scope}[
+						xshift=\dim_use:N \l_nsk_block_stack_xoffset_dim,
+						yshift=\dim_use:N \l_nsk_block_stack_yoffset_dim,
+					]
+					\exp_not:N \draw [
+						fill=\l_nsk_block_fill_tl,
+						\l_nsk_block_stack_opts_tl,
+						\l_tmpa_tl
+					]
+					\l__nsk_persp_path_tl ;
+					\exp_not:N \end{scope}
+				}
+			}
+		}
+		% Disable shadow when stack is active
+		\bool_set_false:N \l_nsk_block_shadow_bool
+	}
+}
+
+% ------------------------------------------------------------------------------
+% Helper: Create invisible reference node for anchors
+% Bridges and positioning need this node to exist
+% ------------------------------------------------------------------------------
+\cs_new_protected:Npn \__nsk_persp_create_reference_node:
+{
+	\node[
+		name=\l_nsk_block_id_tl,
+		at={(\l_nsk_block_x_dim, \l_nsk_block_y_dim)},
+		minimum~width=\l_nsk_block_width_dim,
+		minimum~height=\l_nsk_block_height_dim,
+		inner~sep=0pt, draw=none, fill=none,
+	] {};
+}
+
+% ==============================================================================
+% Path-building helpers (used by renderers and outer border)
+% These build \l__nsk_persp_path_tl without drawing
+% ==============================================================================
+
+% Rectangle path builder
+\cs_new_protected:Npn \__nsk_persp_build_rect_path:
+{
+	% Get block bounds (relative to center)
 	\dim_set:Nn \l_tmpa_dim { -\l_nsk_block_width_dim / 2 }   % left offset
 	\dim_set:Nn \l_tmpb_dim {  \l_nsk_block_width_dim / 2 }   % right offset
 	\dim_set:Nn \l__nsk_tmpc_dim { -\l_nsk_block_height_dim / 2 }  % bottom offset
 	\dim_set:Nn \l__nsk_tmpd_dim {  \l_nsk_block_height_dim / 2 }  % top offset
 
-	% 2. Compute 4 corner absolute positions + transform
+	% Compute 4 corner absolute positions + transform
 	% SW (left, bottom)
 	\dim_set:Nn \l__nsk_sw_x_dim { \l_nsk_block_x_dim + \l_tmpa_dim }
 	\dim_set:Nn \l__nsk_sw_y_dim { \l_nsk_block_y_dim + \l__nsk_tmpc_dim }
@@ -1127,80 +1400,330 @@ every~node/.append~style={text=c__nsk_principal},
 	\dim_set_eq:NN \l__nsk_nw_x_dim \l__nsk_persp_result_x_dim
 	\dim_set_eq:NN \l__nsk_nw_y_dim \l__nsk_persp_result_y_dim
 
-	% 3. Build style options
-	\tl_clear:N \l__nsk_persp_style_tl
-
-	% Fill
-	\tl_if_eq:NnTF \l_nsk_block_fill_tl {none}
-	{ \tl_put_right:Nn \l__nsk_persp_style_tl {fill=none,} }
-	{ \tl_put_right:Nx \l__nsk_persp_style_tl {fill=\l_nsk_block_fill_tl,} }
-
-	% Border/draw
-	\tl_if_eq:NnTF \l_nsk_block_border_type_tl {none}
-	{ \tl_put_right:Nn \l__nsk_persp_style_tl {draw=none,} }
-	{
-		\tl_put_right:Nx \l__nsk_persp_style_tl {draw=\l_nsk_block_border_color_tl,}
-		\tl_put_right:Nx \l__nsk_persp_style_tl {\l_nsk_block_border_type_tl,}
+	% Build path
+	\tl_set:Nx \l__nsk_persp_path_tl {
+		(\dim_use:N \l__nsk_sw_x_dim, \dim_use:N \l__nsk_sw_y_dim) --
+		(\dim_use:N \l__nsk_se_x_dim, \dim_use:N \l__nsk_se_y_dim) --
+		(\dim_use:N \l__nsk_ne_x_dim, \dim_use:N \l__nsk_ne_y_dim) --
+		(\dim_use:N \l__nsk_nw_x_dim, \dim_use:N \l__nsk_nw_y_dim) -- cycle
 	}
+}
 
-	% Line width
-	\tl_put_right:Nx \l__nsk_persp_style_tl {line~width=\dim_use:N \l_nsk_block_border_size_dim,}
+% Ellipse path builder
+\cs_new_protected:Npn \__nsk_persp_build_ellipse_path:
+{
+	\tl_clear:N \l__nsk_persp_path_tl
 
-	% Opacity
-	\tl_put_right:Nx \l__nsk_persp_style_tl {fill~opacity=\l_nsk_block_opacity_tl,}
-	\tl_put_right:Nx \l__nsk_persp_style_tl {draw~opacity=\l_nsk_block_opacity_tl,}
+	% Precompute half-widths
+	\dim_set:Nn \l__nsk_persp_radius_dim { \l_nsk_block_width_dim / 2 }
+	\dim_set:Nn \l__nsk_persp_inner_radius_dim { \l_nsk_block_height_dim / 2 }
 
-	% Rounded corners (border radius)
-	\dim_compare:nNnTF {\l_nsk_block_border_radius_dim} > {0pt}
-	{ \tl_put_right:Nx \l__nsk_persp_style_tl {rounded~corners=\dim_use:N \l_nsk_block_border_radius_dim,} }
-	{ }
-
-	% Pattern (if specified)
-	\tl_if_blank:VF \l_nsk_block_pattern_tl
+	% Sample 36 points around ellipse
+	\int_step_inline:nnn { 0 } { 35 }
 	{
-		\tl_put_right:Nx \l__nsk_persp_style_tl {
-			postaction={
-				pattern=\l_nsk_block_pattern_tl,
-				pattern~color=\l_nsk_block_pattern_color_tl,
-			},
+		\fp_set:Nn \l_tmpa_fp { ##1 * 10 }
+		\dim_set:Nn \l_tmpa_dim {
+			\l_nsk_block_x_dim + \fp_to_dim:n { \dim_to_fp:n { \l__nsk_persp_radius_dim } * cosd(\l_tmpa_fp) }
+		}
+		\dim_set:Nn \l_tmpb_dim {
+			\l_nsk_block_y_dim + \fp_to_dim:n { \dim_to_fp:n { \l__nsk_persp_inner_radius_dim } * sind(\l_tmpa_fp) }
+		}
+		\__nsk_persp_transform_point:nn { \l_tmpa_dim } { \l_tmpb_dim }
+		\int_compare:nNnTF { ##1 } = { 0 }
+		{
+			\tl_put_right:Nx \l__nsk_persp_path_tl {
+				(\dim_use:N \l__nsk_persp_result_x_dim, \dim_use:N \l__nsk_persp_result_y_dim)
+			}
+		}
+		{
+			\tl_put_right:Nx \l__nsk_persp_path_tl {
+				-- (\dim_use:N \l__nsk_persp_result_x_dim, \dim_use:N \l__nsk_persp_result_y_dim)
+			}
 		}
 	}
+	\tl_put_right:Nn \l__nsk_persp_path_tl { -- cycle }
+}
 
-	% 4. Draw shadow first (if enabled)
-	% Shadow uses the same perspective-transformed corners with screen-space offset
-	% Offset: centered horizontally, down (visible beneath the block)
-	\bool_if:NT \l_nsk_block_shadow_bool
+% Diamond path builder
+\cs_new_protected:Npn \__nsk_persp_build_diamond_path:
+{
+	% North (top center)
+	\__nsk_persp_transform_point:nn
+		{ \l_nsk_block_x_dim }
+		{ \dim_eval:n { \l_nsk_block_y_dim + \l_nsk_block_height_dim/2 } }
+	\dim_set_eq:NN \l__nsk_n_x_dim \l__nsk_persp_result_x_dim
+	\dim_set_eq:NN \l__nsk_n_y_dim \l__nsk_persp_result_y_dim
+
+	% East (right center)
+	\__nsk_persp_transform_point:nn
+		{ \dim_eval:n { \l_nsk_block_x_dim + \l_nsk_block_width_dim/2 } }
+		{ \l_nsk_block_y_dim }
+	\dim_set_eq:NN \l__nsk_e_x_dim \l__nsk_persp_result_x_dim
+	\dim_set_eq:NN \l__nsk_e_y_dim \l__nsk_persp_result_y_dim
+
+	% South (bottom center)
+	\__nsk_persp_transform_point:nn
+		{ \l_nsk_block_x_dim }
+		{ \dim_eval:n { \l_nsk_block_y_dim - \l_nsk_block_height_dim/2 } }
+	\dim_set_eq:NN \l__nsk_s_x_dim \l__nsk_persp_result_x_dim
+	\dim_set_eq:NN \l__nsk_s_y_dim \l__nsk_persp_result_y_dim
+
+	% West (left center)
+	\__nsk_persp_transform_point:nn
+		{ \dim_eval:n { \l_nsk_block_x_dim - \l_nsk_block_width_dim/2 } }
+		{ \l_nsk_block_y_dim }
+	\dim_set_eq:NN \l__nsk_w_x_dim \l__nsk_persp_result_x_dim
+	\dim_set_eq:NN \l__nsk_w_y_dim \l__nsk_persp_result_y_dim
+
+	% Build path: N -> E -> S -> W -> cycle
+	\tl_set:Nx \l__nsk_persp_path_tl {
+		(\dim_use:N \l__nsk_n_x_dim, \dim_use:N \l__nsk_n_y_dim) --
+		(\dim_use:N \l__nsk_e_x_dim, \dim_use:N \l__nsk_e_y_dim) --
+		(\dim_use:N \l__nsk_s_x_dim, \dim_use:N \l__nsk_s_y_dim) --
+		(\dim_use:N \l__nsk_w_x_dim, \dim_use:N \l__nsk_w_y_dim) -- cycle
+	}
+}
+
+% Polygon path builder
+\cs_new_protected:Npn \__nsk_persp_build_polygon_path:
+{
+	\tl_clear:N \l__nsk_persp_path_tl
+
+	% Get number of sides from parsed args (default 5)
+	\int_set:Nn \l__nsk_persp_sides_int { 5 }
+	\tl_if_empty:NF \l__nsk_parsed_args_tl
 	{
+		\int_set:Nn \l__nsk_persp_sides_int { \l__nsk_parsed_args_tl }
+	}
+
+	% Use minimum of width/height as diameter
+	\dim_set:Nn \l__nsk_persp_radius_dim {
+		\dim_min:nn { \l_nsk_block_width_dim } { \l_nsk_block_height_dim } / 2
+	}
+
+	% Sample N vertices (start at top: 90 degrees)
+	\int_step_inline:nnn { 0 } { \l__nsk_persp_sides_int - 1 }
+	{
+		\fp_set:Nn \l_tmpa_fp { 90 + ##1 * 360 / \l__nsk_persp_sides_int }
+		\dim_set:Nn \l_tmpa_dim {
+			\l_nsk_block_x_dim + \fp_to_dim:n { \dim_to_fp:n { \l__nsk_persp_radius_dim } * cosd(\l_tmpa_fp) }
+		}
+		\dim_set:Nn \l_tmpb_dim {
+			\l_nsk_block_y_dim + \fp_to_dim:n { \dim_to_fp:n { \l__nsk_persp_radius_dim } * sind(\l_tmpa_fp) }
+		}
+		\__nsk_persp_transform_point:nn { \l_tmpa_dim } { \l_tmpb_dim }
+		\int_compare:nNnTF { ##1 } = { 0 }
+		{
+			\tl_put_right:Nx \l__nsk_persp_path_tl {
+				(\dim_use:N \l__nsk_persp_result_x_dim, \dim_use:N \l__nsk_persp_result_y_dim)
+			}
+		}
+		{
+			\tl_put_right:Nx \l__nsk_persp_path_tl {
+				-- (\dim_use:N \l__nsk_persp_result_x_dim, \dim_use:N \l__nsk_persp_result_y_dim)
+			}
+		}
+	}
+	\tl_put_right:Nn \l__nsk_persp_path_tl { -- cycle }
+}
+
+% Star path builder
+\cs_new_protected:Npn \__nsk_persp_build_star_path:
+{
+	\tl_clear:N \l__nsk_persp_path_tl
+
+	% Get number of points from parsed args (default 5)
+	\int_set:Nn \l__nsk_persp_sides_int { 5 }
+	\tl_if_empty:NF \l__nsk_parsed_args_tl
+	{
+		\int_set:Nn \l__nsk_persp_sides_int { \l__nsk_parsed_args_tl }
+	}
+
+	% Use minimum of width/height as outer diameter
+	\dim_set:Nn \l__nsk_persp_outer_radius_dim {
+		\dim_min:nn { \l_nsk_block_width_dim } { \l_nsk_block_height_dim } / 2
+	}
+	% Inner radius = 40% of outer
+	\dim_set:Nn \l__nsk_persp_inner_radius_dim {
+		\fp_to_dim:n { \dim_to_fp:n { \l__nsk_persp_outer_radius_dim } * 0.4 }
+	}
+
+	% Sample 2N vertices (alternating outer/inner, start at top)
+	\int_step_inline:nnn { 0 } { 2 * \l__nsk_persp_sides_int - 1 }
+	{
+		\int_if_odd:nTF { ##1 }
+		{ \dim_set_eq:NN \l__nsk_persp_r_dim \l__nsk_persp_inner_radius_dim }
+		{ \dim_set_eq:NN \l__nsk_persp_r_dim \l__nsk_persp_outer_radius_dim }
+
+		\fp_set:Nn \l_tmpa_fp { 90 + ##1 * 180 / \l__nsk_persp_sides_int }
+		\dim_set:Nn \l_tmpa_dim {
+			\l_nsk_block_x_dim + \fp_to_dim:n { \dim_to_fp:n { \l__nsk_persp_r_dim } * cosd(\l_tmpa_fp) }
+		}
+		\dim_set:Nn \l_tmpb_dim {
+			\l_nsk_block_y_dim + \fp_to_dim:n { \dim_to_fp:n { \l__nsk_persp_r_dim } * sind(\l_tmpa_fp) }
+		}
+		\__nsk_persp_transform_point:nn { \l_tmpa_dim } { \l_tmpb_dim }
+		\int_compare:nNnTF { ##1 } = { 0 }
+		{
+			\tl_put_right:Nx \l__nsk_persp_path_tl {
+				(\dim_use:N \l__nsk_persp_result_x_dim, \dim_use:N \l__nsk_persp_result_y_dim)
+			}
+		}
+		{
+			\tl_put_right:Nx \l__nsk_persp_path_tl {
+				-- (\dim_use:N \l__nsk_persp_result_x_dim, \dim_use:N \l__nsk_persp_result_y_dim)
+			}
+		}
+	}
+	\tl_put_right:Nn \l__nsk_persp_path_tl { -- cycle }
+}
+
+% ==============================================================================
+% Shape Renderers
+% ==============================================================================
+
+% ------------------------------------------------------------------------------
+% Rectangle/Trapezoid renderer (default)
+% ------------------------------------------------------------------------------
+\cs_new_protected:Npn \__nsk_persp_render_rectangle:
+{
+	\__nsk_persp_build_rect_path:
+	\__nsk_persp_build_style:
+	\__nsk_persp_draw_stack:
+	\__nsk_persp_draw_outer_border:
+	\__nsk_persp_draw_shadow:
+	\use:x { \exp_not:N \draw [ \l__nsk_persp_style_tl ] \l__nsk_persp_path_tl ; }
+	\__nsk_persp_create_reference_node:
+}
+
+% ------------------------------------------------------------------------------
+% Ellipse/Circle renderer
+% ------------------------------------------------------------------------------
+\cs_new_protected:Npn \__nsk_persp_render_ellipse:
+{
+	\bool_set_false:N \l__nsk_persp_use_rounded_corners_bool
+	\__nsk_persp_build_ellipse_path:
+	\__nsk_persp_build_style:
+	\__nsk_persp_draw_stack:
+	\__nsk_persp_draw_outer_border:
+	\__nsk_persp_draw_shadow:
+	\use:x { \exp_not:N \draw [ \l__nsk_persp_style_tl ] \l__nsk_persp_path_tl ; }
+	\__nsk_persp_create_reference_node:
+}
+
+% ------------------------------------------------------------------------------
+% Diamond renderer
+% ------------------------------------------------------------------------------
+\cs_new_protected:Npn \__nsk_persp_render_diamond:
+{
+	\bool_set_false:N \l__nsk_persp_use_rounded_corners_bool
+	\__nsk_persp_build_diamond_path:
+	\__nsk_persp_build_style:
+	\__nsk_persp_draw_stack:
+	\__nsk_persp_draw_outer_border:
+	\__nsk_persp_draw_shadow:
+	\use:x { \exp_not:N \draw [ \l__nsk_persp_style_tl ] \l__nsk_persp_path_tl ; }
+	\__nsk_persp_create_reference_node:
+}
+
+% ------------------------------------------------------------------------------
+% Regular polygon renderer
+% ------------------------------------------------------------------------------
+\cs_new_protected:Npn \__nsk_persp_render_polygon:
+{
+	\bool_set_false:N \l__nsk_persp_use_rounded_corners_bool
+	\__nsk_persp_build_polygon_path:
+	\__nsk_persp_build_style:
+	\__nsk_persp_draw_stack:
+	\__nsk_persp_draw_outer_border:
+	\__nsk_persp_draw_shadow:
+	\use:x { \exp_not:N \draw [ \l__nsk_persp_style_tl ] \l__nsk_persp_path_tl ; }
+	\__nsk_persp_create_reference_node:
+}
+
+% ------------------------------------------------------------------------------
+% Star renderer
+% ------------------------------------------------------------------------------
+\cs_new_protected:Npn \__nsk_persp_render_star:
+{
+	\bool_set_false:N \l__nsk_persp_use_rounded_corners_bool
+	\__nsk_persp_build_star_path:
+	\__nsk_persp_build_style:
+	\__nsk_persp_draw_stack:
+	\__nsk_persp_draw_outer_border:
+	\__nsk_persp_draw_shadow:
+	\use:x { \exp_not:N \draw [ \l__nsk_persp_style_tl ] \l__nsk_persp_path_tl ; }
+	\__nsk_persp_create_reference_node:
+}
+
+% ------------------------------------------------------------------------------
+% Text/Icon renderer (no shape, just reference node)
+% ------------------------------------------------------------------------------
+\cs_new_protected:Npn \__nsk_persp_render_text:
+{
+	\__nsk_persp_create_reference_node:
+}
+
+% ------------------------------------------------------------------------------
+% Helper: Resolve TikZ positioning (pos_tl) to x/y coordinates
+% When last-pos or similar is used, we need to get actual coordinates
+% ------------------------------------------------------------------------------
+\cs_new_protected:Npn \__nsk_persp_resolve_position:
+{
+	\tl_if_blank:VF \l_nsk_block_pos_tl
+	{
+		% Create a temporary invisible node to get the coordinates
+		% Build positioning options including anchor if specified
+		\tl_clear:N \l_tmpa_tl
+		\tl_put_right:NV \l_tmpa_tl \l_nsk_block_pos_tl
+		\tl_if_blank:VF \l_nsk_block_anchor_tl
+		{
+			\tl_put_right:Nn \l_tmpa_tl { , anchor= }
+			\tl_put_right:NV \l_tmpa_tl \l_nsk_block_anchor_tl
+		}
+
+		% Create temporary node and extract center coordinates
 		\use:x {
-			\exp_not:N \draw [
-				fill=nskShadow,
-				draw=none,
-				rounded~corners=\dim_use:N \l_nsk_block_border_radius_dim,
-			]
-				(\dim_use:N \l__nsk_sw_x_dim, \dim_eval:n {\l__nsk_sw_y_dim - 3mm}) --
-				(\dim_use:N \l__nsk_se_x_dim, \dim_eval:n {\l__nsk_se_y_dim - 3mm}) --
-				(\dim_use:N \l__nsk_ne_x_dim, \dim_eval:n {\l__nsk_ne_y_dim - 3mm}) --
-				(\dim_use:N \l__nsk_nw_x_dim, \dim_eval:n {\l__nsk_nw_y_dim - 3mm}) -- cycle;
+			\exp_not:N \node [
+				\l_tmpa_tl,
+				minimum~width=\dim_use:N \l_nsk_block_width_dim,
+				minimum~height=\dim_use:N \l_nsk_block_height_dim,
+				inner~sep=0pt,
+			] (nsk@temp@pos) {};
 		}
-	}
 
-	% 5. Draw trapezoid path with all styles
-	\use:x {
-		\exp_not:N \draw [ \l__nsk_persp_style_tl ]
-			(\dim_use:N \l__nsk_sw_x_dim, \dim_use:N \l__nsk_sw_y_dim) --
-			(\dim_use:N \l__nsk_se_x_dim, \dim_use:N \l__nsk_se_y_dim) --
-			(\dim_use:N \l__nsk_ne_x_dim, \dim_use:N \l__nsk_ne_y_dim) --
-			(\dim_use:N \l__nsk_nw_x_dim, \dim_use:N \l__nsk_nw_y_dim) -- cycle;
+		% Extract center coordinates from the temporary node
+		\path (nsk@temp@pos.center);
+		\pgfgetlastxy{\l_tmpa_tl}{\l_tmpb_tl}
+		\dim_set:Nn \l_nsk_block_x_dim { \l_tmpa_tl }
+		\dim_set:Nn \l_nsk_block_y_dim { \l_tmpb_tl }
 	}
+}
 
-	% 6. Create invisible reference node for anchors (bridges need this)
-	\node[
-		name=\l_nsk_block_id_tl,
-		at={(\l_nsk_block_x_dim, \l_nsk_block_y_dim)},
-		minimum~width=\l_nsk_block_width_dim,
-		minimum~height=\l_nsk_block_height_dim,
-		inner~sep=0pt, draw=none, fill=none,
-	] {};
+% ------------------------------------------------------------------------------
+% Main dispatcher: routes to appropriate shape renderer
+% ------------------------------------------------------------------------------
+\cs_new_protected:Npn \__nsk_block_render_perspective:
+{
+	% First resolve any TikZ positioning to x/y coordinates
+	\__nsk_persp_resolve_position:
+
+	% Dispatch based on shape type
+	\str_case:VnF \l_nsk_block_type_tl
+	{
+		{ rectangle }        { \__nsk_persp_render_rectangle: }
+		{ circle }           { \__nsk_persp_render_ellipse: }
+		{ ellipse }          { \__nsk_persp_render_ellipse: }
+		{ diamond }          { \__nsk_persp_render_diamond: }
+		{ regular~polygon }  { \__nsk_persp_render_polygon: }
+		{ star }             { \__nsk_persp_render_star: }
+		{ text }             { \__nsk_persp_render_text: }
+		{ icon }             { \__nsk_persp_render_text: }
+	}
+	{
+		% Default: treat as rectangle (trapezoid)
+		\__nsk_persp_render_rectangle:
+	}
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
