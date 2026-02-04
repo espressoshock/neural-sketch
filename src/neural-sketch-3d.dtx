@@ -94,6 +94,23 @@
 \fp_new:N \l__nsk_threed_depth_fp          % Plane depth for perspective calc
 \fp_new:N \l__nsk_threed_combined_scale_fp % Combined perspective + user scale
 
+% Perspective center for convergence (centered shear transform)
+\fp_new:N \l__nsk_threed_persp_center_x_fp
+\fp_new:N \l__nsk_threed_persp_center_y_fp
+
+% Perspective shear parameters (computed at draw time)
+\fp_new:N \l__nsk_threed_persp_shear_fp     % X-shear factor
+\fp_new:N \l__nsk_threed_persp_yscale_fp    % Y-scale factor
+
+% Global flag: true when inside perspective plane (focal-length > 0)
+% Used by block renderer to switch to trapezoid path rendering
+\bool_new:N \g__nsk_threed_perspective_active_bool
+\bool_gset_false:N \g__nsk_threed_perspective_active_bool
+
+% Result dimensions for perspective transform
+\dim_new:N \l__nsk_persp_result_x_dim
+\dim_new:N \l__nsk_persp_result_y_dim
+
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Stack sequences for plane nesting
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -106,6 +123,8 @@
 \seq_new:N \g__nsk_threed_scale_stack_seq
 \seq_new:N \g__nsk_threed_rotate_stack_seq
 \seq_new:N \g__nsk_threed_focal_length_stack_seq
+\seq_new:N \g__nsk_threed_persp_center_x_stack_seq
+\seq_new:N \g__nsk_threed_persp_center_y_stack_seq
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Push/Pop helpers (following containers pattern)
@@ -121,6 +140,8 @@
 	\seq_gpush:Nx \g__nsk_threed_scale_stack_seq {\fp_use:N \l__nsk_threed_scale_fp}
 	\seq_gpush:Nx \g__nsk_threed_rotate_stack_seq {\fp_use:N \l__nsk_threed_rotate_fp}
 	\seq_gpush:Nx \g__nsk_threed_focal_length_stack_seq {\fp_use:N \l__nsk_threed_focal_length_fp}
+	\seq_gpush:Nx \g__nsk_threed_persp_center_x_stack_seq {\fp_use:N \l__nsk_threed_persp_center_x_fp}
+	\seq_gpush:Nx \g__nsk_threed_persp_center_y_stack_seq {\fp_use:N \l__nsk_threed_persp_center_y_fp}
 }
 
 \cs_new_protected:Npn \__nsk_threed_pop_from_stack:
@@ -144,6 +165,10 @@
 		\fp_set:Nn \l__nsk_threed_rotate_fp {\l_tmpa_tl}
 		\seq_gpop:NN \g__nsk_threed_focal_length_stack_seq \l_tmpa_tl
 		\fp_set:Nn \l__nsk_threed_focal_length_fp {\l_tmpa_tl}
+		\seq_gpop:NN \g__nsk_threed_persp_center_x_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l__nsk_threed_persp_center_x_fp {\l_tmpa_tl}
+		\seq_gpop:NN \g__nsk_threed_persp_center_y_stack_seq \l_tmpa_tl
+		\fp_set:Nn \l__nsk_threed_persp_center_y_fp {\l_tmpa_tl}
 	}
 	{
 		% Stack empty - reset to defaults
@@ -156,6 +181,8 @@
 		\fp_set:Nn \l__nsk_threed_scale_fp {1}
 		\fp_set:Nn \l__nsk_threed_rotate_fp {0}
 		\fp_set:Nn \l__nsk_threed_focal_length_fp {\g__nsk_threed_focal_length_fp}
+		\fp_set:Nn \l__nsk_threed_persp_center_x_fp {0}
+		\fp_set:Nn \l__nsk_threed_persp_center_y_fp {0}
 	}
 }
 
@@ -239,6 +266,38 @@
 		{yz} {canvas~is~yz~plane~at~x}
 	}
 	{canvas~is~xy~plane~at~z}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Perspective transform helper
+% Computes perspective-transformed x-coordinate for true trapezoid rendering
+%
+% Formula: x' = cx + (x - cx) * f / (f + y * k)
+% Where:
+%   cx = perspective-center-x (vanishing point x)
+%   f  = focal-length
+%   k  = sin(elevation) (controls convergence strength)
+%   y  = vertical position (higher y = more convergence)
+%
+% Results stored in \l__nsk_persp_result_x_dim and \l__nsk_persp_result_y_dim
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\cs_new_protected:Npn \__nsk_persp_transform_point:nn #1 #2
+{
+	% #1 = x (dim), #2 = y (dim)
+	\fp_set:Nn \l_tmpa_fp { \dim_to_decimal_in_unit:nn {#1} {1cm} }
+	\fp_set:Nn \l_tmpb_fp { \dim_to_decimal_in_unit:nn {#2} {1cm} }
+
+	% x' = cx + (x - cx) * f / (f + y * k)
+	% k = sin(elevation)
+	\fp_set:Nn \l_tmpc_fp {
+		\l__nsk_threed_persp_center_x_fp +
+		(\l_tmpa_fp - \l__nsk_threed_persp_center_x_fp) *
+		\l__nsk_threed_focal_length_fp /
+		(\l__nsk_threed_focal_length_fp + \l_tmpb_fp * sind(\l__nsk_threed_elevation_fp))
+	}
+
+	\dim_set:Nn \l__nsk_persp_result_x_dim { \fp_to_decimal:N \l_tmpc_fp cm }
+	\dim_set:Nn \l__nsk_persp_result_y_dim { #2 }  % y unchanged
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -361,6 +420,15 @@
 	% Typical: 10 = strong perspective, 20 = moderate, 50 = subtle
 	focal-length .fp_set:N = \l__nsk_threed_focal_length_fp,
 	focal-length .initial:n = {0},
+
+	% Perspective center coordinates (in cm) for nonlinear convergence
+	% Vertical lines at this x-coordinate remain vertical; others converge toward it
+	perspective-center-x .fp_set:N = \l__nsk_threed_persp_center_x_fp,
+	perspective-center-x .initial:n = {0},
+
+	% Y center for perspective (currently unused, reserved for future y-convergence)
+	perspective-center-y .fp_set:N = \l__nsk_threed_persp_center_y_fp,
+	perspective-center-y .initial:n = {0},
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -404,10 +472,24 @@
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Perspective plane drawing function (focal-length > 0)
-% Uses y-dependent shearing to create perspective distortion (trapezoid effect)
+% True perspective trapezoid rendering via per-block path transforms
+%
+% The perspective transformation is applied at the block level (not scope level)
+% using the formula: x' = cx + (x - cx) * f / (f + y * k)
+%
+% This function:
+% 1. Sets the global perspective_active flag
+% 2. Sets up the tdplot coordinate system
+% 3. The content renders with flag active
+% 4. Clears the flag when done
+%
+% Blocks check the flag and use custom trapezoid path rendering instead of
+% TikZ nodes when perspective is active.
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected:Npn \__nsk_threed_draw_plane_perspective:n #1
 {
+	\bool_gset_true:N \g__nsk_threed_perspective_active_bool
+
 	% Apply tdplot view angles
 	\tdplotsetmaincoords
 		{\fp_use:N \l__nsk_threed_elevation_fp}
@@ -416,35 +498,6 @@
 	% Build canvas transform string
 	\tl_set:Nx \l_tmpa_tl {\__nsk_threed_get_canvas_string:}
 
-	% Get plane depth in cm (add small offset so depth=0 still has some effect)
-	\fp_set:Nn \l__nsk_threed_depth_fp { \dim_to_decimal_in_unit:nn{\l__nsk_threed_at_dim}{1cm} }
-
-	% Compute base projection factor: focal / (focal + depth)
-	% This scales the entire plane based on its distance from the camera
-	\fp_set:Nn \l__nsk_threed_proj_factor_fp {
-		\l__nsk_threed_focal_length_fp / (\l__nsk_threed_focal_length_fp + \l__nsk_threed_depth_fp)
-	}
-
-	% Compute combined scale (perspective + user scale)
-	\fp_set:Nn \l__nsk_threed_combined_scale_fp {
-		\l__nsk_threed_proj_factor_fp * \l__nsk_threed_scale_fp
-	}
-
-	% Compute x-shear for perspective convergence (trapezoid effect)
-	% Points at higher y (further from camera) shift inward toward center
-	% Base strength is scaled by sin(elevation) and inversely by focal length
-	% focal-length=10: strong (multiplier ~2), focal-length=20: moderate (~1), focal-length=50: subtle (~0.4)
-	\fp_set:Nn \l_tmpa_fp {
-		-sind(\l__nsk_threed_elevation_fp) * 0.1 * (20 / \l__nsk_threed_focal_length_fp)
-	}
-
-	% Compute y-scale compression for perspective (top appears compressed)
-	% Approximates foreshortening: further elements appear smaller
-	\fp_set:Nn \l_tmpb_fp {
-		1 - (sind(\l__nsk_threed_elevation_fp) * 0.05 * (20 / \l__nsk_threed_focal_length_fp))
-	}
-
-	% Draw with perspective transformation
 	\begin{scope}[
 		tdplot_main_coords,
 		\l_tmpa_tl = \dim_to_decimal_in_unit:nn { \l__nsk_threed_at_dim } { 1cm },
@@ -455,9 +508,7 @@
 			\begin{scope}[
 				cm={0,1,1,0,(0,0)},
 				rotate=\fp_use:N \l__nsk_threed_rotate_fp,
-				scale=\fp_use:N \l__nsk_threed_combined_scale_fp,
-				% Apply perspective: x-shear for convergence, y-scale for compression
-				cm={1, 0, \fp_use:N \l_tmpa_fp, \fp_use:N \l_tmpb_fp, (0,0)},
+				scale=\fp_use:N \l__nsk_threed_scale_fp,
 			]
 				#1
 			\end{scope}
@@ -465,14 +516,14 @@
 		{
 			\begin{scope}[
 				rotate=\fp_use:N \l__nsk_threed_rotate_fp,
-				scale=\fp_use:N \l__nsk_threed_combined_scale_fp,
-				% Apply perspective: x-shear for convergence, y-scale for compression
-				cm={1, 0, \fp_use:N \l_tmpa_fp, \fp_use:N \l_tmpb_fp, (0,0)},
+				scale=\fp_use:N \l__nsk_threed_scale_fp,
 			]
 				#1
 			\end{scope}
 		}
 	\end{scope}
+
+	\bool_gset_false:N \g__nsk_threed_perspective_active_bool
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

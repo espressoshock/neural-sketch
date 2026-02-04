@@ -219,6 +219,18 @@ every~node/.append~style={text=c__nsk_principal},
 \dim_new:N \l_nsk_block_y_dim
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Perspective block corner dims (for trapezoid rendering)
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\dim_new:N \l__nsk_sw_x_dim  \dim_new:N \l__nsk_sw_y_dim
+\dim_new:N \l__nsk_se_x_dim  \dim_new:N \l__nsk_se_y_dim
+\dim_new:N \l__nsk_ne_x_dim  \dim_new:N \l__nsk_ne_y_dim
+\dim_new:N \l__nsk_nw_x_dim  \dim_new:N \l__nsk_nw_y_dim
+
+% Additional temp dims (l_tmpc_dim and l_tmpd_dim are not standard)
+\dim_new:N \l__nsk_tmpc_dim
+\dim_new:N \l__nsk_tmpd_dim
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Global counter -
 % to track skipping pos (1=normal, 0=skip first last-pos in scope)
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
@@ -1072,18 +1084,146 @@ every~node/.append~style={text=c__nsk_principal},
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Perspective block renderer (trapezoid path)
+% Renders blocks as custom paths with 4 perspective-transformed corners
+% Used when \g__nsk_threed_perspective_active_bool is true
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
+\tl_new:N \l__nsk_persp_style_tl
+
+\cs_new_protected:Npn \__nsk_block_render_perspective:
+{
+	% 1. Get block bounds (relative to center)
+	\dim_set:Nn \l_tmpa_dim { -\l_nsk_block_width_dim / 2 }   % left offset
+	\dim_set:Nn \l_tmpb_dim {  \l_nsk_block_width_dim / 2 }   % right offset
+	\dim_set:Nn \l__nsk_tmpc_dim { -\l_nsk_block_height_dim / 2 }  % bottom offset
+	\dim_set:Nn \l__nsk_tmpd_dim {  \l_nsk_block_height_dim / 2 }  % top offset
+
+	% 2. Compute 4 corner absolute positions + transform
+	% SW (left, bottom)
+	\dim_set:Nn \l__nsk_sw_x_dim { \l_nsk_block_x_dim + \l_tmpa_dim }
+	\dim_set:Nn \l__nsk_sw_y_dim { \l_nsk_block_y_dim + \l__nsk_tmpc_dim }
+	\__nsk_persp_transform_point:nn { \l__nsk_sw_x_dim } { \l__nsk_sw_y_dim }
+	\dim_set_eq:NN \l__nsk_sw_x_dim \l__nsk_persp_result_x_dim
+	\dim_set_eq:NN \l__nsk_sw_y_dim \l__nsk_persp_result_y_dim
+
+	% SE (right, bottom)
+	\dim_set:Nn \l__nsk_se_x_dim { \l_nsk_block_x_dim + \l_tmpb_dim }
+	\dim_set:Nn \l__nsk_se_y_dim { \l_nsk_block_y_dim + \l__nsk_tmpc_dim }
+	\__nsk_persp_transform_point:nn { \l__nsk_se_x_dim } { \l__nsk_se_y_dim }
+	\dim_set_eq:NN \l__nsk_se_x_dim \l__nsk_persp_result_x_dim
+	\dim_set_eq:NN \l__nsk_se_y_dim \l__nsk_persp_result_y_dim
+
+	% NE (right, top)
+	\dim_set:Nn \l__nsk_ne_x_dim { \l_nsk_block_x_dim + \l_tmpb_dim }
+	\dim_set:Nn \l__nsk_ne_y_dim { \l_nsk_block_y_dim + \l__nsk_tmpd_dim }
+	\__nsk_persp_transform_point:nn { \l__nsk_ne_x_dim } { \l__nsk_ne_y_dim }
+	\dim_set_eq:NN \l__nsk_ne_x_dim \l__nsk_persp_result_x_dim
+	\dim_set_eq:NN \l__nsk_ne_y_dim \l__nsk_persp_result_y_dim
+
+	% NW (left, top)
+	\dim_set:Nn \l__nsk_nw_x_dim { \l_nsk_block_x_dim + \l_tmpa_dim }
+	\dim_set:Nn \l__nsk_nw_y_dim { \l_nsk_block_y_dim + \l__nsk_tmpd_dim }
+	\__nsk_persp_transform_point:nn { \l__nsk_nw_x_dim } { \l__nsk_nw_y_dim }
+	\dim_set_eq:NN \l__nsk_nw_x_dim \l__nsk_persp_result_x_dim
+	\dim_set_eq:NN \l__nsk_nw_y_dim \l__nsk_persp_result_y_dim
+
+	% 3. Build style options
+	\tl_clear:N \l__nsk_persp_style_tl
+
+	% Fill
+	\tl_if_eq:NnTF \l_nsk_block_fill_tl {none}
+	{ \tl_put_right:Nn \l__nsk_persp_style_tl {fill=none,} }
+	{ \tl_put_right:Nx \l__nsk_persp_style_tl {fill=\l_nsk_block_fill_tl,} }
+
+	% Border/draw
+	\tl_if_eq:NnTF \l_nsk_block_border_type_tl {none}
+	{ \tl_put_right:Nn \l__nsk_persp_style_tl {draw=none,} }
+	{
+		\tl_put_right:Nx \l__nsk_persp_style_tl {draw=\l_nsk_block_border_color_tl,}
+		\tl_put_right:Nx \l__nsk_persp_style_tl {\l_nsk_block_border_type_tl,}
+	}
+
+	% Line width
+	\tl_put_right:Nx \l__nsk_persp_style_tl {line~width=\dim_use:N \l_nsk_block_border_size_dim,}
+
+	% Opacity
+	\tl_put_right:Nx \l__nsk_persp_style_tl {fill~opacity=\l_nsk_block_opacity_tl,}
+	\tl_put_right:Nx \l__nsk_persp_style_tl {draw~opacity=\l_nsk_block_opacity_tl,}
+
+	% Rounded corners (border radius)
+	\dim_compare:nNnTF {\l_nsk_block_border_radius_dim} > {0pt}
+	{ \tl_put_right:Nx \l__nsk_persp_style_tl {rounded~corners=\dim_use:N \l_nsk_block_border_radius_dim,} }
+	{ }
+
+	% Pattern (if specified)
+	\tl_if_blank:VF \l_nsk_block_pattern_tl
+	{
+		\tl_put_right:Nx \l__nsk_persp_style_tl {
+			postaction={
+				pattern=\l_nsk_block_pattern_tl,
+				pattern~color=\l_nsk_block_pattern_color_tl,
+			},
+		}
+	}
+
+	% 4. Draw shadow first (if enabled)
+	% Shadow uses the same perspective-transformed corners with screen-space offset
+	% Offset: centered horizontally, down (visible beneath the block)
+	\bool_if:NT \l_nsk_block_shadow_bool
+	{
+		\use:x {
+			\exp_not:N \draw [
+				fill=nskShadow,
+				draw=none,
+				rounded~corners=\dim_use:N \l_nsk_block_border_radius_dim,
+			]
+				(\dim_use:N \l__nsk_sw_x_dim, \dim_eval:n {\l__nsk_sw_y_dim - 3mm}) --
+				(\dim_use:N \l__nsk_se_x_dim, \dim_eval:n {\l__nsk_se_y_dim - 3mm}) --
+				(\dim_use:N \l__nsk_ne_x_dim, \dim_eval:n {\l__nsk_ne_y_dim - 3mm}) --
+				(\dim_use:N \l__nsk_nw_x_dim, \dim_eval:n {\l__nsk_nw_y_dim - 3mm}) -- cycle;
+		}
+	}
+
+	% 5. Draw trapezoid path with all styles
+	\use:x {
+		\exp_not:N \draw [ \l__nsk_persp_style_tl ]
+			(\dim_use:N \l__nsk_sw_x_dim, \dim_use:N \l__nsk_sw_y_dim) --
+			(\dim_use:N \l__nsk_se_x_dim, \dim_use:N \l__nsk_se_y_dim) --
+			(\dim_use:N \l__nsk_ne_x_dim, \dim_use:N \l__nsk_ne_y_dim) --
+			(\dim_use:N \l__nsk_nw_x_dim, \dim_use:N \l__nsk_nw_y_dim) -- cycle;
+	}
+
+	% 6. Create invisible reference node for anchors (bridges need this)
+	\node[
+		name=\l_nsk_block_id_tl,
+		at={(\l_nsk_block_x_dim, \l_nsk_block_y_dim)},
+		minimum~width=\l_nsk_block_width_dim,
+		minimum~height=\l_nsk_block_height_dim,
+		inner~sep=0pt, draw=none, fill=none,
+	] {};
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Block drawing [Aux]
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ <<<
 \cs_new_protected_nopar:Npn \nsk__draw_block_aux:n #1
 {
 
-\tl_if_blank:VTF \l_nsk_block_grid_args_tl
+% Check for perspective mode dispatch
+\bool_if:NTF \g__nsk_threed_perspective_active_bool
 {
-\node [
-	spath/save~global=\l_nsk_block_id_tl,
-	#1,
-] {};
+	% Perspective mode: custom trapezoid path
+	\__nsk_block_render_perspective:
 }
+{
+	% Normal mode: existing TikZ node
+	\tl_if_blank:VTF \l_nsk_block_grid_args_tl
+	{
+		\node [
+			spath/save~global=\l_nsk_block_id_tl,
+			#1,
+		] {};
+	}
 {
 % update width to account for border size
 \dim_set:Nn \l_nsk_block_width_dim {\l_nsk_block_width_dim - \l_nsk_block_border_size_dim}
@@ -1123,6 +1263,7 @@ path~picture={
 }
 }
 ] {};
+}
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
