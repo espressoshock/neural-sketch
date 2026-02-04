@@ -776,7 +776,7 @@
 \IfBooleanTF{#1}
 {
 	% Starred form: auto-expand keys
-	\edef\l_tmpa_tl{#3}
+	\protected@edef\l_tmpa_tl{#3}
 	\expandafter\nskContainerR\expandafter[\l_tmpa_tl]
 }
 {

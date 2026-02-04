@@ -2474,7 +2474,7 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 	\IfBooleanTF{#1}
 	{
 		% Starred form: auto-expand keys
-		\edef\l_tmpa_tl{#2}
+		\protected@edef\l_tmpa_tl{#2}
 		\expandafter\nskBlockR\expandafter[\l_tmpa_tl]
 	}
 	{

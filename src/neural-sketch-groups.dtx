@@ -651,7 +651,7 @@
 	\IfBooleanTF{#1}
 	{
 		% Starred form: auto-expand keys
-		\edef\l_tmpa_tl{#2}
+		\protected@edef\l_tmpa_tl{#2}
 		\expandafter\nskGroupR\expandafter[\l_tmpa_tl]
 	}
 	{
