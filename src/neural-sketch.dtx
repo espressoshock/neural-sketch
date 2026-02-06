@@ -2319,20 +2319,30 @@ shadow~yshift=\l_nsk_block_stack_yoffset_dim,
 			\nsk__maybe_resize_block_to_text:
 		}
 
-	% 1. draw the main block shape
-	\nsk__build_block_style:
-
-	% 2. draw per-corner rounded rectangle if needed (only for rectangle type)
-	\bool_if:NT \l_nsk_block_percorner_mode_bool
+	% Extrusion dispatch: if depth > 0 and 3D extrusion renderer exists, use it
+	\bool_set_false:N \l_tmpa_bool
+	\cs_if_exist:NT \__nsk_extrude_render_block:
 	{
-		\tl_if_eq:NnT \l_nsk_block_type_tl {rectangle}
+		\cs_if_exist:NT \l__nsk_ext_depth_dim
 		{
-			\nsk__draw_percorner_rounded_rect:
+			\dim_compare:nNnT { \l__nsk_ext_depth_dim } > { 0pt }
+			{ \bool_set_true:N \l_tmpa_bool }
 		}
 	}
-
-	% 3. draw the text anchorings
-	\nsk__render_all_text:
+	\bool_if:NTF \l_tmpa_bool
+	{
+		\__nsk_extrude_render_block:
+	}
+	{
+		% Normal rendering path
+		\nsk__build_block_style:
+		\bool_if:NT \l_nsk_block_percorner_mode_bool
+		{
+			\tl_if_eq:NnT \l_nsk_block_type_tl {rectangle}
+			{ \nsk__draw_percorner_rounded_rect: }
+		}
+		\nsk__render_all_text:
+	}
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

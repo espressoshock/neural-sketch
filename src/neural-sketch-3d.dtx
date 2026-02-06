@@ -725,6 +725,1874 @@
 	\prop_gclear:N \g__nsk_threed_plane_registry_prop
 }
 
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Extrusion: 3D depth rendering for blocks
+% Turns a flat face into a 3D solid with auto-shaded faces
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+% ==============================================================================
+% Extrusion local variables
+% ==============================================================================
+\dim_new:N  \l__nsk_ext_depth_dim
+\tl_new:N   \l__nsk_ext_direction_tl
+\fp_new:N   \l__nsk_ext_shading_fp
+\bool_new:N \l__nsk_ext_border_bool
+\tl_new:N   \l__nsk_ext_cap_fill_tl
+\tl_new:N   \l__nsk_ext_side_fill_tl
+\tl_new:N   \l__nsk_ext_cap_border_color_tl
+\tl_new:N   \l__nsk_ext_side_border_color_tl
+\dim_new:N  \l__nsk_ext_round_dim
+\dim_new:N  \l__nsk_ext_round_nw_dim
+\dim_new:N  \l__nsk_ext_round_ne_dim
+\dim_new:N  \l__nsk_ext_round_sw_dim
+\dim_new:N  \l__nsk_ext_round_se_dim
+
+% Per-corner round tracking booleans
+\bool_new:N \l__nsk_ext_round_nw_mset_bool
+\bool_new:N \l__nsk_ext_round_ne_mset_bool
+\bool_new:N \l__nsk_ext_round_sw_mset_bool
+\bool_new:N \l__nsk_ext_round_se_mset_bool
+\bool_new:N \l__nsk_ext_round_percorner_bool
+
+% Effective corner radii (border-radius + round combined)
+\dim_new:N  \l__nsk_ext_eff_r_nw_dim
+\dim_new:N  \l__nsk_ext_eff_r_ne_dim
+\dim_new:N  \l__nsk_ext_eff_r_sw_dim
+\dim_new:N  \l__nsk_ext_eff_r_se_dim
+
+% Computed offset (screen-space 2D displacement for extrusion)
+\dim_new:N  \l__nsk_ext_dx_dim
+\dim_new:N  \l__nsk_ext_dy_dim
+
+% Computed face colors (after shading)
+\tl_new:N   \l__nsk_ext_color_cap_tl
+\tl_new:N   \l__nsk_ext_color_top_tl
+\tl_new:N   \l__nsk_ext_color_bottom_tl
+\tl_new:N   \l__nsk_ext_color_left_tl
+\tl_new:N   \l__nsk_ext_color_right_tl
+\tl_new:N   \l__nsk_ext_color_base_tl
+
+% Face visibility booleans
+\bool_new:N \l__nsk_ext_vis_top_bool
+\bool_new:N \l__nsk_ext_vis_bottom_bool
+\bool_new:N \l__nsk_ext_vis_left_bool
+\bool_new:N \l__nsk_ext_vis_right_bool
+
+% Cap (back face) vertices: 4 corners offset by extrusion
+\dim_new:N  \l__nsk_ext_cap_sw_x_dim   \dim_new:N \l__nsk_ext_cap_sw_y_dim
+\dim_new:N  \l__nsk_ext_cap_se_x_dim   \dim_new:N \l__nsk_ext_cap_se_y_dim
+\dim_new:N  \l__nsk_ext_cap_ne_x_dim   \dim_new:N \l__nsk_ext_cap_ne_y_dim
+\dim_new:N  \l__nsk_ext_cap_nw_x_dim   \dim_new:N \l__nsk_ext_cap_nw_y_dim
+
+% Base (front face) vertices: 4 corners at block position
+\dim_new:N  \l__nsk_ext_base_sw_x_dim  \dim_new:N \l__nsk_ext_base_sw_y_dim
+\dim_new:N  \l__nsk_ext_base_se_x_dim  \dim_new:N \l__nsk_ext_base_se_y_dim
+\dim_new:N  \l__nsk_ext_base_ne_x_dim  \dim_new:N \l__nsk_ext_base_ne_y_dim
+\dim_new:N  \l__nsk_ext_base_nw_x_dim  \dim_new:N \l__nsk_ext_base_nw_y_dim
+
+% Border style token lists for faces
+\tl_new:N   \l__nsk_ext_border_style_tl
+\tl_new:N   \l__nsk_ext_side_border_style_tl
+\tl_new:N   \l__nsk_ext_cap_border_style_tl
+
+% ==============================================================================
+% Extrusion key definitions (added to nsk/block keyspace)
+% ==============================================================================
+\keys_define:nn { nsk / block }
+{
+	% Extrusion depth (0 = flat, no extrusion)
+	depth .dim_set:N = \l__nsk_ext_depth_dim,
+	depth .initial:n = {0pt},
+
+	% Extrusion direction: normal (auto from plane), x, y, z
+	extrude-direction .tl_set:N = \l__nsk_ext_direction_tl,
+	extrude-direction .initial:n = {normal},
+
+	% Auto-shade strength for side/cap faces [0-1]
+	extrude-shading .code:n = { \fp_set:Nn \l__nsk_ext_shading_fp {#1} },
+	extrude-shading .initial:n = {0.35},
+
+	% Draw borders on extrusion edges
+	extrude-border .bool_set:N = \l__nsk_ext_border_bool,
+	extrude-border .initial:n = {true},
+	extrude-border .default:n = {true},
+
+	% Override cap face fill color
+	cap-fill .tl_set:N = \l__nsk_ext_cap_fill_tl,
+	cap-fill .initial:n = {},
+
+	% Override all side face fills
+	side-fill .tl_set:N = \l__nsk_ext_side_fill_tl,
+	side-fill .initial:n = {},
+
+	% Override cap face border color
+	cap-border-color .tl_set:N = \l__nsk_ext_cap_border_color_tl,
+	cap-border-color .initial:n = {},
+
+	% Override side face border color
+	side-border-color .tl_set:N = \l__nsk_ext_side_border_color_tl,
+	side-border-color .initial:n = {},
+
+	% Convex edge rounding radius along extrusion
+	round .dim_set:N = \l__nsk_ext_round_dim,
+	round .initial:n = {0pt},
+
+	% Per-corner rounds (with mset tracking)
+	round-nw .code:n = {
+		\dim_set:Nn \l__nsk_ext_round_nw_dim {#1}
+		\bool_set_true:N \l__nsk_ext_round_nw_mset_bool
+	},
+
+	round-ne .code:n = {
+		\dim_set:Nn \l__nsk_ext_round_ne_dim {#1}
+		\bool_set_true:N \l__nsk_ext_round_ne_mset_bool
+	},
+
+	round-sw .code:n = {
+		\dim_set:Nn \l__nsk_ext_round_sw_dim {#1}
+		\bool_set_true:N \l__nsk_ext_round_sw_mset_bool
+	},
+
+	round-se .code:n = {
+		\dim_set:Nn \l__nsk_ext_round_se_dim {#1}
+		\bool_set_true:N \l__nsk_ext_round_se_mset_bool
+	},
+}
+
+% ==============================================================================
+% Extrusion: Compute 2D screen offset from 3D depth
+%
+% Given azimuth (phi), elevation, theta = 90 - elevation, depth (d):
+%   x-axis: dX = -sin(phi)*d,  dY = -cos(theta)*cos(phi)*d
+%   y-axis: dX = cos(phi)*d,   dY = -cos(theta)*sin(phi)*d
+%   z-axis: dX = 0,            dY = sin(theta)*d
+%
+% The axis is chosen based on extrude-direction:
+%   normal -> auto from plane type: xy->z, xz->y, yz->x, standalone->y
+%   x/y/z  -> explicit axis
+% ==============================================================================
+\cs_new_protected:Npn \__nsk_ext_compute_offset:
+{
+	% Determine actual axis
+	\tl_set_eq:NN \l_tmpa_tl \l__nsk_ext_direction_tl
+	\str_if_eq:VnT \l_tmpa_tl {normal}
+	{
+		% Auto-detect from plane type or standalone
+		\int_compare:nNnTF { \g__nsk_threed_plane_nesting_int } > { 0 }
+		{
+			% Inside a plane: use plane type
+			\str_case:VnF \l__nsk_threed_plane_type_tl
+			{
+				{xy} { \tl_set:Nn \l_tmpa_tl {z} }
+				{xz} { \tl_set:Nn \l_tmpa_tl {y} }
+				{yz} { \tl_set:Nn \l_tmpa_tl {x} }
+			}
+			{ \tl_set:Nn \l_tmpa_tl {y} }
+		}
+		{
+			% Standalone: default to y-axis
+			\tl_set:Nn \l_tmpa_tl {y}
+		}
+	}
+
+	% Get depth in cm for fp computation
+	\fp_set:Nn \l_tmpa_fp { \dim_to_decimal_in_unit:nn { \l__nsk_ext_depth_dim } { 1cm } }
+
+	% Get view angles
+	\fp_set:Nn \l_tmpb_fp { 90 - \g__nsk_threed_elevation_fp }  % theta
+
+	% Compute offset based on axis
+	% Note: \l_tmpa_fp is depth in cm, multiply result by 1cm to get dim
+	\str_case:VnF \l_tmpa_tl
+	{
+		{x}
+		{
+			% x-axis: dX = -sin(phi)*d, dY = -cos(theta)*cos(phi)*d
+			\dim_set:Nn \l__nsk_ext_dx_dim {
+				\fp_to_decimal:n { -sind(\g__nsk_threed_azimuth_fp) * \l_tmpa_fp } cm
+			}
+			\dim_set:Nn \l__nsk_ext_dy_dim {
+				\fp_to_decimal:n { -cosd(\l_tmpb_fp) * cosd(\g__nsk_threed_azimuth_fp) * \l_tmpa_fp } cm
+			}
+		}
+		{y}
+		{
+			% y-axis: dX = cos(phi)*d, dY = -cos(theta)*sin(phi)*d
+			\dim_set:Nn \l__nsk_ext_dx_dim {
+				\fp_to_decimal:n { cosd(\g__nsk_threed_azimuth_fp) * \l_tmpa_fp } cm
+			}
+			\dim_set:Nn \l__nsk_ext_dy_dim {
+				\fp_to_decimal:n { -cosd(\l_tmpb_fp) * sind(\g__nsk_threed_azimuth_fp) * \l_tmpa_fp } cm
+			}
+		}
+		{z}
+		{
+			% z-axis: dX = 0, dY = sin(theta)*d
+			\dim_set:Nn \l__nsk_ext_dx_dim { 0pt }
+			\dim_set:Nn \l__nsk_ext_dy_dim {
+				\fp_to_decimal:n { sind(\l_tmpb_fp) * \l_tmpa_fp } cm
+			}
+		}
+	}
+	{
+		% Unknown direction, default to y
+		\dim_set:Nn \l__nsk_ext_dx_dim {
+			\fp_to_decimal:n { cosd(\g__nsk_threed_azimuth_fp) * \l_tmpa_fp } cm
+		}
+		\dim_set:Nn \l__nsk_ext_dy_dim {
+			\fp_to_decimal:n { -cosd(\l_tmpb_fp) * sind(\g__nsk_threed_azimuth_fp) * \l_tmpa_fp } cm
+		}
+	}
+}
+
+% ==============================================================================
+% Extrusion: Compute face colors via xcolor mixing
+%
+% face_fill = base_fill ! mix_pct ! nskBg
+% Where mix_pct = 100 * (1 - shading * face_factor)
+%   Cap:    factor=0.6  (moderately shaded back face)
+%   Top:    factor=0.15 (lit from above, lightest)
+%   Right:  factor=0.5  (moderately lit)
+%   Left:   factor=0.85 (more shaded)
+%   Bottom: factor=1.0  (most shaded)
+% ==============================================================================
+\cs_new_protected:Npn \__nsk_ext_compute_colors:
+{
+	% Base fill color from block
+	\tl_set_eq:NN \l_tmpa_tl \l_nsk_block_fill_tl
+
+	% Cap face color
+	\tl_if_blank:VTF \l__nsk_ext_cap_fill_tl
+	{
+		\fp_set:Nn \l_tmpb_fp { round( 100 * (1 - \l__nsk_ext_shading_fp * 0.6) , 0 ) }
+		\tl_set:Nx \l__nsk_ext_color_cap_tl { \l_tmpa_tl ! \fp_use:N \l_tmpb_fp ! nskBg }
+	}
+	{ \tl_set_eq:NN \l__nsk_ext_color_cap_tl \l__nsk_ext_cap_fill_tl }
+
+	% Side fill base
+	\tl_if_blank:VTF \l__nsk_ext_side_fill_tl
+	{
+		% Top side (factor=0.15 - brightest, lit from above)
+		\fp_set:Nn \l_tmpb_fp { round( 100 * (1 - \l__nsk_ext_shading_fp * 0.15) , 0 ) }
+		\tl_set:Nx \l__nsk_ext_color_top_tl { \l_tmpa_tl ! \fp_use:N \l_tmpb_fp ! nskBg }
+
+		% Right side (factor=0.5)
+		\fp_set:Nn \l_tmpb_fp { round( 100 * (1 - \l__nsk_ext_shading_fp * 0.5) , 0 ) }
+		\tl_set:Nx \l__nsk_ext_color_right_tl { \l_tmpa_tl ! \fp_use:N \l_tmpb_fp ! nskBg }
+
+		% Left side (factor=0.85)
+		\fp_set:Nn \l_tmpb_fp { round( 100 * (1 - \l__nsk_ext_shading_fp * 0.85) , 0 ) }
+		\tl_set:Nx \l__nsk_ext_color_left_tl { \l_tmpa_tl ! \fp_use:N \l_tmpb_fp ! nskBg }
+
+		% Bottom side (factor=1.0 - most shaded)
+		\fp_set:Nn \l_tmpb_fp { round( 100 * (1 - \l__nsk_ext_shading_fp * 1.0) , 0 ) }
+		\tl_set:Nx \l__nsk_ext_color_bottom_tl { \l_tmpa_tl ! \fp_use:N \l_tmpb_fp ! nskBg }
+	}
+	{
+		% All sides use the same override color
+		\tl_set_eq:NN \l__nsk_ext_color_top_tl    \l__nsk_ext_side_fill_tl
+		\tl_set_eq:NN \l__nsk_ext_color_right_tl  \l__nsk_ext_side_fill_tl
+		\tl_set_eq:NN \l__nsk_ext_color_left_tl   \l__nsk_ext_side_fill_tl
+		\tl_set_eq:NN \l__nsk_ext_color_bottom_tl \l__nsk_ext_side_fill_tl
+	}
+
+	% Base face = original block fill (front face, no shade)
+	\tl_set_eq:NN \l__nsk_ext_color_base_tl \l_nsk_block_fill_tl
+
+}
+
+% ==============================================================================
+% Extrusion: Compute face visibility from offset sign
+%
+% Given screen offset (dx, dy):
+%   Top visible    when dy > 0
+%   Bottom visible when dy < 0
+%   Right visible  when dx > 0
+%   Left visible   when dx < 0
+% ==============================================================================
+\cs_new_protected:Npn \__nsk_ext_compute_visibility:
+{
+	\dim_compare:nNnTF { \l__nsk_ext_dy_dim } > { 0pt }
+	{
+		\bool_set_true:N  \l__nsk_ext_vis_top_bool
+		\bool_set_false:N \l__nsk_ext_vis_bottom_bool
+	}
+	{
+		\bool_set_false:N \l__nsk_ext_vis_top_bool
+		\dim_compare:nNnTF { \l__nsk_ext_dy_dim } < { 0pt }
+		{ \bool_set_true:N \l__nsk_ext_vis_bottom_bool }
+		{ \bool_set_false:N \l__nsk_ext_vis_bottom_bool }
+	}
+
+	\dim_compare:nNnTF { \l__nsk_ext_dx_dim } > { 0pt }
+	{
+		\bool_set_true:N  \l__nsk_ext_vis_right_bool
+		\bool_set_false:N \l__nsk_ext_vis_left_bool
+	}
+	{
+		\bool_set_false:N \l__nsk_ext_vis_right_bool
+		\dim_compare:nNnTF { \l__nsk_ext_dx_dim } < { 0pt }
+		{ \bool_set_true:N \l__nsk_ext_vis_left_bool }
+		{ \bool_set_false:N \l__nsk_ext_vis_left_bool }
+	}
+}
+
+% ==============================================================================
+% Extrusion: Compute 8 vertices (base + cap)
+%
+% Base vertices = block center +/- half width/height
+% Cap vertices  = base vertices + (dx, dy)
+% ==============================================================================
+\cs_new_protected:Npn \__nsk_ext_compute_vertices:
+{
+	% Half dimensions
+	\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim / 2 }
+	\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim / 2 }
+
+	% Base face vertices (front face, at block position)
+	\dim_set:Nn \l__nsk_ext_base_sw_x_dim { \l_nsk_block_x_dim - \l_tmpa_dim }
+	\dim_set:Nn \l__nsk_ext_base_sw_y_dim { \l_nsk_block_y_dim - \l_tmpb_dim }
+
+	\dim_set:Nn \l__nsk_ext_base_se_x_dim { \l_nsk_block_x_dim + \l_tmpa_dim }
+	\dim_set:Nn \l__nsk_ext_base_se_y_dim { \l_nsk_block_y_dim - \l_tmpb_dim }
+
+	\dim_set:Nn \l__nsk_ext_base_ne_x_dim { \l_nsk_block_x_dim + \l_tmpa_dim }
+	\dim_set:Nn \l__nsk_ext_base_ne_y_dim { \l_nsk_block_y_dim + \l_tmpb_dim }
+
+	\dim_set:Nn \l__nsk_ext_base_nw_x_dim { \l_nsk_block_x_dim - \l_tmpa_dim }
+	\dim_set:Nn \l__nsk_ext_base_nw_y_dim { \l_nsk_block_y_dim + \l_tmpb_dim }
+
+	% Cap face vertices (back face, offset by extrusion)
+	\dim_set:Nn \l__nsk_ext_cap_sw_x_dim { \l__nsk_ext_base_sw_x_dim + \l__nsk_ext_dx_dim }
+	\dim_set:Nn \l__nsk_ext_cap_sw_y_dim { \l__nsk_ext_base_sw_y_dim + \l__nsk_ext_dy_dim }
+
+	\dim_set:Nn \l__nsk_ext_cap_se_x_dim { \l__nsk_ext_base_se_x_dim + \l__nsk_ext_dx_dim }
+	\dim_set:Nn \l__nsk_ext_cap_se_y_dim { \l__nsk_ext_base_se_y_dim + \l__nsk_ext_dy_dim }
+
+	\dim_set:Nn \l__nsk_ext_cap_ne_x_dim { \l__nsk_ext_base_ne_x_dim + \l__nsk_ext_dx_dim }
+	\dim_set:Nn \l__nsk_ext_cap_ne_y_dim { \l__nsk_ext_base_ne_y_dim + \l__nsk_ext_dy_dim }
+
+	\dim_set:Nn \l__nsk_ext_cap_nw_x_dim { \l__nsk_ext_base_nw_x_dim + \l__nsk_ext_dx_dim }
+	\dim_set:Nn \l__nsk_ext_cap_nw_y_dim { \l__nsk_ext_base_nw_y_dim + \l__nsk_ext_dy_dim }
+}
+
+% ==============================================================================
+% Extrusion: Draw a single quad face
+% #1 = fill color
+% #2 = SW x, #3 = SW y, #4 = SE x, #5 = SE y
+% #6 = NE x, #7 = NE y, #8 = NW x, #9 = NW y
+% #10 = border draw color (or "none" for no border)
+% ==============================================================================
+% Side faces are always drawn without borders (fill only).
+% The outer contour is drawn separately after all faces are rendered.
+\cs_new_protected:Npn \__nsk_ext_draw_face:nnnnnnnnn #1 #2 #3 #4 #5 #6 #7 #8 #9
+{
+	\draw [
+		fill={#1},
+		draw=none,
+		fill~opacity=\l_nsk_block_opacity_tl,
+	]
+	(#2, #3) -- (#4, #5) -- (#6, #7) -- (#8, #9) -- cycle;
+}
+
+% Convenience wrapper that takes dim pairs
+\cs_new_protected:Npn \__nsk_ext_draw_quad_face:nNNNNNNNN #1 #2 #3 #4 #5 #6 #7 #8 #9
+{
+	\use:x {
+		\exp_not:N \__nsk_ext_draw_face:nnnnnnnnn
+			{#1}
+			{\dim_use:N #2} {\dim_use:N #3}
+			{\dim_use:N #4} {\dim_use:N #5}
+			{\dim_use:N #6} {\dim_use:N #7}
+			{\dim_use:N #8} {\dim_use:N #9}
+	}
+}
+
+% ==============================================================================
+% Extrusion: Build per-corner rounded rect path as a token list
+%
+% Builds a TikZ path in \l__nsk_ext_face_path_tl using the 4 corner
+% coordinates (set via scratch dims) and the 4 per-corner radii.
+%
+% Input (set before calling):
+%   \l__nsk_ext_fp_sw_x/y_dim .. fp_nw_x/y_dim = 4 corner coordinates
+%   \l__nsk_ext_fp_r_nw/ne/sw/se_dim = per-corner radii
+% Output:
+%   \l__nsk_ext_face_path_tl = TikZ path token list
+% ==============================================================================
+\tl_new:N \l__nsk_ext_face_path_tl
+
+% Scratch dims for face path building
+\dim_new:N \l__nsk_ext_fp_sw_x_dim   \dim_new:N \l__nsk_ext_fp_sw_y_dim
+\dim_new:N \l__nsk_ext_fp_se_x_dim   \dim_new:N \l__nsk_ext_fp_se_y_dim
+\dim_new:N \l__nsk_ext_fp_ne_x_dim   \dim_new:N \l__nsk_ext_fp_ne_y_dim
+\dim_new:N \l__nsk_ext_fp_nw_x_dim   \dim_new:N \l__nsk_ext_fp_nw_y_dim
+\dim_new:N \l__nsk_ext_fp_r_nw_dim
+\dim_new:N \l__nsk_ext_fp_r_ne_dim
+\dim_new:N \l__nsk_ext_fp_r_sw_dim
+\dim_new:N \l__nsk_ext_fp_r_se_dim
+
+\cs_new_protected:Npn \__nsk_ext_build_face_path:
+{
+	\tl_clear:N \l__nsk_ext_face_path_tl
+
+	% Start at NW, offset right by r_nw along top edge
+	\tl_put_right:Nx \l__nsk_ext_face_path_tl
+		{ ( \dim_eval:n { \l__nsk_ext_fp_nw_x_dim + \l__nsk_ext_fp_r_nw_dim } ,
+		    \dim_use:N \l__nsk_ext_fp_nw_y_dim ) }
+
+	% Top edge to NE
+	\tl_put_right:Nx \l__nsk_ext_face_path_tl
+		{ -- ( \dim_eval:n { \l__nsk_ext_fp_ne_x_dim - \l__nsk_ext_fp_r_ne_dim } ,
+		       \dim_use:N \l__nsk_ext_fp_ne_y_dim ) }
+
+	% NE corner arc (90° to 0°)
+	\dim_compare:nNnTF { \l__nsk_ext_fp_r_ne_dim } > { 0pt }
+	{
+		\tl_put_right:Nx \l__nsk_ext_face_path_tl
+			{ arc[start~angle=90, end~angle=0, radius=\dim_use:N \l__nsk_ext_fp_r_ne_dim] }
+	}
+	{
+		\tl_put_right:Nx \l__nsk_ext_face_path_tl
+			{ -- ( \dim_use:N \l__nsk_ext_fp_ne_x_dim , \dim_use:N \l__nsk_ext_fp_ne_y_dim ) }
+	}
+
+	% Right edge to SE
+	\tl_put_right:Nx \l__nsk_ext_face_path_tl
+		{ -- ( \dim_use:N \l__nsk_ext_fp_se_x_dim ,
+		       \dim_eval:n { \l__nsk_ext_fp_se_y_dim + \l__nsk_ext_fp_r_se_dim } ) }
+
+	% SE corner arc (0° to -90°)
+	\dim_compare:nNnTF { \l__nsk_ext_fp_r_se_dim } > { 0pt }
+	{
+		\tl_put_right:Nx \l__nsk_ext_face_path_tl
+			{ arc[start~angle=0, end~angle=-90, radius=\dim_use:N \l__nsk_ext_fp_r_se_dim] }
+	}
+	{
+		\tl_put_right:Nx \l__nsk_ext_face_path_tl
+			{ -- ( \dim_use:N \l__nsk_ext_fp_se_x_dim , \dim_use:N \l__nsk_ext_fp_se_y_dim ) }
+	}
+
+	% Bottom edge to SW
+	\tl_put_right:Nx \l__nsk_ext_face_path_tl
+		{ -- ( \dim_eval:n { \l__nsk_ext_fp_sw_x_dim + \l__nsk_ext_fp_r_sw_dim } ,
+		       \dim_use:N \l__nsk_ext_fp_sw_y_dim ) }
+
+	% SW corner arc (-90° to -180°)
+	\dim_compare:nNnTF { \l__nsk_ext_fp_r_sw_dim } > { 0pt }
+	{
+		\tl_put_right:Nx \l__nsk_ext_face_path_tl
+			{ arc[start~angle=-90, end~angle=-180, radius=\dim_use:N \l__nsk_ext_fp_r_sw_dim] }
+	}
+	{
+		\tl_put_right:Nx \l__nsk_ext_face_path_tl
+			{ -- ( \dim_use:N \l__nsk_ext_fp_sw_x_dim , \dim_use:N \l__nsk_ext_fp_sw_y_dim ) }
+	}
+
+	% Left edge to NW
+	\tl_put_right:Nx \l__nsk_ext_face_path_tl
+		{ -- ( \dim_use:N \l__nsk_ext_fp_nw_x_dim ,
+		       \dim_eval:n { \l__nsk_ext_fp_nw_y_dim - \l__nsk_ext_fp_r_nw_dim } ) }
+
+	% NW corner arc (180° to 90°)
+	\dim_compare:nNnTF { \l__nsk_ext_fp_r_nw_dim } > { 0pt }
+	{
+		\tl_put_right:Nx \l__nsk_ext_face_path_tl
+			{ arc[start~angle=180, end~angle=90, radius=\dim_use:N \l__nsk_ext_fp_r_nw_dim] }
+	}
+	{
+		\tl_put_right:Nx \l__nsk_ext_face_path_tl
+			{ -- ( \dim_use:N \l__nsk_ext_fp_nw_x_dim , \dim_use:N \l__nsk_ext_fp_nw_y_dim ) }
+	}
+
+	% Close
+	\tl_put_right:Nn \l__nsk_ext_face_path_tl { -- cycle }
+}
+
+% Helper: set face path corners from base or cap vertices and resolve radii
+\cs_new_protected:Npn \__nsk_ext_setup_face_base:
+{
+	\dim_set_eq:NN \l__nsk_ext_fp_sw_x_dim \l__nsk_ext_base_sw_x_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_sw_y_dim \l__nsk_ext_base_sw_y_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_se_x_dim \l__nsk_ext_base_se_x_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_se_y_dim \l__nsk_ext_base_se_y_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_ne_x_dim \l__nsk_ext_base_ne_x_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_ne_y_dim \l__nsk_ext_base_ne_y_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_nw_x_dim \l__nsk_ext_base_nw_x_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_nw_y_dim \l__nsk_ext_base_nw_y_dim
+}
+\cs_new_protected:Npn \__nsk_ext_setup_face_cap:
+{
+	\dim_set_eq:NN \l__nsk_ext_fp_sw_x_dim \l__nsk_ext_cap_sw_x_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_sw_y_dim \l__nsk_ext_cap_sw_y_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_se_x_dim \l__nsk_ext_cap_se_x_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_se_y_dim \l__nsk_ext_cap_se_y_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_ne_x_dim \l__nsk_ext_cap_ne_x_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_ne_y_dim \l__nsk_ext_cap_ne_y_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_nw_x_dim \l__nsk_ext_cap_nw_x_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_nw_y_dim \l__nsk_ext_cap_nw_y_dim
+}
+\cs_new_protected:Npn \__nsk_ext_resolve_face_radii:
+{
+	\dim_set_eq:NN \l__nsk_ext_fp_r_nw_dim \l__nsk_ext_eff_r_nw_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_r_ne_dim \l__nsk_ext_eff_r_ne_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_r_sw_dim \l__nsk_ext_eff_r_sw_dim
+	\dim_set_eq:NN \l__nsk_ext_fp_r_se_dim \l__nsk_ext_eff_r_se_dim
+}
+
+% ==============================================================================
+% Extrusion: Draw base face with rounded corners support
+% ==============================================================================
+\cs_new_protected:Npn \__nsk_ext_draw_base_face:
+{
+	% Build pattern postaction (applied only to base face)
+	\tl_clear:N \l_tmpa_tl
+	\tl_if_blank:VF \l_nsk_block_pattern_tl
+	{
+		\tl_set:Nx \l_tmpa_tl {
+			postaction={
+				pattern=\l_nsk_block_pattern_tl,
+				pattern~color=\l_nsk_block_pattern_color_tl,
+			},
+		}
+	}
+
+	\__nsk_ext_has_rounding:
+	\bool_if:NTF \l_tmpa_bool
+	{
+		% Build per-corner rounded rect path for base face (fill only, no border).
+		% The border is drawn separately by \__nsk_ext_draw_contour: to avoid
+		% fill-over-stroke rendering issues with arc paths.
+		\__nsk_ext_setup_face_base:
+		\__nsk_ext_resolve_face_radii:
+		\__nsk_ext_build_face_path:
+
+		\use:x {
+			\exp_not:N \draw [
+				fill=\l__nsk_ext_color_base_tl,
+				draw=none,
+				fill~opacity=\l_nsk_block_opacity_tl,
+				\l_tmpa_tl
+			] \l__nsk_ext_face_path_tl ;
+		}
+	}
+	{
+		% Sharp-cornered base face (with optional pattern)
+		\use:x {
+			\exp_not:N \draw [
+				fill=\l__nsk_ext_color_base_tl,
+				draw=none,
+				fill~opacity=\l_nsk_block_opacity_tl,
+				\l_tmpa_tl
+			]
+			(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim) --
+			(\dim_use:N \l__nsk_ext_base_se_x_dim, \dim_use:N \l__nsk_ext_base_se_y_dim) --
+			(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim) --
+			(\dim_use:N \l__nsk_ext_base_nw_x_dim, \dim_use:N \l__nsk_ext_base_nw_y_dim) -- cycle;
+		}
+	}
+}
+
+% ==============================================================================
+% Extrusion: Draw cap face with rounded corners support
+% Cap face is always drawn without border (it's the back face, covered by sides)
+% ==============================================================================
+\cs_new_protected:Npn \__nsk_ext_draw_cap_face:
+{
+	\__nsk_ext_has_rounding:
+	\bool_if:NTF \l_tmpa_bool
+	{
+		% Build per-corner rounded rect path for cap face
+		\__nsk_ext_setup_face_cap:
+		\__nsk_ext_resolve_face_radii:
+		\__nsk_ext_build_face_path:
+
+		\draw [
+			fill=\l__nsk_ext_color_cap_tl,
+			draw=none,
+			fill~opacity=\l_nsk_block_opacity_tl,
+		] \tl_use:N \l__nsk_ext_face_path_tl ;
+	}
+	{
+		% Sharp corners: draw as quad, no border
+		\draw [
+			fill=\l__nsk_ext_color_cap_tl,
+			draw=none,
+			fill~opacity=\l_nsk_block_opacity_tl,
+		]
+		(\dim_use:N \l__nsk_ext_cap_sw_x_dim, \dim_use:N \l__nsk_ext_cap_sw_y_dim) --
+		(\dim_use:N \l__nsk_ext_cap_se_x_dim, \dim_use:N \l__nsk_ext_cap_se_y_dim) --
+		(\dim_use:N \l__nsk_ext_cap_ne_x_dim, \dim_use:N \l__nsk_ext_cap_ne_y_dim) --
+		(\dim_use:N \l__nsk_ext_cap_nw_x_dim, \dim_use:N \l__nsk_ext_cap_nw_y_dim) -- cycle;
+	}
+}
+
+% ==============================================================================
+% Extrusion: Draw side faces (parallelogram quads)
+%
+% When border-radius > 0, side faces are inset by border-radius at corners
+% so they connect to the straight portions of the rounded rectangle.
+% ==============================================================================
+
+% Helper dims for inset side vertices
+\dim_new:N \l__nsk_ext_side_a_x_dim  \dim_new:N \l__nsk_ext_side_a_y_dim
+\dim_new:N \l__nsk_ext_side_b_x_dim  \dim_new:N \l__nsk_ext_side_b_y_dim
+\dim_new:N \l__nsk_ext_side_c_x_dim  \dim_new:N \l__nsk_ext_side_c_y_dim
+\dim_new:N \l__nsk_ext_side_d_x_dim  \dim_new:N \l__nsk_ext_side_d_y_dim
+
+% Helper: check if any rounding is active (border-radius, round, or per-corner)
+% Sets \l_tmpa_bool to true if insets are needed.
+% Uses pre-computed effective radii.
+\cs_new_protected:Npn \__nsk_ext_has_rounding:
+{
+	\bool_set_false:N \l_tmpa_bool
+	\dim_compare:nNnT { \l__nsk_ext_eff_r_nw_dim } > { 0pt }
+		{ \bool_set_true:N \l_tmpa_bool }
+	\dim_compare:nNnT { \l__nsk_ext_eff_r_ne_dim } > { 0pt }
+		{ \bool_set_true:N \l_tmpa_bool }
+	\dim_compare:nNnT { \l__nsk_ext_eff_r_sw_dim } > { 0pt }
+		{ \bool_set_true:N \l_tmpa_bool }
+	\dim_compare:nNnT { \l__nsk_ext_eff_r_se_dim } > { 0pt }
+		{ \bool_set_true:N \l_tmpa_bool }
+}
+
+% Top side: base NW-NE -> cap NW-NE
+% Inset left end by r_nw, right end by r_ne (along x)
+\cs_new_protected:Npn \__nsk_ext_draw_top_side:
+{
+	\__nsk_ext_has_rounding:
+	\bool_if:NTF \l_tmpa_bool
+	{
+		% Use effective radii (border-radius + round)
+		% Base NW inset right by eff_r_nw
+		\dim_set:Nn \l__nsk_ext_side_a_x_dim { \l__nsk_ext_base_nw_x_dim + \l__nsk_ext_eff_r_nw_dim }
+		\dim_set_eq:NN \l__nsk_ext_side_a_y_dim \l__nsk_ext_base_nw_y_dim
+		% Base NE inset left by eff_r_ne
+		\dim_set:Nn \l__nsk_ext_side_b_x_dim { \l__nsk_ext_base_ne_x_dim - \l__nsk_ext_eff_r_ne_dim }
+		\dim_set_eq:NN \l__nsk_ext_side_b_y_dim \l__nsk_ext_base_ne_y_dim
+		% Cap NE inset left by eff_r_ne
+		\dim_set:Nn \l__nsk_ext_side_c_x_dim { \l__nsk_ext_cap_ne_x_dim - \l__nsk_ext_eff_r_ne_dim }
+		\dim_set_eq:NN \l__nsk_ext_side_c_y_dim \l__nsk_ext_cap_ne_y_dim
+		% Cap NW inset right by eff_r_nw
+		\dim_set:Nn \l__nsk_ext_side_d_x_dim { \l__nsk_ext_cap_nw_x_dim + \l__nsk_ext_eff_r_nw_dim }
+		\dim_set_eq:NN \l__nsk_ext_side_d_y_dim \l__nsk_ext_cap_nw_y_dim
+
+		\__nsk_ext_draw_quad_face:nNNNNNNNN
+			{ \l__nsk_ext_color_top_tl }
+			\l__nsk_ext_side_a_x_dim \l__nsk_ext_side_a_y_dim
+			\l__nsk_ext_side_b_x_dim \l__nsk_ext_side_b_y_dim
+			\l__nsk_ext_side_c_x_dim \l__nsk_ext_side_c_y_dim
+			\l__nsk_ext_side_d_x_dim \l__nsk_ext_side_d_y_dim
+	}
+	{
+		\__nsk_ext_draw_quad_face:nNNNNNNNN
+			{ \l__nsk_ext_color_top_tl }
+			\l__nsk_ext_base_nw_x_dim \l__nsk_ext_base_nw_y_dim
+			\l__nsk_ext_base_ne_x_dim \l__nsk_ext_base_ne_y_dim
+			\l__nsk_ext_cap_ne_x_dim  \l__nsk_ext_cap_ne_y_dim
+			\l__nsk_ext_cap_nw_x_dim  \l__nsk_ext_cap_nw_y_dim
+	}
+}
+
+% Bottom side: base SE-SW -> cap SE-SW
+% Inset right end by eff_r_se, left end by eff_r_sw (along x)
+\cs_new_protected:Npn \__nsk_ext_draw_bottom_side:
+{
+	\__nsk_ext_has_rounding:
+	\bool_if:NTF \l_tmpa_bool
+	{
+		% Base SE inset left by eff_r_se
+		\dim_set:Nn \l__nsk_ext_side_a_x_dim { \l__nsk_ext_base_se_x_dim - \l__nsk_ext_eff_r_se_dim }
+		\dim_set_eq:NN \l__nsk_ext_side_a_y_dim \l__nsk_ext_base_se_y_dim
+		% Base SW inset right by eff_r_sw
+		\dim_set:Nn \l__nsk_ext_side_b_x_dim { \l__nsk_ext_base_sw_x_dim + \l__nsk_ext_eff_r_sw_dim }
+		\dim_set_eq:NN \l__nsk_ext_side_b_y_dim \l__nsk_ext_base_sw_y_dim
+		% Cap SW inset right by eff_r_sw
+		\dim_set:Nn \l__nsk_ext_side_c_x_dim { \l__nsk_ext_cap_sw_x_dim + \l__nsk_ext_eff_r_sw_dim }
+		\dim_set_eq:NN \l__nsk_ext_side_c_y_dim \l__nsk_ext_cap_sw_y_dim
+		% Cap SE inset left by eff_r_se
+		\dim_set:Nn \l__nsk_ext_side_d_x_dim { \l__nsk_ext_cap_se_x_dim - \l__nsk_ext_eff_r_se_dim }
+		\dim_set_eq:NN \l__nsk_ext_side_d_y_dim \l__nsk_ext_cap_se_y_dim
+
+		\__nsk_ext_draw_quad_face:nNNNNNNNN
+			{ \l__nsk_ext_color_bottom_tl }
+			\l__nsk_ext_side_a_x_dim \l__nsk_ext_side_a_y_dim
+			\l__nsk_ext_side_b_x_dim \l__nsk_ext_side_b_y_dim
+			\l__nsk_ext_side_c_x_dim \l__nsk_ext_side_c_y_dim
+			\l__nsk_ext_side_d_x_dim \l__nsk_ext_side_d_y_dim
+	}
+	{
+		\__nsk_ext_draw_quad_face:nNNNNNNNN
+			{ \l__nsk_ext_color_bottom_tl }
+			\l__nsk_ext_base_se_x_dim \l__nsk_ext_base_se_y_dim
+			\l__nsk_ext_base_sw_x_dim \l__nsk_ext_base_sw_y_dim
+			\l__nsk_ext_cap_sw_x_dim  \l__nsk_ext_cap_sw_y_dim
+			\l__nsk_ext_cap_se_x_dim  \l__nsk_ext_cap_se_y_dim
+	}
+}
+
+% Right side: base SE-NE -> cap SE-NE
+% Inset bottom by eff_r_se, top by eff_r_ne (along y)
+\cs_new_protected:Npn \__nsk_ext_draw_right_side:
+{
+	\__nsk_ext_has_rounding:
+	\bool_if:NTF \l_tmpa_bool
+	{
+		% Base SE inset up by eff_r_se
+		\dim_set_eq:NN \l__nsk_ext_side_a_x_dim \l__nsk_ext_base_se_x_dim
+		\dim_set:Nn \l__nsk_ext_side_a_y_dim { \l__nsk_ext_base_se_y_dim + \l__nsk_ext_eff_r_se_dim }
+		% Cap SE inset up by eff_r_se
+		\dim_set_eq:NN \l__nsk_ext_side_b_x_dim \l__nsk_ext_cap_se_x_dim
+		\dim_set:Nn \l__nsk_ext_side_b_y_dim { \l__nsk_ext_cap_se_y_dim + \l__nsk_ext_eff_r_se_dim }
+		% Cap NE inset down by eff_r_ne
+		\dim_set_eq:NN \l__nsk_ext_side_c_x_dim \l__nsk_ext_cap_ne_x_dim
+		\dim_set:Nn \l__nsk_ext_side_c_y_dim { \l__nsk_ext_cap_ne_y_dim - \l__nsk_ext_eff_r_ne_dim }
+		% Base NE inset down by eff_r_ne
+		\dim_set_eq:NN \l__nsk_ext_side_d_x_dim \l__nsk_ext_base_ne_x_dim
+		\dim_set:Nn \l__nsk_ext_side_d_y_dim { \l__nsk_ext_base_ne_y_dim - \l__nsk_ext_eff_r_ne_dim }
+
+		\__nsk_ext_draw_quad_face:nNNNNNNNN
+			{ \l__nsk_ext_color_right_tl }
+			\l__nsk_ext_side_a_x_dim \l__nsk_ext_side_a_y_dim
+			\l__nsk_ext_side_b_x_dim \l__nsk_ext_side_b_y_dim
+			\l__nsk_ext_side_c_x_dim \l__nsk_ext_side_c_y_dim
+			\l__nsk_ext_side_d_x_dim \l__nsk_ext_side_d_y_dim
+	}
+	{
+		\__nsk_ext_draw_quad_face:nNNNNNNNN
+			{ \l__nsk_ext_color_right_tl }
+			\l__nsk_ext_base_se_x_dim \l__nsk_ext_base_se_y_dim
+			\l__nsk_ext_cap_se_x_dim  \l__nsk_ext_cap_se_y_dim
+			\l__nsk_ext_cap_ne_x_dim  \l__nsk_ext_cap_ne_y_dim
+			\l__nsk_ext_base_ne_x_dim \l__nsk_ext_base_ne_y_dim
+	}
+}
+
+% Left side: base NW-SW -> cap NW-SW
+% Inset top by eff_r_nw, bottom by eff_r_sw (along y)
+\cs_new_protected:Npn \__nsk_ext_draw_left_side:
+{
+	\__nsk_ext_has_rounding:
+	\bool_if:NTF \l_tmpa_bool
+	{
+		% Base NW inset down by eff_r_nw
+		\dim_set_eq:NN \l__nsk_ext_side_a_x_dim \l__nsk_ext_base_nw_x_dim
+		\dim_set:Nn \l__nsk_ext_side_a_y_dim { \l__nsk_ext_base_nw_y_dim - \l__nsk_ext_eff_r_nw_dim }
+		% Cap NW inset down by eff_r_nw
+		\dim_set_eq:NN \l__nsk_ext_side_b_x_dim \l__nsk_ext_cap_nw_x_dim
+		\dim_set:Nn \l__nsk_ext_side_b_y_dim { \l__nsk_ext_cap_nw_y_dim - \l__nsk_ext_eff_r_nw_dim }
+		% Cap SW inset up by eff_r_sw
+		\dim_set_eq:NN \l__nsk_ext_side_c_x_dim \l__nsk_ext_cap_sw_x_dim
+		\dim_set:Nn \l__nsk_ext_side_c_y_dim { \l__nsk_ext_cap_sw_y_dim + \l__nsk_ext_eff_r_sw_dim }
+		% Base SW inset up by eff_r_sw
+		\dim_set_eq:NN \l__nsk_ext_side_d_x_dim \l__nsk_ext_base_sw_x_dim
+		\dim_set:Nn \l__nsk_ext_side_d_y_dim { \l__nsk_ext_base_sw_y_dim + \l__nsk_ext_eff_r_sw_dim }
+
+		\__nsk_ext_draw_quad_face:nNNNNNNNN
+			{ \l__nsk_ext_color_left_tl }
+			\l__nsk_ext_side_a_x_dim \l__nsk_ext_side_a_y_dim
+			\l__nsk_ext_side_b_x_dim \l__nsk_ext_side_b_y_dim
+			\l__nsk_ext_side_c_x_dim \l__nsk_ext_side_c_y_dim
+			\l__nsk_ext_side_d_x_dim \l__nsk_ext_side_d_y_dim
+	}
+	{
+		\__nsk_ext_draw_quad_face:nNNNNNNNN
+			{ \l__nsk_ext_color_left_tl }
+			\l__nsk_ext_base_nw_x_dim \l__nsk_ext_base_nw_y_dim
+			\l__nsk_ext_cap_nw_x_dim  \l__nsk_ext_cap_nw_y_dim
+			\l__nsk_ext_cap_sw_x_dim  \l__nsk_ext_cap_sw_y_dim
+			\l__nsk_ext_base_sw_x_dim \l__nsk_ext_base_sw_y_dim
+	}
+}
+
+% ==============================================================================
+% Extrusion: Draw tessellated fillet strips at rounded corners
+%
+% When border-radius > 0, draw curved fillet strips connecting the base corner
+% arc to the cap corner arc. Each fillet is tessellated into N quad strips
+% (N=4) that approximate the quarter-cylinder surface.
+%
+% For each corner, the 90-degree arc is sampled at N+1 points. Adjacent pairs
+% of arc points define a quad strip: base_pt_i -> base_pt_{i+1} ->
+% cap_pt_{i+1} -> cap_pt_i, where cap points = base points + (dx, dy).
+%
+% Per-corner border-radius is supported: each corner can have a different
+% radius (or 0 for sharp corners, which get no fillet).
+% ==============================================================================
+
+% Number of tessellation segments per fillet (4 gives smooth appearance)
+\int_const:Nn \c__nsk_ext_fillet_segments_int { 4 }
+
+% Scratch dims for fillet tessellation
+\dim_new:N \l__nsk_ext_fil_cx_dim     % arc center x
+\dim_new:N \l__nsk_ext_fil_cy_dim     % arc center y
+\dim_new:N \l__nsk_ext_fil_r_dim      % corner radius
+\fp_new:N  \l__nsk_ext_fil_start_fp   % start angle of arc
+\dim_new:N \l__nsk_ext_fil_bx_a_dim   % base point A x (current)
+\dim_new:N \l__nsk_ext_fil_by_a_dim   % base point A y
+\dim_new:N \l__nsk_ext_fil_bx_b_dim   % base point B x (next)
+\dim_new:N \l__nsk_ext_fil_by_b_dim   % base point B y
+
+% Helper: draw a tessellated fillet for one corner
+% #1 = fill color
+% #2 = arc center x (dim expression)
+% #3 = arc center y (dim expression)
+% #4 = corner radius (dim)
+% #5 = start angle (fp, degrees) — arc goes from start to start-90 (clockwise)
+\cs_new_protected:Npn \__nsk_ext_draw_fillet_tess:nnnnn #1 #2 #3 #4 #5
+{
+	\dim_set:Nn \l__nsk_ext_fil_cx_dim {#2}
+	\dim_set:Nn \l__nsk_ext_fil_cy_dim {#3}
+	\dim_set:Nn \l__nsk_ext_fil_r_dim  {#4}
+	\fp_set:Nn  \l__nsk_ext_fil_start_fp {#5}
+
+	% Skip if radius is zero
+	\dim_compare:nNnT { \l__nsk_ext_fil_r_dim } > { 0pt }
+	{
+		% Compute first point on arc (at start angle)
+		\dim_set:Nn \l__nsk_ext_fil_bx_a_dim {
+			\l__nsk_ext_fil_cx_dim +
+			\fp_to_decimal:n { cosd(\l__nsk_ext_fil_start_fp) *
+				\dim_to_decimal_in_unit:nn { \l__nsk_ext_fil_r_dim } { 1cm } } cm
+		}
+		\dim_set:Nn \l__nsk_ext_fil_by_a_dim {
+			\l__nsk_ext_fil_cy_dim +
+			\fp_to_decimal:n { sind(\l__nsk_ext_fil_start_fp) *
+				\dim_to_decimal_in_unit:nn { \l__nsk_ext_fil_r_dim } { 1cm } } cm
+		}
+
+		\int_step_inline:nnn { 1 } { \c__nsk_ext_fillet_segments_int }
+		{
+			% Compute angle for next sample point
+			% Arc goes clockwise: angle = start - (##1/N)*90
+			\fp_set:Nn \l_tmpa_fp {
+				\l__nsk_ext_fil_start_fp -
+				( ##1 / \c__nsk_ext_fillet_segments_int ) * 90
+			}
+
+			% Compute next point on arc
+			\dim_set:Nn \l__nsk_ext_fil_bx_b_dim {
+				\l__nsk_ext_fil_cx_dim +
+				\fp_to_decimal:n { cosd(\l_tmpa_fp) *
+					\dim_to_decimal_in_unit:nn { \l__nsk_ext_fil_r_dim } { 1cm } } cm
+			}
+			\dim_set:Nn \l__nsk_ext_fil_by_b_dim {
+				\l__nsk_ext_fil_cy_dim +
+				\fp_to_decimal:n { sind(\l_tmpa_fp) *
+					\dim_to_decimal_in_unit:nn { \l__nsk_ext_fil_r_dim } { 1cm } } cm
+			}
+
+			% Draw quad strip: base_a -> base_b -> cap_b -> cap_a
+			\draw [
+				fill={#1},
+				draw=none,
+				fill~opacity=\l_nsk_block_opacity_tl,
+			]
+			(\dim_use:N \l__nsk_ext_fil_bx_a_dim, \dim_use:N \l__nsk_ext_fil_by_a_dim) --
+			(\dim_use:N \l__nsk_ext_fil_bx_b_dim, \dim_use:N \l__nsk_ext_fil_by_b_dim) --
+			([shift={(\l__nsk_ext_dx_dim, \l__nsk_ext_dy_dim)}]
+				\dim_use:N \l__nsk_ext_fil_bx_b_dim, \dim_use:N \l__nsk_ext_fil_by_b_dim) --
+			([shift={(\l__nsk_ext_dx_dim, \l__nsk_ext_dy_dim)}]
+				\dim_use:N \l__nsk_ext_fil_bx_a_dim, \dim_use:N \l__nsk_ext_fil_by_a_dim) --
+			cycle;
+
+			% Advance: A = B for next segment
+			\dim_set_eq:NN \l__nsk_ext_fil_bx_a_dim \l__nsk_ext_fil_bx_b_dim
+			\dim_set_eq:NN \l__nsk_ext_fil_by_a_dim \l__nsk_ext_fil_by_b_dim
+		}
+	}
+}
+
+% Resolve the effective radius for each corner.
+% Returns the combined border-radius + round for the given corner.
+% Uses pre-computed effective radii from \__nsk_ext_compute_effective_radii:.
+\cs_new_protected:Npn \__nsk_ext_resolve_corner_radius:Nn #1 #2
+{
+	% #1 = per-corner effective radius dim (e.g. \l__nsk_ext_eff_r_ne_dim)
+	% #2 = output dim register
+	\dim_set_eq:NN #2 #1
+}
+
+% ==============================================================================
+% Round: Per-corner mode detection and effective radii computation
+%
+% Detects per-corner round mode, resolves unset corners to uniform round,
+% then computes effective radii (border-radius + round) for each corner.
+% ==============================================================================
+\cs_new_protected:Npn \__nsk_ext_determine_round_percorner:
+{
+	\bool_set_false:N \l__nsk_ext_round_percorner_bool
+	\bool_if:nT {
+		\l__nsk_ext_round_nw_mset_bool ||
+		\l__nsk_ext_round_ne_mset_bool ||
+		\l__nsk_ext_round_sw_mset_bool ||
+		\l__nsk_ext_round_se_mset_bool
+	}
+	{
+		\bool_set_true:N \l__nsk_ext_round_percorner_bool
+		% Resolve unset corners to uniform round value
+		\bool_if:NF \l__nsk_ext_round_nw_mset_bool
+			{ \dim_set_eq:NN \l__nsk_ext_round_nw_dim \l__nsk_ext_round_dim }
+		\bool_if:NF \l__nsk_ext_round_ne_mset_bool
+			{ \dim_set_eq:NN \l__nsk_ext_round_ne_dim \l__nsk_ext_round_dim }
+		\bool_if:NF \l__nsk_ext_round_sw_mset_bool
+			{ \dim_set_eq:NN \l__nsk_ext_round_sw_dim \l__nsk_ext_round_dim }
+		\bool_if:NF \l__nsk_ext_round_se_mset_bool
+			{ \dim_set_eq:NN \l__nsk_ext_round_se_dim \l__nsk_ext_round_dim }
+	}
+}
+
+% Compute effective radii = border-radius + round for each corner.
+% Must be called after \nsk__determine_percorner_mode: and
+% \__nsk_ext_determine_round_percorner:.
+\cs_new_protected:Npn \__nsk_ext_compute_effective_radii:
+{
+	% NW: border-radius component
+	\bool_if:NTF \l_nsk_block_percorner_mode_bool
+		{ \dim_set_eq:NN \l__nsk_ext_eff_r_nw_dim \l_nsk_block_border_radius_nw_dim }
+		{ \dim_set_eq:NN \l__nsk_ext_eff_r_nw_dim \l_nsk_block_border_radius_dim }
+	% NW: add round component
+	\bool_if:NTF \l__nsk_ext_round_percorner_bool
+		{ \dim_add:Nn \l__nsk_ext_eff_r_nw_dim { \l__nsk_ext_round_nw_dim } }
+		{ \dim_add:Nn \l__nsk_ext_eff_r_nw_dim { \l__nsk_ext_round_dim } }
+
+	% NE
+	\bool_if:NTF \l_nsk_block_percorner_mode_bool
+		{ \dim_set_eq:NN \l__nsk_ext_eff_r_ne_dim \l_nsk_block_border_radius_ne_dim }
+		{ \dim_set_eq:NN \l__nsk_ext_eff_r_ne_dim \l_nsk_block_border_radius_dim }
+	\bool_if:NTF \l__nsk_ext_round_percorner_bool
+		{ \dim_add:Nn \l__nsk_ext_eff_r_ne_dim { \l__nsk_ext_round_ne_dim } }
+		{ \dim_add:Nn \l__nsk_ext_eff_r_ne_dim { \l__nsk_ext_round_dim } }
+
+	% SW
+	\bool_if:NTF \l_nsk_block_percorner_mode_bool
+		{ \dim_set_eq:NN \l__nsk_ext_eff_r_sw_dim \l_nsk_block_border_radius_sw_dim }
+		{ \dim_set_eq:NN \l__nsk_ext_eff_r_sw_dim \l_nsk_block_border_radius_dim }
+	\bool_if:NTF \l__nsk_ext_round_percorner_bool
+		{ \dim_add:Nn \l__nsk_ext_eff_r_sw_dim { \l__nsk_ext_round_sw_dim } }
+		{ \dim_add:Nn \l__nsk_ext_eff_r_sw_dim { \l__nsk_ext_round_dim } }
+
+	% SE
+	\bool_if:NTF \l_nsk_block_percorner_mode_bool
+		{ \dim_set_eq:NN \l__nsk_ext_eff_r_se_dim \l_nsk_block_border_radius_se_dim }
+		{ \dim_set_eq:NN \l__nsk_ext_eff_r_se_dim \l_nsk_block_border_radius_dim }
+	\bool_if:NTF \l__nsk_ext_round_percorner_bool
+		{ \dim_add:Nn \l__nsk_ext_eff_r_se_dim { \l__nsk_ext_round_se_dim } }
+		{ \dim_add:Nn \l__nsk_ext_eff_r_se_dim { \l__nsk_ext_round_dim } }
+}
+
+% Draw all visible fillet strips at rounded corners.
+% A fillet at a corner is visible when EITHER adjacent side is visible.
+% The color used is based on which sides are visible at that corner.
+\cs_new_protected:Npn \__nsk_ext_draw_fillets:
+{
+	% Check if any effective rounding is active (border-radius + round)
+	\__nsk_ext_has_rounding:
+	\bool_if:NT \l_tmpa_bool
+	{
+		% ---- NE corner fillet ----
+		% Visible when top OR right is visible
+		% Arc center: (ne_x - r, ne_y - r), start angle 90° going clockwise to 0°
+		\bool_if:nT { \l__nsk_ext_vis_top_bool || \l__nsk_ext_vis_right_bool }
+		{
+			\dim_compare:nNnT { \l__nsk_ext_eff_r_ne_dim } > { 0pt }
+			{
+				\use:x {
+					\exp_not:N \__nsk_ext_draw_fillet_tess:nnnnn
+						{ \l__nsk_ext_color_right_tl }
+						{ \dim_eval:n { \l__nsk_ext_base_ne_x_dim - \l__nsk_ext_eff_r_ne_dim } }
+						{ \dim_eval:n { \l__nsk_ext_base_ne_y_dim - \l__nsk_ext_eff_r_ne_dim } }
+						{ \dim_use:N \l__nsk_ext_eff_r_ne_dim }
+						{ 90 }
+				}
+			}
+		}
+
+		% ---- NW corner fillet ----
+		% Arc center: (nw_x + r, nw_y - r), start angle 180° going clockwise to 90°
+		\bool_if:nT { \l__nsk_ext_vis_top_bool || \l__nsk_ext_vis_left_bool }
+		{
+			\dim_compare:nNnT { \l__nsk_ext_eff_r_nw_dim } > { 0pt }
+			{
+				\use:x {
+					\exp_not:N \__nsk_ext_draw_fillet_tess:nnnnn
+						{ \l__nsk_ext_color_left_tl }
+						{ \dim_eval:n { \l__nsk_ext_base_nw_x_dim + \l__nsk_ext_eff_r_nw_dim } }
+						{ \dim_eval:n { \l__nsk_ext_base_nw_y_dim - \l__nsk_ext_eff_r_nw_dim } }
+						{ \dim_use:N \l__nsk_ext_eff_r_nw_dim }
+						{ 180 }
+				}
+			}
+		}
+
+		% ---- SE corner fillet ----
+		% Arc center: (se_x - r, se_y + r), start angle 0° going clockwise to -90°
+		\bool_if:nT { \l__nsk_ext_vis_bottom_bool || \l__nsk_ext_vis_right_bool }
+		{
+			\dim_compare:nNnT { \l__nsk_ext_eff_r_se_dim } > { 0pt }
+			{
+				\use:x {
+					\exp_not:N \__nsk_ext_draw_fillet_tess:nnnnn
+						{ \l__nsk_ext_color_right_tl }
+						{ \dim_eval:n { \l__nsk_ext_base_se_x_dim - \l__nsk_ext_eff_r_se_dim } }
+						{ \dim_eval:n { \l__nsk_ext_base_se_y_dim + \l__nsk_ext_eff_r_se_dim } }
+						{ \dim_use:N \l__nsk_ext_eff_r_se_dim }
+						{ 0 }
+				}
+			}
+		}
+
+		% ---- SW corner fillet ----
+		% Arc center: (sw_x + r, sw_y + r), start angle -90° going clockwise to -180°
+		\bool_if:nT { \l__nsk_ext_vis_bottom_bool || \l__nsk_ext_vis_left_bool }
+		{
+			\dim_compare:nNnT { \l__nsk_ext_eff_r_sw_dim } > { 0pt }
+			{
+				\use:x {
+					\exp_not:N \__nsk_ext_draw_fillet_tess:nnnnn
+						{ \l__nsk_ext_color_left_tl }
+						{ \dim_eval:n { \l__nsk_ext_base_sw_x_dim + \l__nsk_ext_eff_r_sw_dim } }
+						{ \dim_eval:n { \l__nsk_ext_base_sw_y_dim + \l__nsk_ext_eff_r_sw_dim } }
+						{ \dim_use:N \l__nsk_ext_eff_r_sw_dim }
+						{ -90 }
+				}
+			}
+		}
+	}
+}
+
+% ==============================================================================
+% Extrusion: Draw stack copies behind extruded block
+%
+% Draws flat copies of the base face at stack offsets, behind the main block.
+% Follows the same convention as perspective mode stacks.
+% ==============================================================================
+\cs_new_protected:Npn \__nsk_ext_draw_stack:
+{
+	\bool_if:NT \l_nsk_block_stack_bool
+	{
+		% Build base face path for stack copy
+		\tl_set:Nx \l_tmpb_tl {
+			(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim) --
+			(\dim_use:N \l__nsk_ext_base_se_x_dim, \dim_use:N \l__nsk_ext_base_se_y_dim) --
+			(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim) --
+			(\dim_use:N \l__nsk_ext_base_nw_x_dim, \dim_use:N \l__nsk_ext_base_nw_y_dim) -- cycle
+		}
+
+		% Build rounded corners option
+		\tl_clear:N \l_tmpa_tl
+		\__nsk_ext_has_rounding:
+		\bool_if:NT \l_tmpa_bool
+		{
+			\tl_set:Nx \l_tmpa_tl { rounded~corners=\dim_use:N \l__nsk_ext_eff_r_ne_dim, }
+		}
+
+		\str_case:Vn \l_nsk_block_stack_count_tl
+		{
+			{single}
+			{
+				\use:x {
+					\exp_not:N \begin{scope}[
+						xshift=\dim_use:N \l_nsk_block_stack_xoffset_dim,
+						yshift=\dim_use:N \l_nsk_block_stack_yoffset_dim,
+					]
+					\exp_not:N \draw [
+						fill=\l_nsk_block_fill_tl,
+						draw=\l_nsk_block_border_color_tl,
+						line~width=\dim_use:N \l_nsk_block_border_size_dim,
+						\l_tmpa_tl
+						\l_nsk_block_stack_opts_tl
+					]
+					\l_tmpb_tl ;
+					\exp_not:N \end{scope}
+				}
+			}
+			{double}
+			{
+				% 2x offsets for back copy
+				\dim_set:Nn \l__nsk_ext_side_a_x_dim {
+					\l_nsk_block_stack_xoffset_dim + \l_nsk_block_stack_xoffset_dim
+				}
+				\dim_set:Nn \l__nsk_ext_side_a_y_dim {
+					\l_nsk_block_stack_yoffset_dim + \l_nsk_block_stack_yoffset_dim
+				}
+				% Back copy
+				\use:x {
+					\exp_not:N \begin{scope}[
+						xshift=\dim_use:N \l__nsk_ext_side_a_x_dim,
+						yshift=\dim_use:N \l__nsk_ext_side_a_y_dim,
+					]
+					\exp_not:N \draw [
+						fill=\l_nsk_block_fill_tl,
+						draw=\l_nsk_block_border_color_tl,
+						line~width=\dim_use:N \l_nsk_block_border_size_dim,
+						\l_tmpa_tl
+						\l_nsk_block_stack_opts_tl
+					]
+					\l_tmpb_tl ;
+					\exp_not:N \end{scope}
+				}
+				% Front copy
+				\use:x {
+					\exp_not:N \begin{scope}[
+						xshift=\dim_use:N \l_nsk_block_stack_xoffset_dim,
+						yshift=\dim_use:N \l_nsk_block_stack_yoffset_dim,
+					]
+					\exp_not:N \draw [
+						fill=\l_nsk_block_fill_tl,
+						draw=\l_nsk_block_border_color_tl,
+						line~width=\dim_use:N \l_nsk_block_border_size_dim,
+						\l_tmpa_tl
+						\l_nsk_block_stack_opts_tl
+					]
+					\l_tmpb_tl ;
+					\exp_not:N \end{scope}
+				}
+			}
+		}
+	}
+}
+
+% ==============================================================================
+% Extrusion: Create reference node for positioning/connections
+% ==============================================================================
+\cs_new_protected:Npn \__nsk_ext_create_reference_node:
+{
+	\node[
+		name=\l_nsk_block_id_tl,
+		at={(\l_nsk_block_x_dim, \l_nsk_block_y_dim)},
+		minimum~width=\l_nsk_block_width_dim,
+		minimum~height=\l_nsk_block_height_dim,
+		inner~sep=0pt, draw=none, fill=none,
+	] {};
+}
+
+% Helper: draw a single connecting edge from base point to its cap counterpart
+\cs_new_protected:Npn \__nsk_ext_contour_edge:nn #1 #2
+{
+	\draw [draw=\l_nsk_block_border_color_tl,
+		line~width=\dim_use:N \l_nsk_block_border_size_dim,
+		draw~opacity=\l_nsk_block_opacity_tl]
+	(#1, #2) --
+	([shift={(\l__nsk_ext_dx_dim, \l__nsk_ext_dy_dim)}] #1, #2);
+}
+
+% ==============================================================================
+% Extrusion: Draw outer contour (silhouette) of the 3D block
+%
+% The contour traces a closed path around the outer visible edges.
+% For each view, the contour connects base and cap vertices.
+%
+% The contour path depends on which sides are visible:
+%   right+bottom: NW_b → NE_b → NE_c → SE_c → SW_c → SW_b → cycle
+%   right+top:    SW_b → SE_b → SE_c → NE_c → NW_c → NW_b → cycle
+%   left+bottom:  NE_b → SE_b → SW_b → SW_c → NW_c → NE_c → cycle (reversed)
+%   left+top:     SE_b → NE_b → NW_b → NW_c → SW_c → SE_c → cycle
+%
+% _b = base, _c = cap
+% ==============================================================================
+\cs_new_protected:Npn \__nsk_ext_draw_contour:
+{
+	\bool_if:NT \l__nsk_ext_border_bool
+	{
+		\__nsk_ext_has_rounding:
+		\bool_if:NTF \l_tmpa_bool
+		{
+			% Rounded corners: draw connecting edges at fillet arc endpoints,
+			% plus the base face rounded-rectangle border.
+			% Each visible corner gets 2 lines (start + end of fillet arc).
+			% Skip cap border to avoid ghosting through opaque side faces.
+			\bool_if:nT { \l__nsk_ext_vis_right_bool && \l__nsk_ext_vis_bottom_bool }
+			{
+				% NE corner: top-side and right-side arc endpoints
+				\__nsk_ext_contour_edge:nn
+					{ \dim_eval:n { \l__nsk_ext_base_ne_x_dim - \l__nsk_ext_eff_r_ne_dim } }
+					{ \dim_use:N \l__nsk_ext_base_ne_y_dim }
+				\__nsk_ext_contour_edge:nn
+					{ \dim_use:N \l__nsk_ext_base_ne_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_base_ne_y_dim - \l__nsk_ext_eff_r_ne_dim } }
+				% SW corner: bottom-side and left-side arc endpoints
+				\__nsk_ext_contour_edge:nn
+					{ \dim_eval:n { \l__nsk_ext_base_sw_x_dim + \l__nsk_ext_eff_r_sw_dim } }
+					{ \dim_use:N \l__nsk_ext_base_sw_y_dim }
+				\__nsk_ext_contour_edge:nn
+					{ \dim_use:N \l__nsk_ext_base_sw_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_base_sw_y_dim + \l__nsk_ext_eff_r_sw_dim } }
+				% SE corner (interior): right-side and bottom-side arc endpoints
+				\__nsk_ext_contour_edge:nn
+					{ \dim_use:N \l__nsk_ext_base_se_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_base_se_y_dim + \l__nsk_ext_eff_r_se_dim } }
+				\__nsk_ext_contour_edge:nn
+					{ \dim_eval:n { \l__nsk_ext_base_se_x_dim - \l__nsk_ext_eff_r_se_dim } }
+					{ \dim_use:N \l__nsk_ext_base_se_y_dim }
+			}
+			\bool_if:nT { \l__nsk_ext_vis_right_bool && ! \l__nsk_ext_vis_bottom_bool }
+			{
+				% SE corner: right-side and bottom-side arc endpoints
+				\__nsk_ext_contour_edge:nn
+					{ \dim_use:N \l__nsk_ext_base_se_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_base_se_y_dim + \l__nsk_ext_eff_r_se_dim } }
+				\__nsk_ext_contour_edge:nn
+					{ \dim_eval:n { \l__nsk_ext_base_se_x_dim - \l__nsk_ext_eff_r_se_dim } }
+					{ \dim_use:N \l__nsk_ext_base_se_y_dim }
+				% NW corner: top-side and left-side arc endpoints
+				\__nsk_ext_contour_edge:nn
+					{ \dim_eval:n { \l__nsk_ext_base_nw_x_dim + \l__nsk_ext_eff_r_nw_dim } }
+					{ \dim_use:N \l__nsk_ext_base_nw_y_dim }
+				\__nsk_ext_contour_edge:nn
+					{ \dim_use:N \l__nsk_ext_base_nw_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_base_nw_y_dim - \l__nsk_ext_eff_r_nw_dim } }
+				% NE corner (interior): top-side and right-side arc endpoints
+				\__nsk_ext_contour_edge:nn
+					{ \dim_eval:n { \l__nsk_ext_base_ne_x_dim - \l__nsk_ext_eff_r_ne_dim } }
+					{ \dim_use:N \l__nsk_ext_base_ne_y_dim }
+				\__nsk_ext_contour_edge:nn
+					{ \dim_use:N \l__nsk_ext_base_ne_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_base_ne_y_dim - \l__nsk_ext_eff_r_ne_dim } }
+			}
+			\bool_if:nT { \l__nsk_ext_vis_left_bool && \l__nsk_ext_vis_bottom_bool }
+			{
+				% NW corner: top-side and left-side arc endpoints
+				\__nsk_ext_contour_edge:nn
+					{ \dim_eval:n { \l__nsk_ext_base_nw_x_dim + \l__nsk_ext_eff_r_nw_dim } }
+					{ \dim_use:N \l__nsk_ext_base_nw_y_dim }
+				\__nsk_ext_contour_edge:nn
+					{ \dim_use:N \l__nsk_ext_base_nw_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_base_nw_y_dim - \l__nsk_ext_eff_r_nw_dim } }
+				% SE corner: right-side and bottom-side arc endpoints
+				\__nsk_ext_contour_edge:nn
+					{ \dim_use:N \l__nsk_ext_base_se_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_base_se_y_dim + \l__nsk_ext_eff_r_se_dim } }
+				\__nsk_ext_contour_edge:nn
+					{ \dim_eval:n { \l__nsk_ext_base_se_x_dim - \l__nsk_ext_eff_r_se_dim } }
+					{ \dim_use:N \l__nsk_ext_base_se_y_dim }
+				% SW corner (interior): bottom-side and left-side arc endpoints
+				\__nsk_ext_contour_edge:nn
+					{ \dim_eval:n { \l__nsk_ext_base_sw_x_dim + \l__nsk_ext_eff_r_sw_dim } }
+					{ \dim_use:N \l__nsk_ext_base_sw_y_dim }
+				\__nsk_ext_contour_edge:nn
+					{ \dim_use:N \l__nsk_ext_base_sw_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_base_sw_y_dim + \l__nsk_ext_eff_r_sw_dim } }
+			}
+			\bool_if:nT { \l__nsk_ext_vis_left_bool && ! \l__nsk_ext_vis_bottom_bool }
+			{
+				% NE corner: top-side and right-side arc endpoints
+				\__nsk_ext_contour_edge:nn
+					{ \dim_eval:n { \l__nsk_ext_base_ne_x_dim - \l__nsk_ext_eff_r_ne_dim } }
+					{ \dim_use:N \l__nsk_ext_base_ne_y_dim }
+				\__nsk_ext_contour_edge:nn
+					{ \dim_use:N \l__nsk_ext_base_ne_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_base_ne_y_dim - \l__nsk_ext_eff_r_ne_dim } }
+				% SW corner: bottom-side and left-side arc endpoints
+				\__nsk_ext_contour_edge:nn
+					{ \dim_eval:n { \l__nsk_ext_base_sw_x_dim + \l__nsk_ext_eff_r_sw_dim } }
+					{ \dim_use:N \l__nsk_ext_base_sw_y_dim }
+				\__nsk_ext_contour_edge:nn
+					{ \dim_use:N \l__nsk_ext_base_sw_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_base_sw_y_dim + \l__nsk_ext_eff_r_sw_dim } }
+				% NW corner (interior): top-side and left-side arc endpoints
+				\__nsk_ext_contour_edge:nn
+					{ \dim_eval:n { \l__nsk_ext_base_nw_x_dim + \l__nsk_ext_eff_r_nw_dim } }
+					{ \dim_use:N \l__nsk_ext_base_nw_y_dim }
+				\__nsk_ext_contour_edge:nn
+					{ \dim_use:N \l__nsk_ext_base_nw_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_base_nw_y_dim - \l__nsk_ext_eff_r_nw_dim } }
+			}
+
+			% DEBUG: bright red line to verify drawing works here
+			\draw [draw=red, line~width=2pt]
+			(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim) --
+			(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim);
+			% Draw base face rounded-rectangle border on top of fill.
+			\draw [
+				fill=none,
+				draw=\l_nsk_block_border_color_tl,
+				line~width=\dim_use:N \l_nsk_block_border_size_dim,
+				draw~opacity=\l_nsk_block_opacity_tl,
+				rounded~corners=\dim_use:N \l__nsk_ext_eff_r_ne_dim,
+			]
+			(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim) rectangle
+			(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim);
+		}
+		{
+			% Sharp corners: draw contour as a single closed path
+			% The contour connects base and cap vertices in the right order
+			\bool_if:nT { \l__nsk_ext_vis_right_bool && \l__nsk_ext_vis_bottom_bool }
+			{
+				% Outer silhouette: base NW→NE→cap NE→SE→SW→base SW→cycle
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl, fill=none]
+				(\dim_use:N \l__nsk_ext_base_nw_x_dim, \dim_use:N \l__nsk_ext_base_nw_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_ne_x_dim, \dim_use:N \l__nsk_ext_cap_ne_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_se_x_dim, \dim_use:N \l__nsk_ext_cap_se_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_sw_x_dim, \dim_use:N \l__nsk_ext_cap_sw_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim) -- cycle;
+				% Interior: SE extrusion (right/bottom separator)
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl]
+				(\dim_use:N \l__nsk_ext_base_se_x_dim, \dim_use:N \l__nsk_ext_base_se_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_se_x_dim, \dim_use:N \l__nsk_ext_cap_se_y_dim);
+				% Interior: base right edge (base/right separator)
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl]
+				(\dim_use:N \l__nsk_ext_base_se_x_dim, \dim_use:N \l__nsk_ext_base_se_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim);
+				% Interior: base bottom edge (base/bottom separator)
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl]
+				(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_se_x_dim, \dim_use:N \l__nsk_ext_base_se_y_dim);
+			}
+			\bool_if:nT { \l__nsk_ext_vis_right_bool && ! \l__nsk_ext_vis_bottom_bool }
+			{
+				% right+top: outer silhouette
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl, fill=none]
+				(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_se_x_dim, \dim_use:N \l__nsk_ext_base_se_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_se_x_dim, \dim_use:N \l__nsk_ext_cap_se_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_ne_x_dim, \dim_use:N \l__nsk_ext_cap_ne_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_nw_x_dim, \dim_use:N \l__nsk_ext_cap_nw_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_nw_x_dim, \dim_use:N \l__nsk_ext_base_nw_y_dim) -- cycle;
+				% Interior: NE extrusion (right/top separator)
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl]
+				(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_ne_x_dim, \dim_use:N \l__nsk_ext_cap_ne_y_dim);
+				% Interior: base top edge (base/top separator)
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl]
+				(\dim_use:N \l__nsk_ext_base_nw_x_dim, \dim_use:N \l__nsk_ext_base_nw_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim);
+				% Interior: base right edge (base/right separator)
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl]
+				(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_se_x_dim, \dim_use:N \l__nsk_ext_base_se_y_dim);
+			}
+			\bool_if:nT { \l__nsk_ext_vis_left_bool && \l__nsk_ext_vis_bottom_bool }
+			{
+				% left+bottom: outer silhouette
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl, fill=none]
+				(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_nw_x_dim, \dim_use:N \l__nsk_ext_base_nw_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_nw_x_dim, \dim_use:N \l__nsk_ext_cap_nw_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_sw_x_dim, \dim_use:N \l__nsk_ext_cap_sw_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_se_x_dim, \dim_use:N \l__nsk_ext_cap_se_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_se_x_dim, \dim_use:N \l__nsk_ext_base_se_y_dim) -- cycle;
+				% Interior: SW extrusion (left/bottom separator)
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl]
+				(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_sw_x_dim, \dim_use:N \l__nsk_ext_cap_sw_y_dim);
+				% Interior: base bottom edge (base/bottom separator)
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl]
+				(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_se_x_dim, \dim_use:N \l__nsk_ext_base_se_y_dim);
+				% Interior: base left edge (base/left separator)
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl]
+				(\dim_use:N \l__nsk_ext_base_nw_x_dim, \dim_use:N \l__nsk_ext_base_nw_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim);
+			}
+			\bool_if:nT { \l__nsk_ext_vis_left_bool && ! \l__nsk_ext_vis_bottom_bool }
+			{
+				% left+top: outer silhouette
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl, fill=none]
+				(\dim_use:N \l__nsk_ext_base_se_x_dim, \dim_use:N \l__nsk_ext_base_se_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_ne_x_dim, \dim_use:N \l__nsk_ext_cap_ne_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_nw_x_dim, \dim_use:N \l__nsk_ext_cap_nw_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_sw_x_dim, \dim_use:N \l__nsk_ext_cap_sw_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim) -- cycle;
+				% Interior: NW extrusion (left/top separator)
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl]
+				(\dim_use:N \l__nsk_ext_base_nw_x_dim, \dim_use:N \l__nsk_ext_base_nw_y_dim) --
+				(\dim_use:N \l__nsk_ext_cap_nw_x_dim, \dim_use:N \l__nsk_ext_cap_nw_y_dim);
+				% Interior: base top edge (base/top separator)
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl]
+				(\dim_use:N \l__nsk_ext_base_nw_x_dim, \dim_use:N \l__nsk_ext_base_nw_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim);
+				% Interior: base left edge (base/left separator)
+				\draw [draw=\l_nsk_block_border_color_tl, line~width=\dim_use:N \l_nsk_block_border_size_dim, draw~opacity=\l_nsk_block_opacity_tl]
+				(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim) --
+				(\dim_use:N \l__nsk_ext_base_nw_x_dim, \dim_use:N \l__nsk_ext_base_nw_y_dim);
+			}
+		}
+	}
+}
+
+% ==============================================================================
+% Generic polygon extrusion: Extrude arbitrary N-gon shapes
+%
+% Stores N base vertices in a sequence, computes cap vertices by adding
+% the extrusion offset, then renders: cap → visible side quads → base → contour.
+%
+% Each vertex is stored as {x_dim}{y_dim} in the sequences.
+% Side face visibility is tested per-edge using the 2D cross product of
+% the edge tangent and extrusion offset (backface culling).
+% ==============================================================================
+
+% Vertex sequences: each item is {x_dim_value}{y_dim_value}
+\seq_new:N \l__nsk_ext_poly_base_x_seq
+\seq_new:N \l__nsk_ext_poly_base_y_seq
+\seq_new:N \l__nsk_ext_poly_cap_x_seq
+\seq_new:N \l__nsk_ext_poly_cap_y_seq
+\int_new:N \l__nsk_ext_poly_count_int
+
+% Build base vertices for circle/ellipse (36-point approximation)
+\cs_new_protected:Npn \__nsk_ext_poly_build_ellipse:
+{
+	\seq_clear:N \l__nsk_ext_poly_base_x_seq
+	\seq_clear:N \l__nsk_ext_poly_base_y_seq
+	\int_set:Nn \l__nsk_ext_poly_count_int { 36 }
+	\dim_set:Nn \l_tmpa_dim { \l_nsk_block_width_dim / 2 }   % half-width
+	\dim_set:Nn \l_tmpb_dim { \l_nsk_block_height_dim / 2 }  % half-height
+	\int_step_inline:nnn { 0 } { 35 }
+	{
+		\fp_set:Nn \l_tmpa_fp { ##1 * 10 }
+		\dim_set:Nn \l__nsk_ext_side_a_x_dim {
+			\fp_to_dim:n {
+				\dim_to_fp:n { \l_nsk_block_x_dim } +
+				\dim_to_fp:n { \l_tmpa_dim } * cosd(\l_tmpa_fp)
+			}
+		}
+		\dim_set:Nn \l__nsk_ext_side_a_y_dim {
+			\fp_to_dim:n {
+				\dim_to_fp:n { \l_nsk_block_y_dim } +
+				\dim_to_fp:n { \l_tmpb_dim } * sind(\l_tmpa_fp)
+			}
+		}
+		\seq_put_right:Nx \l__nsk_ext_poly_base_x_seq { \dim_use:N \l__nsk_ext_side_a_x_dim }
+		\seq_put_right:Nx \l__nsk_ext_poly_base_y_seq { \dim_use:N \l__nsk_ext_side_a_y_dim }
+	}
+}
+
+% Build base vertices for diamond (4 cardinal points: E, N, W, S)
+\cs_new_protected:Npn \__nsk_ext_poly_build_diamond:
+{
+	\seq_clear:N \l__nsk_ext_poly_base_x_seq
+	\seq_clear:N \l__nsk_ext_poly_base_y_seq
+	\int_set:Nn \l__nsk_ext_poly_count_int { 4 }
+	% East
+	\seq_put_right:Nx \l__nsk_ext_poly_base_x_seq
+		{ \dim_eval:n { \l_nsk_block_x_dim + \l_nsk_block_width_dim / 2 } }
+	\seq_put_right:Nx \l__nsk_ext_poly_base_y_seq
+		{ \dim_use:N \l_nsk_block_y_dim }
+	% North
+	\seq_put_right:Nx \l__nsk_ext_poly_base_x_seq
+		{ \dim_use:N \l_nsk_block_x_dim }
+	\seq_put_right:Nx \l__nsk_ext_poly_base_y_seq
+		{ \dim_eval:n { \l_nsk_block_y_dim + \l_nsk_block_height_dim / 2 } }
+	% West
+	\seq_put_right:Nx \l__nsk_ext_poly_base_x_seq
+		{ \dim_eval:n { \l_nsk_block_x_dim - \l_nsk_block_width_dim / 2 } }
+	\seq_put_right:Nx \l__nsk_ext_poly_base_y_seq
+		{ \dim_use:N \l_nsk_block_y_dim }
+	% South
+	\seq_put_right:Nx \l__nsk_ext_poly_base_x_seq
+		{ \dim_use:N \l_nsk_block_x_dim }
+	\seq_put_right:Nx \l__nsk_ext_poly_base_y_seq
+		{ \dim_eval:n { \l_nsk_block_y_dim - \l_nsk_block_height_dim / 2 } }
+}
+
+% Build base vertices for regular polygon (N sides, starting at top)
+\cs_new_protected:Npn \__nsk_ext_poly_build_polygon:
+{
+	\seq_clear:N \l__nsk_ext_poly_base_x_seq
+	\seq_clear:N \l__nsk_ext_poly_base_y_seq
+	% Get number of sides from parsed args (default 5)
+	\int_set:Nn \l__nsk_ext_poly_count_int { 5 }
+	\tl_if_empty:NF \l__nsk_parsed_args_tl
+	{
+		\int_set:Nn \l__nsk_ext_poly_count_int { \l__nsk_parsed_args_tl }
+	}
+	\dim_set:Nn \l_tmpa_dim {
+		\dim_min:nn { \l_nsk_block_width_dim } { \l_nsk_block_height_dim } / 2
+	}
+	\int_step_inline:nnn { 0 } { \l__nsk_ext_poly_count_int - 1 }
+	{
+		\fp_set:Nn \l_tmpa_fp { 90 + ##1 * 360 / \l__nsk_ext_poly_count_int }
+		\dim_set:Nn \l__nsk_ext_side_a_x_dim {
+			\l_nsk_block_x_dim +
+			\fp_to_dim:n { \dim_to_fp:n { \l_tmpa_dim } * cosd(\l_tmpa_fp) }
+		}
+		\dim_set:Nn \l__nsk_ext_side_a_y_dim {
+			\l_nsk_block_y_dim +
+			\fp_to_dim:n { \dim_to_fp:n { \l_tmpa_dim } * sind(\l_tmpa_fp) }
+		}
+		\seq_put_right:Nx \l__nsk_ext_poly_base_x_seq { \dim_use:N \l__nsk_ext_side_a_x_dim }
+		\seq_put_right:Nx \l__nsk_ext_poly_base_y_seq { \dim_use:N \l__nsk_ext_side_a_y_dim }
+	}
+}
+
+% Build base vertices for star (2N alternating outer/inner points)
+\cs_new_protected:Npn \__nsk_ext_poly_build_star:
+{
+	\seq_clear:N \l__nsk_ext_poly_base_x_seq
+	\seq_clear:N \l__nsk_ext_poly_base_y_seq
+	% Get number of points from parsed args (default 5)
+	\int_set:Nn \l_tmpa_int { 5 }
+	\tl_if_empty:NF \l__nsk_parsed_args_tl
+	{
+		\int_set:Nn \l_tmpa_int { \l__nsk_parsed_args_tl }
+	}
+	\int_set:Nn \l__nsk_ext_poly_count_int { 2 * \l_tmpa_int }
+	\dim_set:Nn \l_tmpa_dim {
+		\dim_min:nn { \l_nsk_block_width_dim } { \l_nsk_block_height_dim } / 2
+	}
+	% Inner radius = 40% of outer
+	\dim_set:Nn \l_tmpb_dim {
+		\fp_to_dim:n { \dim_to_fp:n { \l_tmpa_dim } * 0.4 }
+	}
+	\int_step_inline:nnn { 0 } { \l__nsk_ext_poly_count_int - 1 }
+	{
+		\int_if_odd:nTF { ##1 }
+		{ \dim_set_eq:NN \l__nsk_ext_side_c_x_dim \l_tmpb_dim }
+		{ \dim_set_eq:NN \l__nsk_ext_side_c_x_dim \l_tmpa_dim }
+		\fp_set:Nn \l_tmpa_fp { 90 + ##1 * 180 / \l_tmpa_int }
+		\dim_set:Nn \l__nsk_ext_side_a_x_dim {
+			\l_nsk_block_x_dim +
+			\fp_to_dim:n { \dim_to_fp:n { \l__nsk_ext_side_c_x_dim } * cosd(\l_tmpa_fp) }
+		}
+		\dim_set:Nn \l__nsk_ext_side_a_y_dim {
+			\l_nsk_block_y_dim +
+			\fp_to_dim:n { \dim_to_fp:n { \l__nsk_ext_side_c_x_dim } * sind(\l_tmpa_fp) }
+		}
+		\seq_put_right:Nx \l__nsk_ext_poly_base_x_seq { \dim_use:N \l__nsk_ext_side_a_x_dim }
+		\seq_put_right:Nx \l__nsk_ext_poly_base_y_seq { \dim_use:N \l__nsk_ext_side_a_y_dim }
+	}
+}
+
+% Compute cap vertices from base vertices + extrusion offset
+\cs_new_protected:Npn \__nsk_ext_poly_compute_cap:
+{
+	\seq_clear:N \l__nsk_ext_poly_cap_x_seq
+	\seq_clear:N \l__nsk_ext_poly_cap_y_seq
+	\int_step_inline:nnn { 1 } { \l__nsk_ext_poly_count_int }
+	{
+		\dim_set:Nn \l__nsk_ext_side_a_x_dim {
+			\seq_item:Nn \l__nsk_ext_poly_base_x_seq { ##1 } + \l__nsk_ext_dx_dim
+		}
+		\dim_set:Nn \l__nsk_ext_side_a_y_dim {
+			\seq_item:Nn \l__nsk_ext_poly_base_y_seq { ##1 } + \l__nsk_ext_dy_dim
+		}
+		\seq_put_right:Nx \l__nsk_ext_poly_cap_x_seq { \dim_use:N \l__nsk_ext_side_a_x_dim }
+		\seq_put_right:Nx \l__nsk_ext_poly_cap_y_seq { \dim_use:N \l__nsk_ext_side_a_y_dim }
+	}
+}
+
+% Build a polygon path token list from a sequence of vertices
+% #1 = x sequence, #2 = y sequence, #3 = count
+% Result in \l__nsk_ext_face_path_tl
+\cs_new_protected:Npn \__nsk_ext_poly_build_path:NNn #1 #2 #3
+{
+	\tl_clear:N \l__nsk_ext_face_path_tl
+	\int_step_inline:nnn { 1 } { #3 }
+	{
+		\tl_set:Nx \l_tmpa_tl { \seq_item:Nn #1 { ##1 } }
+		\tl_set:Nx \l_tmpb_tl { \seq_item:Nn #2 { ##1 } }
+		\int_compare:nNnTF { ##1 } = { 1 }
+		{
+			\tl_put_right:Nx \l__nsk_ext_face_path_tl { (\l_tmpa_tl, \l_tmpb_tl) }
+		}
+		{
+			\tl_put_right:Nx \l__nsk_ext_face_path_tl { -- (\l_tmpa_tl, \l_tmpb_tl) }
+		}
+	}
+	\tl_put_right:Nn \l__nsk_ext_face_path_tl { -- cycle }
+}
+
+% Determine auto-shade color for a side quad using edge midpoint normal direction.
+% The shade factor is interpolated based on the outward normal angle.
+% #1 = edge midpoint outward normal angle (degrees, 0=right, 90=up)
+% Result in \l__nsk_ext_side_shade_tl
+\tl_new:N \l__nsk_ext_side_shade_tl
+\cs_new_protected:Npn \__nsk_ext_poly_side_color:n #1
+{
+	% Map angle to shade factor: top(90°)=0.15, right(0°)=0.5, bottom(-90°)=1.0, left(180°)=0.85
+	% Use simple interpolation based on angle
+	\fp_set:Nn \l_tmpa_fp { #1 }
+	% Normalize to [0,360)
+	\fp_compare:nNnT { \l_tmpa_fp } < { 0 } { \fp_add:Nn \l_tmpa_fp { 360 } }
+	% Determine factor based on quadrant
+	\fp_compare:nNnTF { \l_tmpa_fp } < { 90 }
+	{
+		% 0-90: right(0.5) to top(0.15)
+		\fp_set:Nn \l_tmpb_fp { 0.5 + (0.15 - 0.5) * \l_tmpa_fp / 90 }
+	}
+	{
+		\fp_compare:nNnTF { \l_tmpa_fp } < { 180 }
+		{
+			% 90-180: top(0.15) to left(0.85)
+			\fp_set:Nn \l_tmpb_fp { 0.15 + (0.85 - 0.15) * (\l_tmpa_fp - 90) / 90 }
+		}
+		{
+			\fp_compare:nNnTF { \l_tmpa_fp } < { 270 }
+			{
+				% 180-270: left(0.85) to bottom(1.0)
+				\fp_set:Nn \l_tmpb_fp { 0.85 + (1.0 - 0.85) * (\l_tmpa_fp - 180) / 90 }
+			}
+			{
+				% 270-360: bottom(1.0) to right(0.5)
+				\fp_set:Nn \l_tmpb_fp { 1.0 + (0.5 - 1.0) * (\l_tmpa_fp - 270) / 90 }
+			}
+		}
+	}
+	% Compute mix percentage: mix = 100 * (1 - shading * factor)
+	\fp_set:Nn \l_tmpa_fp { 100 * (1 - \l__nsk_ext_shading_fp * \l_tmpb_fp) }
+	% Determine base color (side-fill override or block fill)
+	\tl_if_blank:VTF \l__nsk_ext_side_fill_tl
+	{ \tl_set_eq:NN \l_tmpa_tl \l_nsk_block_fill_tl }
+	{ \tl_set_eq:NN \l_tmpa_tl \l__nsk_ext_side_fill_tl }
+	% Build color expression
+	\tl_set:Nx \l__nsk_ext_side_shade_tl {
+		\l_tmpa_tl ! \fp_to_decimal:n { \l_tmpa_fp } ! nskBg
+	}
+}
+
+% Draw one pass of side faces for polygon extrusion.
+% When \l__nsk_ext_vis_right_bool is false: draw back-facing sides.
+% When \l__nsk_ext_vis_right_bool is true: draw front-facing sides.
+\cs_new_protected:Npn \__nsk_ext_poly_draw_sides:
+{
+	\int_step_inline:nnn { 1 } { \l__nsk_ext_poly_count_int }
+	{
+		% Current and next vertex indices (wrap around)
+		\int_set:Nn \l_tmpa_int { ##1 }
+		\int_set:Nn \l_tmpb_int { \l_tmpa_int + 1 }
+		\int_compare:nNnT { \l_tmpb_int } > { \l__nsk_ext_poly_count_int }
+		{ \int_set:Nn \l_tmpb_int { 1 } }
+
+		% Get base vertices for this edge
+		\dim_set:Nn \l__nsk_ext_side_a_x_dim { \seq_item:Nn \l__nsk_ext_poly_base_x_seq { \l_tmpa_int } }
+		\dim_set:Nn \l__nsk_ext_side_a_y_dim { \seq_item:Nn \l__nsk_ext_poly_base_y_seq { \l_tmpa_int } }
+		\dim_set:Nn \l__nsk_ext_side_b_x_dim { \seq_item:Nn \l__nsk_ext_poly_base_x_seq { \l_tmpb_int } }
+		\dim_set:Nn \l__nsk_ext_side_b_y_dim { \seq_item:Nn \l__nsk_ext_poly_base_y_seq { \l_tmpb_int } }
+
+		% Edge vector (in cm for numerical stability)
+		\fp_set:Nn \l_tmpa_fp {
+			\dim_to_decimal_in_unit:nn { \l__nsk_ext_side_b_x_dim - \l__nsk_ext_side_a_x_dim } { 1cm }
+		}
+		\fp_set:Nn \l_tmpb_fp {
+			\dim_to_decimal_in_unit:nn { \l__nsk_ext_side_b_y_dim - \l__nsk_ext_side_a_y_dim } { 1cm }
+		}
+
+		% Cross product: edge_x * dy - edge_y * dx
+		% Visible (front-facing) when cross < 0
+		\bool_set_false:N \l__nsk_ext_vis_top_bool
+		\fp_compare:nNnT {
+			\l_tmpa_fp * \dim_to_fp:n { \l__nsk_ext_dy_dim }
+			- \l_tmpb_fp * \dim_to_fp:n { \l__nsk_ext_dx_dim }
+		} < { 0 }
+		{ \bool_set_true:N \l__nsk_ext_vis_top_bool }
+
+		% Draw if this pass matches the face direction
+		% Front pass (\l__nsk_ext_vis_right_bool=true): draw when vis_top=true
+		% Back pass (\l__nsk_ext_vis_right_bool=false): draw when vis_top=false
+		\bool_if:nT {
+			( \l__nsk_ext_vis_right_bool && \l__nsk_ext_vis_top_bool ) ||
+			( ! \l__nsk_ext_vis_right_bool && ! \l__nsk_ext_vis_top_bool )
+		}
+		{
+			% Get cap vertices for this edge
+			\dim_set:Nn \l__nsk_ext_side_d_x_dim { \seq_item:Nn \l__nsk_ext_poly_cap_x_seq { \l_tmpa_int } }
+			\dim_set:Nn \l__nsk_ext_side_d_y_dim { \seq_item:Nn \l__nsk_ext_poly_cap_y_seq { \l_tmpa_int } }
+			\dim_set:Nn \l__nsk_ext_side_c_x_dim { \seq_item:Nn \l__nsk_ext_poly_cap_x_seq { \l_tmpb_int } }
+			\dim_set:Nn \l__nsk_ext_side_c_y_dim { \seq_item:Nn \l__nsk_ext_poly_cap_y_seq { \l_tmpb_int } }
+
+			% Compute outward normal angle for per-face shading
+			\fp_set:Nn \l_tmpa_fp { atand(-\l_tmpa_fp, \l_tmpb_fp) }
+			\__nsk_ext_poly_side_color:n { \l_tmpa_fp }
+
+			% Draw side quad: base_i -> base_{i+1} -> cap_{i+1} -> cap_i
+			\use:x {
+				\exp_not:N \draw [
+					fill=\l__nsk_ext_side_shade_tl,
+					draw=none,
+					fill~opacity=\l_nsk_block_opacity_tl,
+				]
+				(\dim_use:N \l__nsk_ext_side_a_x_dim, \dim_use:N \l__nsk_ext_side_a_y_dim) --
+				(\dim_use:N \l__nsk_ext_side_b_x_dim, \dim_use:N \l__nsk_ext_side_b_y_dim) --
+				(\dim_use:N \l__nsk_ext_side_c_x_dim, \dim_use:N \l__nsk_ext_side_c_y_dim) --
+				(\dim_use:N \l__nsk_ext_side_d_x_dim, \dim_use:N \l__nsk_ext_side_d_y_dim) -- cycle;
+			}
+		}
+	}
+}
+
+% Render a generic polygon extrusion.
+% Assumes base and cap vertex sequences are already computed.
+% Draws: cap → back-facing sides → front-facing sides → base → contour
+\cs_new_protected:Npn \__nsk_ext_poly_render:
+{
+	% ---- Cap face (back face, no border) ----
+	\__nsk_ext_poly_build_path:NNn
+		\l__nsk_ext_poly_cap_x_seq \l__nsk_ext_poly_cap_y_seq
+		{ \l__nsk_ext_poly_count_int }
+	\use:x {
+		\exp_not:N \draw [
+			fill=\l__nsk_ext_color_cap_tl,
+			draw=none,
+			fill~opacity=\l_nsk_block_opacity_tl,
+		] \l__nsk_ext_face_path_tl ;
+	}
+
+	% ---- Side faces (two passes: back-facing then front-facing) ----
+	\bool_set_false:N \l__nsk_ext_vis_right_bool
+	\__nsk_ext_poly_draw_sides:
+	\bool_set_true:N \l__nsk_ext_vis_right_bool
+	\__nsk_ext_poly_draw_sides:
+
+	% ---- Base face (front face, with optional pattern) ----
+	\__nsk_ext_poly_build_path:NNn
+		\l__nsk_ext_poly_base_x_seq \l__nsk_ext_poly_base_y_seq
+		{ \l__nsk_ext_poly_count_int }
+	% Build pattern postaction
+	\tl_clear:N \l_tmpa_tl
+	\tl_if_blank:VF \l_nsk_block_pattern_tl
+	{
+		\tl_set:Nx \l_tmpa_tl {
+			postaction={
+				pattern=\l_nsk_block_pattern_tl,
+				pattern~color=\l_nsk_block_pattern_color_tl,
+			},
+		}
+	}
+	\use:x {
+		\exp_not:N \draw [
+			fill=\l__nsk_ext_color_base_tl,
+			draw=\l_nsk_block_border_color_tl,
+			line~width=\dim_use:N \l_nsk_block_border_size_dim,
+			fill~opacity=\l_nsk_block_opacity_tl,
+			draw~opacity=\l_nsk_block_opacity_tl,
+			\l_tmpa_tl
+		] \l__nsk_ext_face_path_tl ;
+	}
+
+	% ---- Contour: extrusion edges at silhouette boundary ----
+	\bool_if:NT \l__nsk_ext_border_bool
+	{
+		\int_step_inline:nnn { 1 } { \l__nsk_ext_poly_count_int }
+		{
+			% Check if this vertex is at a visibility boundary
+			% (adjacent faces have different visibility)
+			\int_set:Nn \l_tmpa_int { ##1 }
+			% Previous edge index
+			\int_set:Nn \l_tmpb_int { \l_tmpa_int - 1 }
+			\int_compare:nNnT { \l_tmpb_int } < { 1 }
+			{ \int_set:Nn \l_tmpb_int { \l__nsk_ext_poly_count_int } }
+
+			% Draw extrusion edge at this vertex (connects base to cap)
+			\tl_set:Nx \l_tmpa_tl { \seq_item:Nn \l__nsk_ext_poly_base_x_seq { \l_tmpa_int } }
+			\tl_set:Nx \l_tmpb_tl { \seq_item:Nn \l__nsk_ext_poly_base_y_seq { \l_tmpa_int } }
+			\tl_set:Nx \l__nsk_ext_side_shade_tl { \seq_item:Nn \l__nsk_ext_poly_cap_x_seq { \l_tmpa_int } }
+			\tl_set:Nx \l__nsk_ext_cap_fill_tl { \seq_item:Nn \l__nsk_ext_poly_cap_y_seq { \l_tmpa_int } }
+			\use:x {
+				\exp_not:N \draw [
+					draw=\l_nsk_block_border_color_tl,
+					line~width=\dim_use:N \l_nsk_block_border_size_dim,
+					draw~opacity=\l_nsk_block_opacity_tl,
+				]
+				(\l_tmpa_tl, \l_tmpb_tl) --
+				(\l__nsk_ext_side_shade_tl, \l__nsk_ext_cap_fill_tl);
+			}
+		}
+	}
+}
+
+% Dispatch helper for polygon shapes: compute cap vertices and render
+\cs_new_protected:Npn \__nsk_ext_poly_dispatch:
+{
+	\__nsk_ext_poly_compute_cap:
+	\__nsk_ext_poly_render:
+}
+
+% ==============================================================================
+% Extrusion: Main orchestrator
+%
+% Draw order (painter's algorithm):
+% 1. Cap face (farthest from camera)
+% 2. Back-facing sides (farther)
+% 3. Front-facing sides (closer)
+% 4. Base face (closest to camera)
+% 5. Reference node
+% 6. Text on base face
+% ==============================================================================
+\cs_new_protected:Npn \__nsk_extrude_render_block:
+{
+	% Disable shadow: 3D extrusion provides its own depth cue
+	\bool_set_false:N \l_nsk_block_shadow_bool
+
+	% Resolve pattern alias (needed for base face pattern)
+	\nsk__resolve_pattern_alias:
+
+	% Step 1: Resolve positioning (handle pos=, last-pos=)
+	\tl_if_blank:VF \l_nsk_block_pos_tl
+	{
+		% Create temporary node and extract center
+		\tl_clear:N \l_tmpa_tl
+		\tl_put_right:NV \l_tmpa_tl \l_nsk_block_pos_tl
+		\tl_if_blank:VF \l_nsk_block_anchor_tl
+		{
+			\tl_put_right:Nn \l_tmpa_tl { , anchor= }
+			\tl_put_right:NV \l_tmpa_tl \l_nsk_block_anchor_tl
+		}
+		\use:x {
+			\exp_not:N \node [
+				\l_tmpa_tl,
+				minimum~width=\dim_use:N \l_nsk_block_width_dim,
+				minimum~height=\dim_use:N \l_nsk_block_height_dim,
+				inner~sep=0pt,
+			] (nsk@ext@temp@pos) {};
+		}
+		\path (nsk@ext@temp@pos.center);
+		\pgfgetlastxy{\l_tmpa_tl}{\l_tmpb_tl}
+		\dim_set:Nn \l_nsk_block_x_dim { \l_tmpa_tl }
+		\dim_set:Nn \l_nsk_block_y_dim { \l_tmpb_tl }
+	}
+
+	% Step 2: Compute extrusion offset
+	\__nsk_ext_compute_offset:
+
+	% Step 3: Compute face colors
+	\__nsk_ext_compute_colors:
+
+	% Step 4: Dispatch by shape type
+	\str_case:VnF \l_nsk_block_type_tl
+	{
+		{ circle }          { \__nsk_ext_poly_build_ellipse: \__nsk_ext_poly_dispatch: }
+		{ ellipse }         { \__nsk_ext_poly_build_ellipse: \__nsk_ext_poly_dispatch: }
+		{ diamond }         { \__nsk_ext_poly_build_diamond: \__nsk_ext_poly_dispatch: }
+		{ regular~polygon } { \__nsk_ext_poly_build_polygon: \__nsk_ext_poly_dispatch: }
+		{ star }            { \__nsk_ext_poly_build_star:    \__nsk_ext_poly_dispatch: }
+	}
+	{
+		% Default: rectangle extrusion (supports rounding, fillets, contour)
+		\__nsk_ext_compute_visibility:
+
+		% Detect per-corner modes and compute effective radii
+		\nsk__determine_percorner_mode:
+		\__nsk_ext_determine_round_percorner:
+		\__nsk_ext_compute_effective_radii:
+
+		% Compute rectangle vertices
+		\__nsk_ext_compute_vertices:
+
+		% Draw stack copies behind main block
+		\__nsk_ext_draw_stack:
+
+		% Draw faces in painter's algorithm order
+		\__nsk_ext_draw_cap_face:
+
+		\bool_if:NT \l__nsk_ext_vis_top_bool    { \__nsk_ext_draw_top_side: }
+		\bool_if:NT \l__nsk_ext_vis_bottom_bool { \__nsk_ext_draw_bottom_side: }
+		\bool_if:NT \l__nsk_ext_vis_right_bool  { \__nsk_ext_draw_right_side: }
+		\bool_if:NT \l__nsk_ext_vis_left_bool   { \__nsk_ext_draw_left_side: }
+
+		\__nsk_ext_draw_fillets:
+		\__nsk_ext_draw_base_face:
+		\__nsk_ext_draw_contour:
+	}
+
+	% Step 7: Create reference node
+	\__nsk_ext_create_reference_node:
+
+	% Step 8: Render text on base face
+	\nsk__render_all_text:
+}
+
 \ExplSyntaxOff
 %    \end{macrocode}
 %</package>
