@@ -1260,13 +1260,12 @@
 	\__nsk_ext_has_rounding:
 	\bool_if:NTF \l_tmpa_bool
 	{
-		% Build per-corner rounded rect path for base face (fill only, no border).
-		% The border is drawn separately by \__nsk_ext_draw_contour: to avoid
-		% fill-over-stroke rendering issues with arc paths.
+		% Build per-corner rounded rect path for base face
 		\__nsk_ext_setup_face_base:
 		\__nsk_ext_resolve_face_radii:
 		\__nsk_ext_build_face_path:
 
+		% Draw fill
 		\use:x {
 			\exp_not:N \draw [
 				fill=\l__nsk_ext_color_base_tl,
@@ -1274,6 +1273,19 @@
 				fill~opacity=\l_nsk_block_opacity_tl,
 				\l_tmpa_tl
 			] \l__nsk_ext_face_path_tl ;
+		}
+
+		% Draw border on top of fill if borders are enabled
+		\bool_if:NT \l__nsk_ext_border_bool
+		{
+			\use:x {
+				\exp_not:N \draw [
+					fill=none,
+					draw=\l_nsk_block_border_color_tl,
+					line~width=\dim_use:N \l_nsk_block_border_size_dim,
+					draw~opacity=\l_nsk_block_opacity_tl,
+				] \l__nsk_ext_face_path_tl ;
+			}
 		}
 	}
 	{
@@ -1877,6 +1889,25 @@
 	([shift={(\l__nsk_ext_dx_dim, \l__nsk_ext_dy_dim)}] #1, #2);
 }
 
+% Helper: draw a line between two arbitrary points (for cap face silhouette edges)
+\cs_new_protected:Npn \__nsk_ext_contour_line:nnnn #1 #2 #3 #4
+{
+	\draw [draw=\l_nsk_block_border_color_tl,
+		line~width=\dim_use:N \l_nsk_block_border_size_dim,
+		draw~opacity=\l_nsk_block_opacity_tl]
+	(#1, #2) -- (#3, #4);
+}
+
+% Helper: draw an arc (for cap face rounded corner on the silhouette)
+% #1, #2 = start point x, y; #3 = start angle; #4 = end angle; #5 = radius
+\cs_new_protected:Npn \__nsk_ext_contour_arc:nnnnn #1 #2 #3 #4 #5
+{
+	\draw [draw=\l_nsk_block_border_color_tl,
+		line~width=\dim_use:N \l_nsk_block_border_size_dim,
+		draw~opacity=\l_nsk_block_opacity_tl]
+	(#1, #2) arc[start~angle=#3, end~angle=#4, radius=#5];
+}
+
 % ==============================================================================
 % Extrusion: Draw outer contour (silhouette) of the 3D block
 %
@@ -1899,120 +1930,224 @@
 		\bool_if:NTF \l_tmpa_bool
 		{
 			% Rounded corners: draw connecting edges at fillet arc endpoints,
-			% plus the base face rounded-rectangle border.
-			% Each visible corner gets 2 lines (start + end of fillet arc).
-			% Skip cap border to avoid ghosting through opaque side faces.
+			% cap face silhouette edges (straight portions + all corner arcs).
+			% The base face draws its own rounded border.
 			\bool_if:nT { \l__nsk_ext_vis_right_bool && \l__nsk_ext_vis_bottom_bool }
 			{
-				% NE corner: top-side and right-side arc endpoints
+				% NE corner: top-side and right-side connecting edges
 				\__nsk_ext_contour_edge:nn
 					{ \dim_eval:n { \l__nsk_ext_base_ne_x_dim - \l__nsk_ext_eff_r_ne_dim } }
 					{ \dim_use:N \l__nsk_ext_base_ne_y_dim }
 				\__nsk_ext_contour_edge:nn
 					{ \dim_use:N \l__nsk_ext_base_ne_x_dim }
 					{ \dim_eval:n { \l__nsk_ext_base_ne_y_dim - \l__nsk_ext_eff_r_ne_dim } }
-				% SW corner: bottom-side and left-side arc endpoints
+				% SW corner: bottom-side and left-side connecting edges
 				\__nsk_ext_contour_edge:nn
 					{ \dim_eval:n { \l__nsk_ext_base_sw_x_dim + \l__nsk_ext_eff_r_sw_dim } }
 					{ \dim_use:N \l__nsk_ext_base_sw_y_dim }
 				\__nsk_ext_contour_edge:nn
 					{ \dim_use:N \l__nsk_ext_base_sw_x_dim }
 					{ \dim_eval:n { \l__nsk_ext_base_sw_y_dim + \l__nsk_ext_eff_r_sw_dim } }
-				% SE corner (interior): right-side and bottom-side arc endpoints
+				% SE corner (interior): right-side and bottom-side connecting edges
 				\__nsk_ext_contour_edge:nn
 					{ \dim_use:N \l__nsk_ext_base_se_x_dim }
 					{ \dim_eval:n { \l__nsk_ext_base_se_y_dim + \l__nsk_ext_eff_r_se_dim } }
 				\__nsk_ext_contour_edge:nn
 					{ \dim_eval:n { \l__nsk_ext_base_se_x_dim - \l__nsk_ext_eff_r_se_dim } }
 					{ \dim_use:N \l__nsk_ext_base_se_y_dim }
+				% Cap NE arc (outer: top connecting → right edge)
+				\__nsk_ext_contour_arc:nnnnn
+					{ \dim_eval:n { \l__nsk_ext_cap_ne_x_dim - \l__nsk_ext_eff_r_ne_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_ne_y_dim }
+					{ 90 } { 0 }
+					{ \dim_use:N \l__nsk_ext_eff_r_ne_dim }
+				% Cap right edge (inset by radii)
+				\__nsk_ext_contour_line:nnnn
+					{ \dim_use:N \l__nsk_ext_cap_ne_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_ne_y_dim - \l__nsk_ext_eff_r_ne_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_se_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_se_y_dim + \l__nsk_ext_eff_r_se_dim } }
+				% Cap SE arc (interior: right edge → bottom edge)
+				\__nsk_ext_contour_arc:nnnnn
+					{ \dim_use:N \l__nsk_ext_cap_se_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_se_y_dim + \l__nsk_ext_eff_r_se_dim } }
+					{ 0 } { -90 }
+					{ \dim_use:N \l__nsk_ext_eff_r_se_dim }
+				% Cap bottom edge (inset by radii)
+				\__nsk_ext_contour_line:nnnn
+					{ \dim_eval:n { \l__nsk_ext_cap_se_x_dim - \l__nsk_ext_eff_r_se_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_se_y_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_sw_x_dim + \l__nsk_ext_eff_r_sw_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_sw_y_dim }
+				% Cap SW arc (outer: bottom edge → left connecting)
+				\__nsk_ext_contour_arc:nnnnn
+					{ \dim_eval:n { \l__nsk_ext_cap_sw_x_dim + \l__nsk_ext_eff_r_sw_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_sw_y_dim }
+					{ -90 } { -180 }
+					{ \dim_use:N \l__nsk_ext_eff_r_sw_dim }
 			}
 			\bool_if:nT { \l__nsk_ext_vis_right_bool && ! \l__nsk_ext_vis_bottom_bool }
 			{
-				% SE corner: right-side and bottom-side arc endpoints
+				% SE corner: right-side and bottom-side connecting edges
 				\__nsk_ext_contour_edge:nn
 					{ \dim_use:N \l__nsk_ext_base_se_x_dim }
 					{ \dim_eval:n { \l__nsk_ext_base_se_y_dim + \l__nsk_ext_eff_r_se_dim } }
 				\__nsk_ext_contour_edge:nn
 					{ \dim_eval:n { \l__nsk_ext_base_se_x_dim - \l__nsk_ext_eff_r_se_dim } }
 					{ \dim_use:N \l__nsk_ext_base_se_y_dim }
-				% NW corner: top-side and left-side arc endpoints
+				% NW corner: top-side and left-side connecting edges
 				\__nsk_ext_contour_edge:nn
 					{ \dim_eval:n { \l__nsk_ext_base_nw_x_dim + \l__nsk_ext_eff_r_nw_dim } }
 					{ \dim_use:N \l__nsk_ext_base_nw_y_dim }
 				\__nsk_ext_contour_edge:nn
 					{ \dim_use:N \l__nsk_ext_base_nw_x_dim }
 					{ \dim_eval:n { \l__nsk_ext_base_nw_y_dim - \l__nsk_ext_eff_r_nw_dim } }
-				% NE corner (interior): top-side and right-side arc endpoints
+				% NE corner (interior): top-side and right-side connecting edges
 				\__nsk_ext_contour_edge:nn
 					{ \dim_eval:n { \l__nsk_ext_base_ne_x_dim - \l__nsk_ext_eff_r_ne_dim } }
 					{ \dim_use:N \l__nsk_ext_base_ne_y_dim }
 				\__nsk_ext_contour_edge:nn
 					{ \dim_use:N \l__nsk_ext_base_ne_x_dim }
 					{ \dim_eval:n { \l__nsk_ext_base_ne_y_dim - \l__nsk_ext_eff_r_ne_dim } }
+				% Cap SE arc (outer: bottom connecting → right edge)
+				\__nsk_ext_contour_arc:nnnnn
+					{ \dim_eval:n { \l__nsk_ext_cap_se_x_dim - \l__nsk_ext_eff_r_se_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_se_y_dim }
+					{ -90 } { 0 }
+					{ \dim_use:N \l__nsk_ext_eff_r_se_dim }
+				% Cap right edge (inset by radii)
+				\__nsk_ext_contour_line:nnnn
+					{ \dim_use:N \l__nsk_ext_cap_se_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_se_y_dim + \l__nsk_ext_eff_r_se_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_ne_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_ne_y_dim - \l__nsk_ext_eff_r_ne_dim } }
+				% Cap NE arc (interior: right edge → top edge)
+				\__nsk_ext_contour_arc:nnnnn
+					{ \dim_use:N \l__nsk_ext_cap_ne_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_ne_y_dim - \l__nsk_ext_eff_r_ne_dim } }
+					{ 0 } { 90 }
+					{ \dim_use:N \l__nsk_ext_eff_r_ne_dim }
+				% Cap top edge (inset by radii)
+				\__nsk_ext_contour_line:nnnn
+					{ \dim_eval:n { \l__nsk_ext_cap_ne_x_dim - \l__nsk_ext_eff_r_ne_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_ne_y_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_nw_x_dim + \l__nsk_ext_eff_r_nw_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_nw_y_dim }
+				% Cap NW arc (outer: top edge → left connecting)
+				\__nsk_ext_contour_arc:nnnnn
+					{ \dim_eval:n { \l__nsk_ext_cap_nw_x_dim + \l__nsk_ext_eff_r_nw_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_nw_y_dim }
+					{ 90 } { 180 }
+					{ \dim_use:N \l__nsk_ext_eff_r_nw_dim }
 			}
 			\bool_if:nT { \l__nsk_ext_vis_left_bool && \l__nsk_ext_vis_bottom_bool }
 			{
-				% NW corner: top-side and left-side arc endpoints
+				% NW corner: top-side and left-side connecting edges
 				\__nsk_ext_contour_edge:nn
 					{ \dim_eval:n { \l__nsk_ext_base_nw_x_dim + \l__nsk_ext_eff_r_nw_dim } }
 					{ \dim_use:N \l__nsk_ext_base_nw_y_dim }
 				\__nsk_ext_contour_edge:nn
 					{ \dim_use:N \l__nsk_ext_base_nw_x_dim }
 					{ \dim_eval:n { \l__nsk_ext_base_nw_y_dim - \l__nsk_ext_eff_r_nw_dim } }
-				% SE corner: right-side and bottom-side arc endpoints
+				% SE corner: right-side and bottom-side connecting edges
 				\__nsk_ext_contour_edge:nn
 					{ \dim_use:N \l__nsk_ext_base_se_x_dim }
 					{ \dim_eval:n { \l__nsk_ext_base_se_y_dim + \l__nsk_ext_eff_r_se_dim } }
 				\__nsk_ext_contour_edge:nn
 					{ \dim_eval:n { \l__nsk_ext_base_se_x_dim - \l__nsk_ext_eff_r_se_dim } }
 					{ \dim_use:N \l__nsk_ext_base_se_y_dim }
-				% SW corner (interior): bottom-side and left-side arc endpoints
+				% SW corner (interior): bottom-side and left-side connecting edges
 				\__nsk_ext_contour_edge:nn
 					{ \dim_eval:n { \l__nsk_ext_base_sw_x_dim + \l__nsk_ext_eff_r_sw_dim } }
 					{ \dim_use:N \l__nsk_ext_base_sw_y_dim }
 				\__nsk_ext_contour_edge:nn
 					{ \dim_use:N \l__nsk_ext_base_sw_x_dim }
 					{ \dim_eval:n { \l__nsk_ext_base_sw_y_dim + \l__nsk_ext_eff_r_sw_dim } }
+				% Cap NW arc (outer: top connecting → left edge)
+				\__nsk_ext_contour_arc:nnnnn
+					{ \dim_eval:n { \l__nsk_ext_cap_nw_x_dim + \l__nsk_ext_eff_r_nw_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_nw_y_dim }
+					{ 90 } { 180 }
+					{ \dim_use:N \l__nsk_ext_eff_r_nw_dim }
+				% Cap left edge (inset by radii)
+				\__nsk_ext_contour_line:nnnn
+					{ \dim_use:N \l__nsk_ext_cap_nw_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_nw_y_dim - \l__nsk_ext_eff_r_nw_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_sw_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_sw_y_dim + \l__nsk_ext_eff_r_sw_dim } }
+				% Cap SW arc (interior: left edge → bottom edge)
+				\__nsk_ext_contour_arc:nnnnn
+					{ \dim_use:N \l__nsk_ext_cap_sw_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_sw_y_dim + \l__nsk_ext_eff_r_sw_dim } }
+					{ 180 } { 270 }
+					{ \dim_use:N \l__nsk_ext_eff_r_sw_dim }
+				% Cap bottom edge (inset by radii)
+				\__nsk_ext_contour_line:nnnn
+					{ \dim_eval:n { \l__nsk_ext_cap_sw_x_dim + \l__nsk_ext_eff_r_sw_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_sw_y_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_se_x_dim - \l__nsk_ext_eff_r_se_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_se_y_dim }
+				% Cap SE arc (outer: bottom edge → right connecting)
+				\__nsk_ext_contour_arc:nnnnn
+					{ \dim_eval:n { \l__nsk_ext_cap_se_x_dim - \l__nsk_ext_eff_r_se_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_se_y_dim }
+					{ -90 } { 0 }
+					{ \dim_use:N \l__nsk_ext_eff_r_se_dim }
 			}
 			\bool_if:nT { \l__nsk_ext_vis_left_bool && ! \l__nsk_ext_vis_bottom_bool }
 			{
-				% NE corner: top-side and right-side arc endpoints
+				% NE corner: top-side and right-side connecting edges
 				\__nsk_ext_contour_edge:nn
 					{ \dim_eval:n { \l__nsk_ext_base_ne_x_dim - \l__nsk_ext_eff_r_ne_dim } }
 					{ \dim_use:N \l__nsk_ext_base_ne_y_dim }
 				\__nsk_ext_contour_edge:nn
 					{ \dim_use:N \l__nsk_ext_base_ne_x_dim }
 					{ \dim_eval:n { \l__nsk_ext_base_ne_y_dim - \l__nsk_ext_eff_r_ne_dim } }
-				% SW corner: bottom-side and left-side arc endpoints
+				% SW corner: bottom-side and left-side connecting edges
 				\__nsk_ext_contour_edge:nn
 					{ \dim_eval:n { \l__nsk_ext_base_sw_x_dim + \l__nsk_ext_eff_r_sw_dim } }
 					{ \dim_use:N \l__nsk_ext_base_sw_y_dim }
 				\__nsk_ext_contour_edge:nn
 					{ \dim_use:N \l__nsk_ext_base_sw_x_dim }
 					{ \dim_eval:n { \l__nsk_ext_base_sw_y_dim + \l__nsk_ext_eff_r_sw_dim } }
-				% NW corner (interior): top-side and left-side arc endpoints
+				% NW corner (interior): top-side and left-side connecting edges
 				\__nsk_ext_contour_edge:nn
 					{ \dim_eval:n { \l__nsk_ext_base_nw_x_dim + \l__nsk_ext_eff_r_nw_dim } }
 					{ \dim_use:N \l__nsk_ext_base_nw_y_dim }
 				\__nsk_ext_contour_edge:nn
 					{ \dim_use:N \l__nsk_ext_base_nw_x_dim }
 					{ \dim_eval:n { \l__nsk_ext_base_nw_y_dim - \l__nsk_ext_eff_r_nw_dim } }
+				% Cap NE arc (outer: right connecting → top edge)
+				\__nsk_ext_contour_arc:nnnnn
+					{ \dim_use:N \l__nsk_ext_cap_ne_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_ne_y_dim - \l__nsk_ext_eff_r_ne_dim } }
+					{ 0 } { 90 }
+					{ \dim_use:N \l__nsk_ext_eff_r_ne_dim }
+				% Cap top edge (inset by radii)
+				\__nsk_ext_contour_line:nnnn
+					{ \dim_eval:n { \l__nsk_ext_cap_ne_x_dim - \l__nsk_ext_eff_r_ne_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_ne_y_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_nw_x_dim + \l__nsk_ext_eff_r_nw_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_nw_y_dim }
+				% Cap NW arc (interior: top edge → left edge)
+				\__nsk_ext_contour_arc:nnnnn
+					{ \dim_eval:n { \l__nsk_ext_cap_nw_x_dim + \l__nsk_ext_eff_r_nw_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_nw_y_dim }
+					{ 90 } { 180 }
+					{ \dim_use:N \l__nsk_ext_eff_r_nw_dim }
+				% Cap left edge (inset by radii)
+				\__nsk_ext_contour_line:nnnn
+					{ \dim_use:N \l__nsk_ext_cap_nw_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_nw_y_dim - \l__nsk_ext_eff_r_nw_dim } }
+					{ \dim_use:N \l__nsk_ext_cap_sw_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_sw_y_dim + \l__nsk_ext_eff_r_sw_dim } }
+				% Cap SW arc (outer: left edge → bottom connecting)
+				\__nsk_ext_contour_arc:nnnnn
+					{ \dim_use:N \l__nsk_ext_cap_sw_x_dim }
+					{ \dim_eval:n { \l__nsk_ext_cap_sw_y_dim + \l__nsk_ext_eff_r_sw_dim } }
+					{ 180 } { 270 }
+					{ \dim_use:N \l__nsk_ext_eff_r_sw_dim }
 			}
-
-			% DEBUG: bright red line to verify drawing works here
-			\draw [draw=red, line~width=2pt]
-			(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim) --
-			(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim);
-			% Draw base face rounded-rectangle border on top of fill.
-			\draw [
-				fill=none,
-				draw=\l_nsk_block_border_color_tl,
-				line~width=\dim_use:N \l_nsk_block_border_size_dim,
-				draw~opacity=\l_nsk_block_opacity_tl,
-				rounded~corners=\dim_use:N \l__nsk_ext_eff_r_ne_dim,
-			]
-			(\dim_use:N \l__nsk_ext_base_sw_x_dim, \dim_use:N \l__nsk_ext_base_sw_y_dim) rectangle
-			(\dim_use:N \l__nsk_ext_base_ne_x_dim, \dim_use:N \l__nsk_ext_base_ne_y_dim);
 		}
 		{
 			% Sharp corners: draw contour as a single closed path
